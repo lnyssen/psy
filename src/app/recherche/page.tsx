@@ -1,15 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
-import { CabinetTag, EtatPaiement, RegimeTag, StatutSeance } from "@/components/tags";
-import {
-  adresseCabinet,
-  euros,
-  fmtDateCourte,
-  fmtHeure,
-  initiales,
-  isBillable,
-  nomComplet,
-} from "@/lib/format";
+import { CabinetTag, RegimeTag } from "@/components/tags";
+import { adresseCabinet, fmtDateCourte, initiales, nomComplet } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
 
