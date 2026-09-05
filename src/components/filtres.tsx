@@ -22,7 +22,7 @@ export function avecParam(base: string, params: Params, cle: string, valeur?: st
  * les aurait rendus indistincts au moment précis où l'on choisit entre eux.
  * Blanc sur teal : 5,59:1. Blanc sur pourpre : 6,82:1.
  */
-export type TonOption = { colorHex: string };
+export type TonOption = { colorHex: string; vividHex: string };
 
 export function GroupeFiltre({
   base,
@@ -77,9 +77,10 @@ function Pilule({
   const style: React.CSSProperties | undefined = ton
     ? ({
         "--cab": ton.colorHex,
+        "--cab-vif": ton.vividHex,
         ...(actif
           ? { backgroundColor: "var(--cab)", borderColor: "var(--cab)", color: "#fff" }
-          : { borderColor: "color-mix(in srgb, var(--cab) 35%, transparent)" }),
+          : { borderColor: "color-mix(in srgb, var(--cab-vif) 55%, transparent)" }),
       } as unknown as React.CSSProperties)
     : undefined;
 

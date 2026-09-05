@@ -18,6 +18,7 @@ export type SeanceGrille = {
   cabinetNom: string;
   cabinetColor: string;
   cabinetFill: string;
+  cabinetVif: string;
   paiement: "DUE" | "PAID" | "OVERDUE" | null;
   libellePaiement: string | null;
   conflit: boolean;
@@ -262,7 +263,7 @@ export function GrilleSemaine({
                       >
                         <span
                           aria-hidden="true"
-                          style={{ "--cab": s.cabinetColor } as React.CSSProperties}
+                          style={{ "--cab-vif": s.cabinetVif } as React.CSSProperties}
                           className="filet-cabinet h-9 w-[3px] shrink-0 rounded-full"
                         />
                         <span className="min-w-0 flex-1">
@@ -363,14 +364,15 @@ function Bloc({
           ...style,
           "--cab": seance.cabinetColor,
           "--cab-fill": seance.cabinetFill,
-          borderColor: "color-mix(in srgb, var(--cab) 25%, transparent)",
+          "--cab-vif": seance.cabinetVif,
+          borderColor: "color-mix(in srgb, var(--cab-vif) 45%, transparent)",
         } as React.CSSProperties
       }
       className={`teinte-cabinet group absolute flex cursor-grab overflow-hidden rounded-lg border transition-shadow hover:shadow-[0_2px_8px_rgba(39,39,87,0.10)] active:cursor-grabbing ${
         seance.conflit ? "ring-2 ring-overdue/70" : ""
       }`}
     >
-      <span aria-hidden="true" className="filet-cabinet w-[4px] shrink-0" />
+      <span aria-hidden="true" className="filet-cabinet w-[5px] shrink-0" />
       <Link
         href={`/admin/patients/${seance.patientId}`}
         className="flex min-w-0 flex-1 flex-col gap-[3px] overflow-hidden px-2 py-1.5"

@@ -32,7 +32,7 @@ export default async function Contact() {
         {cabinets.map((c) => (
           <div key={c.id} className="rounded-[16px] bg-paper px-6 py-5">
             <p
-              style={{ "--cab": c.colorHex } as React.CSSProperties}
+              style={{ "--cab-vif": c.vividHex } as React.CSSProperties}
               className="texte-cabinet font-bold"
             >
               {c.nom}

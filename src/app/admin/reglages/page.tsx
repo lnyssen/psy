@@ -204,8 +204,8 @@ export default async function Reglages() {
                           className="peer sr-only"
                         />
                         <span
-                          style={{ backgroundColor: t.colorHex }}
-                          className="h-6 w-6 rounded-full ring-offset-2 ring-offset-surface peer-checked:ring-2 peer-checked:ring-ink peer-focus-visible:ring-2 peer-focus-visible:ring-accent"
+                          style={{ backgroundColor: t.vividHex }}
+                          className="h-7 w-7 rounded-full ring-offset-2 ring-offset-surface peer-checked:ring-2 peer-checked:ring-ink peer-focus-visible:ring-2 peer-focus-visible:ring-accent"
                         />
                         <span className="text-xs text-ink-muted">{t.nom}</span>
                       </label>
@@ -292,8 +292,8 @@ export default async function Reglages() {
                   className="peer sr-only"
                 />
                 <span
-                  style={{ backgroundColor: t.colorHex }}
-                  className="h-6 w-6 rounded-full ring-offset-2 ring-offset-surface peer-checked:ring-2 peer-checked:ring-ink peer-focus-visible:ring-2 peer-focus-visible:ring-accent"
+                  style={{ backgroundColor: t.vividHex }}
+                  className="h-7 w-7 rounded-full ring-offset-2 ring-offset-surface peer-checked:ring-2 peer-checked:ring-ink peer-focus-visible:ring-2 peer-focus-visible:ring-accent"
                 />
                 <span className="text-xs text-ink-muted">{t.nom}</span>
               </label>

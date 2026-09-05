@@ -6,10 +6,12 @@ export function cabinetsActifs() {
   return prisma.cabinet.findMany({ where: { actif: true }, orderBy: { ordre: "asc" } });
 }
 
-export function optionsCabinet(cabinets: { id: string; nom: string; colorHex: string }[]) {
+export function optionsCabinet(
+  cabinets: { id: string; nom: string; colorHex: string; vividHex: string }[],
+) {
   return cabinets.map((c) => ({
     valeur: c.id,
     label: c.nom,
-    ton: { colorHex: c.colorHex },
+    ton: { colorHex: c.colorHex, vividHex: c.vividHex },
   }));
 }

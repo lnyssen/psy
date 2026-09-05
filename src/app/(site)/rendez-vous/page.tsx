@@ -40,6 +40,7 @@ export default async function RendezVous({
         adresse: adresseCabinet(c),
         colorHex: c.colorHex,
         fillHex: c.fillHex,
+        vividHex: c.vividHex,
       }))}
       cabinetChoisi={choisi.id}
       jours={jours}

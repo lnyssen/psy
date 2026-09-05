@@ -1,43 +1,41 @@
 /**
- * Palette des cabinets.
+ * Palette des lieux.
  *
- * Une liste fermée plutôt qu'un sélecteur de couleur libre : un choix libre
- * produirait tôt ou tard un cabinet illisible, ou d'une teinte confondue avec
- * un état de paiement. Chaque entrée a été vérifiée sur ses trois usages —
- * texte sur le fond de page, texte sur son propre aplat, blanc sur la couleur
- * pleine — et tenue à au moins 47° de teinte des couleurs qui portent déjà du
- * sens : le dû, le payé, le retard et le violet de marque.
+ * Chaque teinte porte trois valeurs, et c'est la raison d'être de ce fichier :
  *
- * Trois teintes ont été essayées puis écartées, et il vaut mieux le noter que
- * de les réessayer plus tard : l'indigo (24° du violet), l'aubergine (6°) et la
- * brique (5° du rouge « en retard »). Elles passaient toutes le contraste ;
- * c'est leur teinte qui les disqualifiait.
+ * - `vividHex`, la couleur vive, pour les filets et les pastilles — tout ce qui
+ *   ne porte pas de texte. C'est elle qu'on voit et qui identifie le lieu.
+ * - `colorHex`, une version foncée du même ton, pour le texte. Contrainte par
+ *   le contraste, elle est forcément plus sourde.
+ * - `fillHex`, l'aplat sur lequel ce texte se pose.
  *
- * Une limite à connaître : au-delà de quatre ou cinq lieux, la couleur cesse
- * d'être ce qui les distingue — l'œil ne tient pas dix teintes en mémoire. Le
- * nom du lieu, écrit partout à côté de sa couleur, reste alors le seul repère
- * fiable. C'est pourquoi il n'est jamais omis.
+ * Les avoir confondues rendait la palette terne : une seule couleur devait à la
+ * fois claquer et rester lisible en corps de dix points, ce qu'aucune couleur
+ * ne fait. Les séparer libère les vives.
+ *
+ * Chaque entrée est vérifiée sur ses deux usages textuels — texte sur le fond
+ * de page, texte sur son propre aplat — et tenue à au moins 25° de teinte des
+ * couleurs qui portent déjà du sens : le dû, le payé, le retard, le violet de
+ * marque. Le fuchsia, essayé, a été écarté : 23° du violet, il s'y confondait.
  */
 export type TeinteCabinet = {
   cle: string;
   nom: string;
+  vividHex: string;
   colorHex: string;
   fillHex: string;
-  /** Pire des trois rapports de contraste mesurés. */
+  /** Pire des deux rapports de contraste mesurés. */
   contraste: number;
 };
 
 export const PALETTE_CABINETS: TeinteCabinet[] = [
-  { cle: "teal", nom: "Teal", colorHex: "#0B7285", fillHex: "#E0F1F3", contraste: 4.8 },
-  { cle: "pourpre", nom: "Pourpre", colorHex: "#A61E78", fillHex: "#FBE4F2", contraste: 5.68 },
-  { cle: "bleu", nom: "Bleu", colorHex: "#1B4F9C", fillHex: "#E5ECF8", contraste: 6.69 },
-  { cle: "ardoise", nom: "Ardoise", colorHex: "#3F4A57", fillHex: "#ECEEF1", contraste: 7.76 },
-  { cle: "cyan", nom: "Cyan", colorHex: "#0E6E9E", fillHex: "#E2EFF6", contraste: 4.79 },
-  { cle: "turquoise", nom: "Turquoise", colorHex: "#0F766E", fillHex: "#DFF1EE", contraste: 4.68 },
-  { cle: "marine", nom: "Marine", colorHex: "#1E3A6E", fillHex: "#E5E9F2", contraste: 9.16 },
-  { cle: "prune", nom: "Prune", colorHex: "#6B2D6B", fillHex: "#F2E6F2", contraste: 7.85 },
-  { cle: "framboise", nom: "Framboise", colorHex: "#B5195C", fillHex: "#FCE4EE", contraste: 5.36 },
-  { cle: "olive", nom: "Olive", colorHex: "#55631C", fillHex: "#EEF1DF", contraste: 5.74 },
+  { cle: "cyan", nom: "Cyan", vividHex: "#00C8D4", colorHex: "#056A73", fillHex: "#C6F4F8", contraste: 5.34 },
+  { cle: "magenta", nom: "Magenta", vividHex: "#FF2D8F", colorHex: "#A8005A", fillHex: "#FFD6EA", contraste: 5.71 },
+  { cle: "electrique", nom: "Électrique", vividHex: "#2B6BFF", colorHex: "#1A45B8", fillHex: "#D9E4FF", contraste: 6.37 },
+  { cle: "azur", nom: "Azur", vividHex: "#00A3FF", colorHex: "#00588F", fillHex: "#CCEBFF", contraste: 6.05 },
+  { cle: "turquoise", nom: "Turquoise", vividHex: "#00D9B0", colorHex: "#00695C", fillHex: "#C7F7EE", contraste: 5.66 },
+  { cle: "rose", nom: "Rose", vividHex: "#FF5FB8", colorHex: "#B01372", fillHex: "#FFDCF0", contraste: 5.26 },
+  { cle: "lime", nom: "Lime", vividHex: "#9BE000", colorHex: "#4F6B00", fillHex: "#ECF9C6", contraste: 5.51 },
 ];
 
 export function teintePar(colorHex: string) {

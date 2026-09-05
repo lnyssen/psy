@@ -133,12 +133,17 @@ export async function enregistrerCabinet(f: FormData) {
   if (id) {
     await prisma.cabinet.update({
       where: { id },
-      data: { ...donnees, fillHex: teinte.fillHex },
+      data: { ...donnees, fillHex: teinte.fillHex, vividHex: teinte.vividHex },
     });
   } else {
     const dernier = await prisma.cabinet.findFirst({ orderBy: { ordre: "desc" } });
     await prisma.cabinet.create({
-      data: { ...donnees, fillHex: teinte.fillHex, ordre: (dernier?.ordre ?? -1) + 1 },
+      data: {
+        ...donnees,
+        fillHex: teinte.fillHex,
+        vividHex: teinte.vividHex,
+        ordre: (dernier?.ordre ?? -1) + 1,
+      },
     });
   }
   rafraichirTout();

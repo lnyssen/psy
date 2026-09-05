@@ -78,6 +78,7 @@ export default async function Semaine({ searchParams }: { searchParams: Promise<
     cabinetNom: s.cabinet.nom,
     cabinetColor: s.cabinet.colorHex,
     cabinetFill: s.cabinet.fillHex,
+    cabinetVif: s.cabinet.vividHex,
     paiement: isBillable(s.status) ? s.paymentStatus : null,
     libellePaiement: isBillable(s.status) ? PAYMENT_LABEL[s.paymentStatus] : null,
     conflit: conflits.has(i),

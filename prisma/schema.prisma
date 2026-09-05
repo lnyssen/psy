@@ -76,10 +76,14 @@ model Cabinet {
   addressLine String  @map("address_line")
   postalCode  String  @map("postal_code")
   city        String
-  /// Teinte du texte et des filets.
+  /// Teinte foncée, réservée au texte : elle doit rester lisible sur fond clair.
   colorHex    String  @map("color_hex")
-  /// Aplat clair correspondant.
+  /// Aplat correspondant.
   fillHex     String  @map("fill_hex")
+  /// Teinte vive, pour les filets et les pastilles — tout ce qui ne porte pas
+  /// de texte. C'est elle qui donne sa couleur au lieu ; la teinte de texte,
+  /// contrainte par le contraste, est forcément plus sourde.
+  vividHex    String  @default("#00C8D4") @map("vivid_hex")
   /// Un cabinet fermé n'est plus proposé, mais ses séances passées le gardent.
   actif       Boolean @default(true)
   /// Visible sur le site public et proposé à la réservation. Faux pour un lieu

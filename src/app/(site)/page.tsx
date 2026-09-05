@@ -122,7 +122,7 @@ export default async function Accueil() {
 
       <section className="bg-bande-claire px-6 py-20 md:py-28">
         <div className="mx-auto max-w-5xl">
-          <Titre>Ce pour quoi l’on vient</Titre>
+          <Titre>Ce qui vous amène</Titre>
           <p className="mt-8 max-w-2xl text-lg leading-relaxed text-ink-muted">
             Je propose un espace de parole et d’accompagnement pour de nombreuses problématiques.
           </p>
@@ -171,7 +171,13 @@ export default async function Accueil() {
             {cabinets.map((c) => (
               <div
                 key={c.id}
-                style={{ "--cab": c.colorHex, "--cab-fill": c.fillHex } as React.CSSProperties}
+                style={
+                  {
+                    "--cab": c.colorHex,
+                    "--cab-fill": c.fillHex,
+                    "--cab-vif": c.vividHex,
+                  } as React.CSSProperties
+                }
                 className="teinte-cabinet rounded-[24px] px-8 py-8"
               >
                 <p className="font-display text-2xl">{c.nom}</p>

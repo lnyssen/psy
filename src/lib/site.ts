@@ -12,6 +12,8 @@ export const SITE = {
   accroche:
     "Un accompagnement sur mesure, fort de plus de vingt ans d’expérience. Orientations analytique et systémique.",
   langues: "Consultations en français et en anglais.",
+  /** Fiche publique sur l'annuaire des psychologues bruxellois. */
+  psybru: "https://psybru.be/fr/psychologue/amandine-monsel",
   telephone: "+32 485 83 11 19",
   telephoneLien: "+32485831119",
   email: "amandine.monsel@gmail.com",

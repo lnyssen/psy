@@ -11,6 +11,7 @@ type CabinetChoix = {
   adresse: string;
   colorHex: string;
   fillHex: string;
+  vividHex: string;
 };
 
 import type { Jour } from "@/components/CalendrierRdv";
@@ -80,9 +81,10 @@ export function PriseRdv({
                 style={
                   {
                     "--cab": c.colorHex,
+                    "--cab-vif": c.vividHex,
                     ...(actif
                       ? { backgroundColor: "var(--cab)", borderColor: "var(--cab)", color: "#fff" }
-                      : { borderColor: "color-mix(in srgb, var(--cab) 35%, transparent)" }),
+                      : { borderColor: "color-mix(in srgb, var(--cab-vif) 55%, transparent)" }),
                   } as unknown as React.CSSProperties
                 }
                 className={`flex flex-col rounded-[14px] border px-5 py-3 transition-colors ${

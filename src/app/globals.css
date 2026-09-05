@@ -240,7 +240,9 @@ time,
 }
 
 .filet-cabinet {
-  background: var(--cab);
+  /* La teinte vive : ces éléments ne portent pas de texte, rien ne les oblige
+     à être sombres. C'est ce découplage qui sort la palette de sa grisaille. */
+  background: var(--cab-vif, var(--cab));
 }
 
 .texte-cabinet {
@@ -248,12 +250,12 @@ time,
 }
 
 :root[data-theme="dark"] .teinte-cabinet {
-  background: color-mix(in srgb, var(--cab) 20%, transparent);
-  color: color-mix(in srgb, var(--cab) 45%, white);
+  background: color-mix(in srgb, var(--cab-vif, var(--cab)) 18%, transparent);
+  color: color-mix(in srgb, var(--cab-vif, var(--cab)) 55%, white);
 }
 
 :root[data-theme="dark"] .texte-cabinet {
-  color: color-mix(in srgb, var(--cab) 45%, white);
+  color: color-mix(in srgb, var(--cab-vif, var(--cab)) 55%, white);
 }
 
 /* Séance saisie puis déplacée dans la grille. */

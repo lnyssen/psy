@@ -13,6 +13,7 @@ export type CabinetVue = {
   city: string;
   colorHex: string;
   fillHex: string;
+  vividHex: string;
 };
 
 export function adresseCabinet(c: Pick<CabinetVue, "addressLine" | "postalCode" | "city">) {

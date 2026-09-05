@@ -51,7 +51,13 @@ export function CabinetTag({ cabinet }: { cabinet: CabinetVue }) {
   return (
     <span
       title={adresseCabinet(cabinet)}
-      style={{ "--cab": cabinet.colorHex, "--cab-fill": cabinet.fillHex } as React.CSSProperties}
+      style={
+        {
+          "--cab": cabinet.colorHex,
+          "--cab-fill": cabinet.fillHex,
+          "--cab-vif": cabinet.vividHex,
+        } as React.CSSProperties
+      }
       className="teinte-cabinet inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-medium whitespace-nowrap"
     >
       <span aria-hidden="true" className="filet-cabinet h-1.5 w-1.5 rounded-full" />

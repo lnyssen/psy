@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db";
 import { adresseCabinet } from "@/lib/format";
+import { SITE } from "@/lib/site";
 
 export const dynamic = "force-dynamic";
 
@@ -15,7 +16,7 @@ export default async function Praticalites() {
     <>
       <section className="px-6 py-14 md:py-20">
        <div className="mx-auto max-w-5xl">
-        <h1 className="font-display text-4xl tracking-tight md:text-5xl">Praticalités</h1>
+        <h1 className="font-display text-4xl tracking-tight md:text-5xl">En pratique</h1>
         <p className="mt-4 max-w-2xl text-lg leading-relaxed text-ink-muted">
           Où me trouver, et comment se faire rembourser.
         </p>
@@ -29,7 +30,7 @@ export default async function Praticalites() {
           {cabinets.map((c) => (
             <div key={c.id} className="rounded-[16px] bg-paper px-6 py-5">
               <p
-                style={{ "--cab": c.colorHex } as React.CSSProperties}
+                style={{ "--cab-vif": c.vividHex } as React.CSSProperties}
                 className="texte-cabinet text-lg font-bold"
               >
                 {c.nom}
@@ -62,6 +63,18 @@ export default async function Praticalites() {
           <p className="rounded-[14px] border border-dashed border-line-strong px-5 py-4 text-sm">
             <span className="font-semibold text-ink">À compléter</span> — conditions exactes
             d’accès à la convention dans son cas, et pièces à fournir à la mutuelle.
+          </p>
+          <p>
+            Ma fiche figure également sur{" "}
+            <a
+              href={SITE.psybru}
+              target="_blank"
+              rel="noreferrer"
+              className="font-medium text-accent-text underline underline-offset-4"
+            >
+              PsyBru
+            </a>
+            , l’annuaire des psychologues cliniciens de la Région bruxelloise.
           </p>
         </div>
        </div>

@@ -48,8 +48,9 @@ const CABINETS = [
     addressLine: "Rue Victor Allard 191",
     postalCode: "1180",
     city: "Uccle",
-    colorHex: "#0B7285",
-    fillHex: "#E0F1F3",
+    colorHex: "#056A73",
+    fillHex: "#C6F4F8",
+    vividHex: "#00C8D4",
     ordre: 0,
   },
   {
@@ -57,8 +58,9 @@ const CABINETS = [
     addressLine: "Place Félix Govaert 4",
     postalCode: "1160",
     city: "Auderghem",
-    colorHex: "#A61E78",
-    fillHex: "#FBE4F2",
+    colorHex: "#A8005A",
+    fillHex: "#FFD6EA",
+    vividHex: "#FF2D8F",
     ordre: 1,
   },
   {
@@ -66,8 +68,9 @@ const CABINETS = [
     addressLine: "Adresse à compléter",
     postalCode: "1000",
     city: "Bruxelles",
-    colorHex: "#1B4F9C",
-    fillHex: "#E5ECF8",
+    colorHex: "#1A45B8",
+    fillHex: "#D9E4FF",
+    vividHex: "#2B6BFF",
     ordre: 2,
     // L'école n'est pas un lieu où l'on prend rendez-vous : elle n'a rien à
     // faire sur le site public.

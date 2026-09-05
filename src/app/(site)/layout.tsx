@@ -41,6 +41,16 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
                   {SITE.email}
                 </a>
               </p>
+              <p className="mt-3">
+                <a
+                  href={SITE.psybru}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-white/70 underline underline-offset-4 hover:text-white"
+                >
+                  Ma fiche sur PsyBru
+                </a>
+              </p>
             </div>
           </div>
           <p className="border-t border-white/15 pt-6 text-xs text-white/60">
