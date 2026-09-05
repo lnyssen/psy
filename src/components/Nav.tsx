@@ -11,15 +11,17 @@ import {
   IconFacturation,
   IconJour,
   IconPatients,
+  IconDemandes,
   IconReglages,
   IconSemaine,
 } from "@/components/icons";
 
 const ENTREES = [
-  { href: "/", label: "Aujourd’hui", Icone: IconJour },
-  { href: "/semaine", label: "Semaine", Icone: IconSemaine },
-  { href: "/patients", label: "Patients", Icone: IconPatients },
-  { href: "/facturation", label: "Facturation", Icone: IconFacturation },
+  { href: "/admin", label: "Aujourd’hui", Icone: IconJour },
+  { href: "/admin/semaine", label: "Semaine", Icone: IconSemaine },
+  { href: "/admin/patients", label: "Patients", Icone: IconPatients },
+  { href: "/admin/facturation", label: "Facturation", Icone: IconFacturation },
+  { href: "/admin/demandes", label: "Demandes", Icone: IconDemandes },
 ];
 
 export function Nav({ theme }: { theme: "light" | "dark" }) {
@@ -49,7 +51,7 @@ export function Nav({ theme }: { theme: "light" | "dark" }) {
             La navigation passe en dessous. Aucun défilement horizontal nulle
             part — les libellés s'effacent au profit des seules icônes quand la
             place manque, plutôt que de déborder. */}
-        <Link href="/" className="flex shrink-0 flex-col">
+        <Link href="/admin" className="flex shrink-0 flex-col">
           <span className="font-display text-[22px] leading-[1.15] font-bold tracking-tight">
             Amandine Monsel
           </span>
@@ -63,7 +65,7 @@ export function Nav({ theme }: { theme: "light" | "dark" }) {
           className="order-last flex w-full min-w-0 flex-1 gap-1 md:order-none md:w-auto"
         >
           {ENTREES.map(({ href, label, Icone }) => {
-            const actif = href === "/" ? pathname === "/" : pathname.startsWith(href);
+            const actif = href === "/admin" ? pathname === "/admin" : pathname.startsWith(href);
             return (
               <Link
                 key={href}
@@ -87,11 +89,11 @@ export function Nav({ theme }: { theme: "light" | "dark" }) {
           <Recherche />
 
           <Link
-            href="/reglages"
-            aria-current={pathname.startsWith("/reglages") ? "page" : undefined}
+            href="/admin/reglages"
+            aria-current={pathname.startsWith("/admin/reglages") ? "page" : undefined}
             title="Réglages"
             className={`flex h-9 w-9 items-center justify-center rounded-full border transition-colors ${
-              pathname.startsWith("/reglages")
+              pathname.startsWith("/admin/reglages")
                 ? "border-accent bg-accent text-accent-contrast"
                 : "border-line-strong text-ink-muted hover:border-accent hover:text-accent-text"
             }`}

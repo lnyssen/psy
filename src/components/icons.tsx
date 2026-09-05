@@ -135,3 +135,12 @@ export function IconLune({ className }: Props) {
     </svg>
   );
 }
+
+export function IconDemandes({ className }: Props) {
+  return (
+    <svg {...base} className={className}>
+      <path d="M2.8 5.5h14.4v9.5a1.6 1.6 0 0 1-1.6 1.6H4.4a1.6 1.6 0 0 1-1.6-1.6z" />
+      <path d="m2.8 6 7.2 5 7.2-5" />
+    </svg>
+  );
+}

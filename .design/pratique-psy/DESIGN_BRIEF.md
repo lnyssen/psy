@@ -321,6 +321,25 @@ prévoyait au départ.
   rendu serveur, sans éclair blanc au chargement.
 - **Recherche globale** sur les patients, leurs coordonnées, les notes et les
   lieux, accessible au raccourci ⌘K.
+- **Site public et prise de rendez-vous en ligne**, initialement hors périmètre.
+  Une seule application sert les deux : le site à la racine, l'outil sous
+  `/admin`, atteignable sur un sous-domaine distinct. Rien du site ne trahit
+  l'existence de l'outil.
+- **Réservation à deux régimes** : un patient connu, arrivant avec son lien
+  personnel, réserve immédiatement ; toute autre personne dépose une demande
+  qu'Amandine confirme ou décline. Elle garde la main sur qui entre dans son
+  agenda, ce qui compte pour une première consultation.
+- **Disponibilités** : horaires d'ouverture par lieu et par jour, et congés. Il
+  manquait à l'outil de savoir quand elle est disponible, et non seulement
+  quand elle est occupée. Un créneau n'est proposé que s'il tombe dans une
+  plage d'ouverture, qu'aucune séance ne l'occupe où que ce soit, qu'aucun congé
+  ne le couvre, et qu'il laisse le temps de rejoindre le lieu depuis la séance
+  précédente. Mieux vaut ne pas proposer un créneau intenable que de le refuser
+  ensuite.
+- **Le formulaire public est un point de collecte de données de santé** :
+  solliciter une psychologue en révèle une. D'où le minimum de champs, une
+  mention d'information à côté du formulaire, et l'invitation explicite à
+  garder le motif pour la séance plutôt que de l'écrire dans un courriel.
 - **Reçu PDF** avec mode de paiement (espèces ou électronique). Ce n'est pas une
   attestation de soins, et les prestations de psychologue sont exonérées de TVA
   en Belgique.
@@ -350,8 +369,7 @@ consignées ici pour qu'elles restent des choix, et non des oublis.
 
 ## Hors périmètre
 
-- Portail patient, prise de rendez vous en ligne, rappels automatiques par SMS ou
-  courriel.
+- Rappels automatiques par SMS ou courriel avant séance.
 - Écriture ou lecture via l'API Google Calendar. Le flux iCalendar couvre le
   besoin « voir mon agenda sur mon téléphone » sans OAuth, sans jetons à
   renouveler et sans contrat de sous-traitance avec Google. Sa limite est

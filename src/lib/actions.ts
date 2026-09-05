@@ -28,8 +28,8 @@ export async function deplacerSeance(id: string, isoDebut: string) {
   }
 
   await prisma.session.update({ where: { id }, data: { startsAt: debut } });
-  revalidatePath("/semaine");
-  revalidatePath("/");
+  revalidatePath("/admin/semaine");
+  revalidatePath("/admin");
   return { ok: true as const };
 }
 
@@ -38,13 +38,13 @@ export async function ajouterNote(patientId: string, body: string) {
   if (!texte) return { ok: false as const, message: "La note est vide." };
 
   await prisma.note.create({ data: { patientId, body: texte } });
-  revalidatePath(`/patients/${patientId}`);
+  revalidatePath(`/admin/patients/${patientId}`);
   return { ok: true as const };
 }
 
 export async function supprimerNote(id: string, patientId: string) {
   await prisma.note.delete({ where: { id } });
-  revalidatePath(`/patients/${patientId}`);
+  revalidatePath(`/admin/patients/${patientId}`);
   return { ok: true as const };
 }
 
@@ -66,8 +66,8 @@ export async function marquerPaye(id: string, methode: "CASH" | "ELECTRONIC") {
       amountCents: seance.amountCents ?? seance.patient.feeCents,
     },
   });
-  revalidatePath("/facturation");
-  revalidatePath(`/patients/${seance.patientId}`);
+  revalidatePath("/admin/facturation");
+  revalidatePath(`/admin/patients/${seance.patientId}`);
   return { ok: true as const };
 }
 
@@ -83,8 +83,8 @@ export async function creerSeance(patientId: string, isoDebut: string, cabinetId
       cabinetId,
     },
   });
-  revalidatePath("/semaine");
-  revalidatePath(`/patients/${patientId}`);
+  revalidatePath("/admin/semaine");
+  revalidatePath(`/admin/patients/${patientId}`);
   return { ok: true as const };
 }
 
@@ -95,7 +95,7 @@ export async function creerSeance(patientId: string, isoDebut: string, cabinetId
 /** Toutes les vues qui affichent un lieu ou un tarif doivent être rafraîchies :
  *  un changement de nom ou de couleur se répercute partout. */
 function rafraichirTout() {
-  for (const chemin of ["/", "/semaine", "/patients", "/facturation", "/reglages"]) {
+  for (const chemin of ["/admin", "/admin/semaine", "/admin/patients", "/admin/facturation", "/admin/reglages"]) {
     revalidatePath(chemin);
   }
 }

@@ -34,7 +34,7 @@ export function Recherche({ defaut }: { defaut?: string }) {
       onSubmit={(e) => {
         e.preventDefault();
         const q = champ.current?.value.trim() ?? "";
-        router.push(q ? `/recherche?q=${encodeURIComponent(q)}` : "/recherche");
+        router.push(q ? `/admin/recherche?q=${encodeURIComponent(q)}` : "/admin/recherche");
       }}
       className="relative min-w-0 flex-1 md:max-w-56"
     >

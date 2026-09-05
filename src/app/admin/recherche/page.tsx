@@ -90,7 +90,7 @@ export default async function Recherche({
             {patients.map((p) => (
               <li key={p.id}>
                 <Link
-                  href={`/patients/${p.id}`}
+                  href={`/admin/patients/${p.id}`}
                   className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-[14px] border border-line bg-surface px-5 py-3.5 transition-colors hover:border-accent"
                 >
                   <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent-soft text-[11px] font-semibold text-accent-text">
@@ -123,7 +123,7 @@ export default async function Recherche({
             {notes.map((n) => (
               <li key={n.id}>
                 <Link
-                  href={`/patients/${n.patientId}`}
+                  href={`/admin/patients/${n.patientId}`}
                   className="flex flex-col gap-1 rounded-[14px] border border-line bg-surface px-5 py-3.5 transition-colors hover:border-accent"
                 >
                   <span className="flex items-baseline gap-3">
@@ -152,7 +152,7 @@ export default async function Recherche({
                 <CabinetTag cabinet={c} />
                 <span className="flex-1 text-sm text-ink-muted">{adresseCabinet(c)}</span>
                 <Link
-                  href={`/semaine?cabinet=${c.id}`}
+                  href={`/admin/semaine?cabinet=${c.id}`}
                   className="text-xs font-medium text-accent-text hover:underline"
                 >
                   voir l’agenda

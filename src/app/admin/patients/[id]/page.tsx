@@ -63,7 +63,7 @@ export default async function FichePatient({ params }: { params: Promise<{ id: s
 
   return (
     <div className="flex flex-col gap-8">
-      <Link href="/patients" className="text-sm text-ink-muted transition-colors hover:text-accent-text">
+      <Link href="/admin/patients" className="text-sm text-ink-muted transition-colors hover:text-accent-text">
         ← Tous les patients
       </Link>
 
@@ -163,6 +163,21 @@ export default async function FichePatient({ params }: { params: Promise<{ id: s
           </ol>
         )}
       </section>
+
+      {patient.jetonRdv && (
+        <section className="rounded-[14px] border border-line bg-surface px-5 py-4">
+          <h2 className="text-[11px] font-semibold tracking-[0.1em] text-ink-muted uppercase">
+            Lien personnel de réservation
+          </h2>
+          <p className="mt-2 text-sm text-ink-muted">
+            À transmettre au patient : il lui permet de réserver un créneau libre sans passer par
+            une demande à confirmer. Ce lien vaut reconnaissance — ne le diffusez pas ailleurs.
+          </p>
+          <code className="mt-2 block overflow-x-auto rounded-[10px] bg-sunken px-4 py-2 text-xs">
+            /rendez-vous?p={patient.jetonRdv}
+          </code>
+        </section>
+      )}
 
       <Notes
         patientId={patient.id}

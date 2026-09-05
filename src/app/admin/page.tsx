@@ -85,7 +85,7 @@ export default async function Aujourdhui({ searchParams }: { searchParams: Promi
           </p>
         </div>
         <Link
-          href="/semaine"
+          href="/admin/semaine"
           className="rounded-full border border-line-strong px-5 py-2.5 text-sm font-medium transition-colors hover:border-accent hover:text-accent-text"
         >
           Voir la semaine
@@ -94,14 +94,14 @@ export default async function Aujourdhui({ searchParams }: { searchParams: Promi
 
       <div className="flex flex-wrap gap-x-6 gap-y-3">
         <GroupeFiltre
-          base="/"
+          base="/admin"
           params={params}
           cle="cabinet"
           libelle="Cabinet"
           options={optionsCabinet(cabinets)}
         />
         <GroupeFiltre
-          base="/"
+          base="/admin"
           params={params}
           cle="regime"
           libelle="Régime"
@@ -133,7 +133,7 @@ export default async function Aujourdhui({ searchParams }: { searchParams: Promi
           {seances.map((s, i) => (
             <li key={s.id}>
               <Link
-                href={`/patients/${s.patientId}`}
+                href={`/admin/patients/${s.patientId}`}
                 className="flex flex-wrap items-center gap-x-5 gap-y-3 rounded-[14px] border border-line bg-surface px-5 py-4 transition-colors hover:border-accent"
               >
                 <time

@@ -2,25 +2,41 @@ import { NextResponse, type NextRequest } from "next/server";
 import { COOKIE_SESSION, jetonValide } from "@/lib/session";
 
 /**
- * Tout est fermé par défaut. Deux exceptions, et deux seulement :
+ * Deux domaines, une seule application.
  *
- * - l'écran de connexion, sans quoi on ne pourrait jamais entrer ;
- * - le flux iCalendar, qui porte sa propre authentification par jeton dans
- *   l'adresse — un agenda abonné ne sait pas présenter de cookie.
+ * Le site public vit à la racine ; l'outil vit sous /admin et n'est jamais
+ * atteignable sans session. Quand la requête arrive sur le sous-domaine
+ * « admin. », elle est réécrite vers /admin : l'adresse publique et l'adresse
+ * de travail ne se recouvrent donc jamais, et rien du site ne trahit
+ * l'existence de l'outil.
+ *
+ * Le flux iCalendar reste ouvert : il porte sa propre authentification par
+ * jeton dans l'adresse, un agenda abonné ne sachant pas présenter de cookie.
  */
-const OUVERT = ["/connexion", "/api/agenda"];
-
 export async function middleware(req: NextRequest) {
-  const chemin = req.nextUrl.pathname;
-  if (OUVERT.some((p) => chemin.startsWith(p))) return NextResponse.next();
+  const url = req.nextUrl;
+  const chemin = url.pathname;
+  const hote = req.headers.get("host") ?? "";
+  const surSousDomaineAdmin = hote.startsWith("admin.");
+
+  if (chemin.startsWith("/api/agenda")) return NextResponse.next();
+
+  // Sur admin.…, la racine est l'outil.
+  if (surSousDomaineAdmin && !chemin.startsWith("/admin") && chemin !== "/connexion") {
+    const vers = url.clone();
+    vers.pathname = `/admin${chemin === "/" ? "" : chemin}`;
+    return NextResponse.rewrite(vers);
+  }
+
+  const protege = chemin.startsWith("/admin");
+  if (!protege) return NextResponse.next();
 
   if (await jetonValide(req.cookies.get(COOKIE_SESSION)?.value)) return NextResponse.next();
 
-  const url = req.nextUrl.clone();
-  url.pathname = "/connexion";
-  // On retient la page demandée pour y revenir après déverrouillage.
-  url.searchParams.set("suite", chemin + req.nextUrl.search);
-  return NextResponse.redirect(url);
+  const vers = url.clone();
+  vers.pathname = "/connexion";
+  vers.searchParams.set("suite", chemin + url.search);
+  return NextResponse.redirect(vers);
 }
 
 export const config = {

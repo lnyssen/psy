@@ -84,8 +84,10 @@ model Cabinet {
   actif       Boolean @default(true)
   ordre       Int     @default(0)
 
-  sessions Session[]
-  patients Patient[]
+  sessions       Session[]
+  patients       Patient[]
+  disponibilites Disponibilite[]
+  demandes       DemandeRdv[]
 
   @@map("cabinets")
 }
@@ -101,6 +103,64 @@ model Tarif {
   ordre       Int     @default(0)
 
   @@map("tarifs")
+}
+
+/// Horaires d'ouverture, par lieu et par jour de semaine. L'outil savait quand
+/// Amandine est occupée ; il lui manquait de savoir quand elle est disponible.
+/// Sans cela, aucun créneau ne peut être proposé au public.
+model Disponibilite {
+  id        String  @id @default(cuid())
+  cabinetId String  @map("cabinet_id")
+  cabinet   Cabinet @relation(fields: [cabinetId], references: [id], onDelete: Cascade)
+  /// 0 = lundi … 4 = vendredi. Le week-end n'est pas proposé.
+  jour      Int
+  /// Minutes depuis minuit, heure de Bruxelles.
+  debutMin  Int     @map("debut_min")
+  finMin    Int     @map("fin_min")
+
+  @@index([cabinetId, jour])
+  @@map("disponibilites")
+}
+
+/// Congés et absences. Se soustraient des créneaux proposés, et des heures
+/// comptées comme travaillées.
+model Indisponibilite {
+  id     String   @id @default(cuid())
+  debut  DateTime
+  fin    DateTime
+  motif  String?
+
+  @@index([debut, fin])
+  @@map("indisponibilites")
+}
+
+enum DemandeStatut {
+  EN_ATTENTE
+  CONFIRMEE
+  REFUSEE
+}
+
+/// Demande de rendez-vous déposée depuis le site public par une personne que
+/// l'outil ne connaît pas encore.
+///
+/// Une telle demande est déjà une donnée de santé : solliciter une psychologue
+/// en révèle une. Elle est donc traitée comme un dossier — hébergement
+/// européen, minimum de champs, et purge de ce qui n'aboutit pas.
+model DemandeRdv {
+  id        String        @id @default(cuid())
+  firstName String        @map("first_name")
+  lastName  String        @map("last_name")
+  email     String
+  phone     String?
+  message   String?
+  souhaite  DateTime
+  cabinetId String        @map("cabinet_id")
+  cabinet   Cabinet       @relation(fields: [cabinetId], references: [id], onDelete: Restrict)
+  statut    DemandeStatut @default(EN_ATTENTE)
+  createdAt DateTime      @default(now()) @map("created_at")
+
+  @@index([statut, souhaite])
+  @@map("demandes_rdv")
 }
 
 model Patient {
@@ -128,6 +188,11 @@ model Patient {
   active    Boolean    @default(true)
   createdAt DateTime   @default(now()) @map("created_at")
   updatedAt DateTime   @updatedAt @map("updated_at")
+
+  /// Jeton personnel permettant de réserver directement depuis le site, sans
+  /// passer par une demande. Il est transmis par courriel, vaut reconnaissance
+  /// du patient, et se régénère si besoin.
+  jetonRdv     String?  @unique @map("jeton_rdv")
 
   sessions Session[]
   patientNotes Note[]
@@ -159,6 +224,8 @@ model Session {
   paymentMethod PaymentMethod? @map("payment_method")
   /// Date d'émission du reçu, pour ne pas en délivrer deux fois sans le savoir.
   receiptAt     DateTime?     @map("receipt_at")
+  /// Vrai si la séance a été prise par le patient depuis le site.
+  reserveeEnLigne Boolean     @default(false) @map("reservee_en_ligne")
   /// Note clinique. Chiffrement applicatif à venir (le chiffrement de bout en
   /// bout a été écarté, voir les arbitrages du brief) : ce champ restera vide
   /// tant que ce chiffrement n'est pas en place.

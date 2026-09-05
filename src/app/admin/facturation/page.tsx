@@ -64,7 +64,7 @@ export default async function Facturation({ searchParams }: { searchParams: Prom
 
       <div className="flex flex-wrap gap-x-6 gap-y-3">
         <GroupeFiltre
-          base="/facturation"
+          base="/admin/facturation"
           params={params}
           cle="paiement"
           libelle="Paiement"
@@ -75,14 +75,14 @@ export default async function Facturation({ searchParams }: { searchParams: Prom
           ]}
         />
         <GroupeFiltre
-          base="/facturation"
+          base="/admin/facturation"
           params={params}
           cle="cabinet"
           libelle="Cabinet"
           options={optionsCabinet(cabinets)}
         />
         <GroupeFiltre
-          base="/facturation"
+          base="/admin/facturation"
           params={params}
           cle="regime"
           libelle="Régime"
@@ -112,12 +112,12 @@ export default async function Facturation({ searchParams }: { searchParams: Prom
           <caption className="sr-only">Séances facturables</caption>
           <thead>
             <tr className="border-b border-line bg-sunken text-[11px] tracking-[0.1em] text-ink-muted uppercase">
-              <EnTeteTri base="/facturation" params={params} champ="date">Date</EnTeteTri>
-              <EnTeteTri base="/facturation" params={params} champ="patient">Patient</EnTeteTri>
-              <EnTeteTri base="/facturation" params={params} champ="cabinet">Cabinet</EnTeteTri>
-              <EnTeteTri base="/facturation" params={params} champ="regime">Régime</EnTeteTri>
-              <EnTeteTri base="/facturation" params={params} champ="montant" aDroite>Montant</EnTeteTri>
-              <EnTeteTri base="/facturation" params={params} champ="paiement" aDroite>Paiement</EnTeteTri>
+              <EnTeteTri base="/admin/facturation" params={params} champ="date">Date</EnTeteTri>
+              <EnTeteTri base="/admin/facturation" params={params} champ="patient">Patient</EnTeteTri>
+              <EnTeteTri base="/admin/facturation" params={params} champ="cabinet">Cabinet</EnTeteTri>
+              <EnTeteTri base="/admin/facturation" params={params} champ="regime">Régime</EnTeteTri>
+              <EnTeteTri base="/admin/facturation" params={params} champ="montant" aDroite>Montant</EnTeteTri>
+              <EnTeteTri base="/admin/facturation" params={params} champ="paiement" aDroite>Paiement</EnTeteTri>
             </tr>
           </thead>
           <tbody>
@@ -127,7 +127,7 @@ export default async function Facturation({ searchParams }: { searchParams: Prom
                   {fmtDateCourte.format(s.startsAt)}
                 </td>
                 <td className="px-3 py-3">
-                  <Link href={`/patients/${s.patientId}`} className="font-medium hover:text-accent-text">
+                  <Link href={`/admin/patients/${s.patientId}`} className="font-medium hover:text-accent-text">
                     {nomComplet(s.patient)}
                   </Link>
                 </td>

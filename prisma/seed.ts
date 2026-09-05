@@ -86,6 +86,9 @@ type Semee = {
 };
 
 async function main() {
+  await prisma.demandeRdv.deleteMany();
+  await prisma.disponibilite.deleteMany();
+  await prisma.indisponibilite.deleteMany();
   await prisma.note.deleteMany();
   await prisma.session.deleteMany();
   await prisma.patient.deleteMany();
@@ -108,9 +111,13 @@ async function main() {
     { firstName: "Ibrahim", lastName: "Sow", scheme: CareScheme.INSTITUTION, feeCents: null, cabinetId: c["École"].id, phone: null, email: null, addressLine: null, postalCode: null, city: null, birthDate: new Date("2011-10-19") },
   ];
 
-  const p: Record<string, { id: string }> = {};
+  const p: Record<string, { id: string; jetonRdv: string | null }> = {};
   for (const data of PATIENTS) {
-    const cree = await prisma.patient.create({ data });
+    // Jeton personnel de réservation : il vaut reconnaissance du patient et
+    // lui ouvre la réservation directe depuis le site.
+    const cree = await prisma.patient.create({
+      data: { ...data, jetonRdv: crypto.randomUUID() },
+    });
     p[cree.firstName] = cree;
   }
 
@@ -182,6 +189,51 @@ async function main() {
     aVenir++;
   }
 
+  // Horaires d'ouverture. Les matinées scolaires occupent le début de semaine,
+  // Auderghem les après-midi de début de semaine, Uccle la fin de semaine.
+  const OUVERTURES: [string, number, number, number][] = [
+    ["École", 0, 8 * 60 + 30, 12 * 60 + 30],
+    ["École", 2, 8 * 60 + 30, 12 * 60 + 30],
+    ["Auderghem", 0, 13 * 60 + 30, 18 * 60],
+    ["Auderghem", 1, 13 * 60 + 30, 18 * 60],
+    ["Auderghem", 4, 14 * 60, 18 * 60],
+    ["Uccle", 1, 9 * 60, 12 * 60 + 30],
+    ["Uccle", 2, 13 * 60 + 30, 18 * 60],
+    ["Uccle", 3, 9 * 60, 18 * 60],
+    ["Uccle", 4, 9 * 60, 13 * 60],
+  ];
+  for (const [lieu, jour, debutMin, finMin] of OUVERTURES) {
+    await prisma.disponibilite.create({
+      data: { cabinetId: c[lieu].id, jour, debutMin, finMin },
+    });
+  }
+
+  // Un congé à venir, pour éprouver la soustraction des créneaux.
+  const congeDebut = new Date();
+  congeDebut.setDate(congeDebut.getDate() + 21);
+  congeDebut.setHours(0, 0, 0, 0);
+  const congeFin = new Date(congeDebut);
+  congeFin.setDate(congeFin.getDate() + 7);
+  await prisma.indisponibilite.create({
+    data: { debut: congeDebut, fin: congeFin, motif: "Congé" },
+  });
+
+  // Une demande en attente, pour que l'écran de traitement ne soit pas vide.
+  const souhaite = new Date();
+  souhaite.setDate(souhaite.getDate() + 9);
+  souhaite.setHours(10, 0, 0, 0);
+  await prisma.demandeRdv.create({
+    data: {
+      firstName: "Sophie",
+      lastName: "Delvaux",
+      email: "sophie.delvaux@example.be",
+      phone: "0477 21 45 63",
+      message: "Bonjour, je souhaiterais un premier rendez-vous. Merci.",
+      souhaite,
+      cabinetId: c["Uccle"].id,
+    },
+  });
+
   const notes: [string, string][] = [
     ["Camille", "Préfère les créneaux du matin. Ne pas proposer après 16 h."],
     ["Camille", "Facture à envoyer par courriel, pas de papier."],
@@ -197,7 +249,7 @@ async function main() {
   console.log(
     `Semé : ${CABINETS.length} lieux, ${TARIFS.length} tarifs, ${PATIENTS.length} patients ` +
       `fictifs, ${seances.length + aVenir} séances de ${DUREE} min sur deux semaines, ` +
-      `${notes.length} notes.`,
+      `${notes.length} notes, ${OUVERTURES.length} plages d'ouverture, 1 congé, 1 demande.`,
   );
 }
 

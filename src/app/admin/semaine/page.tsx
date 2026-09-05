@@ -83,7 +83,7 @@ export default async function Semaine({ searchParams }: { searchParams: Promise<
   const decalage = (semaines: number) => {
     const d = new Date(lundi);
     d.setDate(d.getDate() + semaines * 7);
-    return avecParam("/semaine", params, "semaine", d.toISOString().slice(0, 10));
+    return avecParam("/admin/semaine", params, "semaine", d.toISOString().slice(0, 10));
   };
 
   const vendredi = new Date(lundi);
@@ -134,7 +134,7 @@ export default async function Semaine({ searchParams }: { searchParams: Promise<
           {fmtJourMois.format(lundi)} – {fmtJourMoisAn.format(vendredi)}
         </h1>
         <Link
-          href={avecParam("/semaine", params, "semaine")}
+          href={avecParam("/admin/semaine", params, "semaine")}
           className="rounded-full border border-line-strong px-3.5 py-1.5 text-xs font-medium text-ink-muted transition-colors hover:border-accent hover:text-accent-text"
         >
           Cette semaine
@@ -217,14 +217,14 @@ export default async function Semaine({ searchParams }: { searchParams: Promise<
 
       <div className="flex flex-wrap gap-x-6 gap-y-3">
         <GroupeFiltre
-          base="/semaine"
+          base="/admin/semaine"
           params={params}
           cle="cabinet"
           libelle="Cabinet"
           options={optionsCabinet(cabinets)}
         />
         <GroupeFiltre
-          base="/semaine"
+          base="/admin/semaine"
           params={params}
           cle="regime"
           libelle="Régime"

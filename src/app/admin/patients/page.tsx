@@ -60,14 +60,14 @@ export default async function Patients({ searchParams }: { searchParams: Promise
 
       <div className="flex flex-wrap gap-x-6 gap-y-3">
         <GroupeFiltre
-          base="/patients"
+          base="/admin/patients"
           params={params}
           cle="cabinet"
           libelle="Cabinet"
           options={optionsCabinet(cabinets)}
         />
         <GroupeFiltre
-          base="/patients"
+          base="/admin/patients"
           params={params}
           cle="regime"
           libelle="Régime"
@@ -83,22 +83,22 @@ export default async function Patients({ searchParams }: { searchParams: Promise
         <table className="w-full border-collapse text-sm">
           <thead>
             <tr className="border-b border-line bg-sunken text-[11px] tracking-[0.1em] text-ink-muted uppercase">
-              <EnTeteTri base="/patients" params={params} champ="nom">
+              <EnTeteTri base="/admin/patients" params={params} champ="nom">
                 Patient
               </EnTeteTri>
-              <EnTeteTri base="/patients" params={params} champ="cabinet">
+              <EnTeteTri base="/admin/patients" params={params} champ="cabinet">
                 Cabinet
               </EnTeteTri>
-              <EnTeteTri base="/patients" params={params} champ="regime">
+              <EnTeteTri base="/admin/patients" params={params} champ="regime">
                 Régime
               </EnTeteTri>
               <th scope="col" className="px-3 py-2.5 text-left font-semibold">
                 Téléphone
               </th>
-              <EnTeteTri base="/patients" params={params} champ="seances" aDroite>
+              <EnTeteTri base="/admin/patients" params={params} champ="seances" aDroite>
                 Séances
               </EnTeteTri>
-              <EnTeteTri base="/patients" params={params} champ="du" aDroite>
+              <EnTeteTri base="/admin/patients" params={params} champ="du" aDroite>
                 Dû
               </EnTeteTri>
             </tr>
@@ -107,7 +107,7 @@ export default async function Patients({ searchParams }: { searchParams: Promise
             {enrichis.map(({ p, seances, du }) => (
               <tr key={p.id} className="border-b border-line last:border-b-0 hover:bg-sunken/60">
                 <td className="px-5 py-3">
-                  <Link href={`/patients/${p.id}`} className="flex items-center gap-3">
+                  <Link href={`/admin/patients/${p.id}`} className="flex items-center gap-3">
                     <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent-soft font-mono text-[11px] font-semibold text-accent-text">
                       {initiales(p.firstName, p.lastName)}
                     </span>

@@ -38,7 +38,7 @@ export async function seConnecter(_etat: string | null, f: FormData): Promise<st
 
   // Ne rediriger que vers un chemin interne : une valeur venue de l'URL ne doit
   // jamais pouvoir emmener ailleurs.
-  redirect(suite.startsWith("/") && !suite.startsWith("//") ? suite : "/");
+  redirect(suite.startsWith("/") && !suite.startsWith("//") ? suite : "/admin");
 }
 
 /**

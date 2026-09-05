@@ -255,7 +255,7 @@ export function GrilleSemaine({
                   {duJour.map((s) => (
                     <li key={s.id}>
                       <Link
-                        href={`/patients/${s.patientId}`}
+                        href={`/admin/patients/${s.patientId}`}
                         className={`flex items-center gap-3 rounded-[14px] border bg-surface py-3 pr-4 pl-3 ${
                           s.conflit ? "border-overdue/50" : "border-line"
                         }`}
@@ -372,7 +372,7 @@ function Bloc({
     >
       <span aria-hidden="true" className="filet-cabinet w-[4px] shrink-0" />
       <Link
-        href={`/patients/${seance.patientId}`}
+        href={`/admin/patients/${seance.patientId}`}
         className="flex min-w-0 flex-1 flex-col gap-[3px] overflow-hidden px-2 py-1.5"
       >
         <span className="shrink-0 truncate text-[12.5px] leading-[1.25] font-bold" data-numeric>
