@@ -43,7 +43,8 @@ export const METHOD_LABEL: Record<"CASH" | "ELECTRONIC", string> = {
   ELECTRONIC: "électronique",
 };
 
-/** Durée d'une séance dans cette pratique. */
+/** Durée d'une séance — valeur de repli seulement. La vraie se règle dans les
+ *  paramètres de la pratique, et c'est elle qui fait foi partout. */
 export const DUREE_SEANCE = 45;
 
 /** Pas de séance le week-end : la grille s'arrête au vendredi, et un créneau
@@ -61,7 +62,10 @@ export function isBillable(status: SessionStatus) {
 }
 
 /**
- * Temps de trajet minimal entre deux cabinets, en minutes. Valeur unique et
+ * Temps de trajet minimal entre deux cabinets, en minutes — valeur de repli
+ * seulement : la vraie se règle dans les paramètres de la pratique.
+ *
+ * Valeur unique et
  * prudente plutôt qu'une matrice de trajets : tant que les lieux se comptent
  * sur une main et se trouvent tous dans le sud de Bruxelles, une matrice
  * coûterait plus à tenir qu'elle ne rapporterait. À confirmer avec
@@ -95,7 +99,10 @@ export type SeanceLike = { startsAt: Date; durationMin: number; cabinetId: strin
  * d'agenda d'une pratique sur deux sites, et le seul avertissement que porte
  * l'écran : en ajouter d'autres le banaliserait.
  */
-export function conflitsDeTrajet<T extends SeanceLike>(seances: T[]): Set<number> {
+export function conflitsDeTrajet<T extends SeanceLike>(
+  seances: T[],
+  trajetMin: number = TRAJET_MIN,
+): Set<number> {
   const conflits = new Set<number>();
   const tri = [...seances].sort((a, b) => a.startsAt.getTime() - b.startsAt.getTime());
   for (let i = 1; i < tri.length; i++) {
@@ -104,7 +111,7 @@ export function conflitsDeTrajet<T extends SeanceLike>(seances: T[]): Set<number
     if (avant.cabinetId === apres.cabinetId) continue;
     const finAvant = avant.startsAt.getTime() + avant.durationMin * 60_000;
     const battement = (apres.startsAt.getTime() - finAvant) / 60_000;
-    if (battement < TRAJET_MIN) {
+    if (battement < trajetMin) {
       const idx = seances.indexOf(apres);
       if (idx >= 0) conflits.add(idx);
     }

@@ -2,7 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
-import { DUREE_SEANCE, JOURS_OUVRES, partiesJour } from "@/lib/format";
+import { JOURS_OUVRES, partiesJour } from "@/lib/format";
+import { parametres } from "@/lib/parametres";
 import { PALETTE_CABINETS } from "@/lib/palette";
 
 /**
@@ -79,7 +80,7 @@ export async function creerSeance(patientId: string, isoDebut: string, cabinetId
     data: {
       patientId,
       startsAt: new Date(isoDebut),
-      durationMin: DUREE_SEANCE,
+      durationMin: (await parametres()).dureeSeanceMin,
       cabinetId,
     },
   });
@@ -226,7 +227,7 @@ export async function enregistrerDisponibilite(f: FormData) {
 
   if (!cabinetId || !Number.isInteger(jour) || jour < 0 || jour > 4) return;
   if (debutMin === null || finMin === null) return;
-  if (finMin - debutMin < DUREE_SEANCE) return;
+  if (finMin - debutMin < (await parametres()).dureeSeanceMin) return;
 
   const id = texte(f, "id");
   if (id) {
@@ -268,6 +269,40 @@ export async function supprimerConge(f: FormData) {
   const id = texte(f, "id");
   if (!id) return;
   await prisma.indisponibilite.delete({ where: { id } });
+  rafraichirTout();
+  revalidatePath("/rendez-vous");
+}
+
+/**
+ * Paramètres de la pratique.
+ *
+ * Ils gouvernent le calcul des créneaux proposés au public : durée d'une
+ * séance, battement entre deux séances au même endroit, temps de trajet entre
+ * deux lieux, pas de la grille et horizon de réservation. C'étaient des
+ * constantes dans le code ; ce sont des décisions qui appartiennent à la
+ * praticienne.
+ */
+export async function enregistrerParametres(f: FormData) {
+  const entier = (cle: string, min: number, max: number, defaut: number) => {
+    const n = Number(texte(f, cle));
+    return Number.isFinite(n) && n >= min && n <= max ? Math.round(n) : defaut;
+  };
+
+  const data = {
+    dureeSeanceMin: entier("dureeSeanceMin", 15, 240, 45),
+    battementMin: entier("battementMin", 0, 120, 0),
+    trajetMin: entier("trajetMin", 0, 180, 30),
+    pasMin: entier("pasMin", 5, 120, 15),
+    horizonSemaines: entier("horizonSemaines", 1, 26, 4),
+    chainerSeances: f.get("chainerSeances") === "on",
+  };
+
+  await prisma.parametres.upsert({
+    where: { id: "global" },
+    update: data,
+    create: { id: "global", ...data },
+  });
+
   rafraichirTout();
   revalidatePath("/rendez-vous");
 }

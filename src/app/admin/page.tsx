@@ -1,12 +1,12 @@
 import Link from "next/link";
 import type { CareScheme } from "@prisma/client";
 import { prisma } from "@/lib/db";
+import { parametres } from "@/lib/parametres";
 import { AlerteTrajet, CabinetTag, EtatPaiement, RegimeTag, StatutSeance } from "@/components/tags";
 import { GroupeFiltre, type Params } from "@/components/filtres";
 import { FiltresMobile } from "@/components/FiltresMobile";
 import { cabinetsActifs, optionsCabinet } from "@/lib/cabinets";
 import {
-  DUREE_SEANCE,
   conflitsDeTrajet,
   debutDeJour,
   euros,
@@ -57,7 +57,8 @@ export default async function Aujourdhui({ searchParams }: { searchParams: Promi
   });
   const cabinets = await cabinetsActifs();
 
-  const conflits = conflitsDeTrajet(seances);
+  const reglages = await parametres();
+  const conflits = conflitsDeTrajet(seances, reglages.trajetMin);
   const lieuxDuJour = [...new Map(seances.map((s) => [s.cabinetId, s.cabinet])).values()];
   const aStatuer = seances.filter((s) => s.status === "SCHEDULED" && s.startsAt < maintenant);
   const total = heuresTotales(seances);
@@ -204,7 +205,7 @@ export default async function Aujourdhui({ searchParams }: { searchParams: Promi
       )}
 
       <p className="text-xs text-ink-muted" data-numeric>
-        Une séance dure {DUREE_SEANCE} minutes.
+        Une séance dure {reglages.dureeSeanceMin} minutes.
       </p>
     </div>
   );

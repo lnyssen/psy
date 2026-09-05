@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { CareScheme } from "@prisma/client";
 import { prisma } from "@/lib/db";
+import { parametres } from "@/lib/parametres";
 import { GrilleSemaine, type JourGrille, type SeanceGrille } from "@/components/GrilleSemaine";
 import { GroupeFiltre, avecParam, type Params } from "@/components/filtres";
 import { FiltresMobile } from "@/components/FiltresMobile";
@@ -47,7 +48,8 @@ export default async function Semaine({ searchParams }: { searchParams: Promise<
   });
   const cabinets = await cabinetsActifs();
 
-  const conflits = conflitsDeTrajet(seances);
+  const reglages = await parametres();
+  const conflits = conflitsDeTrajet(seances, reglages.trajetMin);
   const maintenant = new Date();
 
   const jours: JourGrille[] = Array.from({ length: JOURS_OUVRES }, (_, i) => {

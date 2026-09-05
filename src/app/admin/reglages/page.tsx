@@ -8,6 +8,8 @@ import {
 } from "@/lib/actions";
 import { euros } from "@/lib/format";
 import { Horaires } from "@/components/Horaires";
+import { Parametres } from "@/components/Parametres";
+import { parametres } from "@/lib/parametres";
 
 export const dynamic = "force-dynamic";
 
@@ -23,6 +25,7 @@ export default async function Reglages() {
     prisma.disponibilite.findMany(),
     prisma.indisponibilite.findMany({ orderBy: { debut: "asc" } }),
   ]);
+  const valeurs = await parametres();
   const seancesPar = new Map(comptes.map((c) => [c.cabinetId, c._count._all]));
 
   return (
@@ -212,6 +215,8 @@ export default async function Reglages() {
           </div>
         </form>
       </section>
+
+      <Parametres valeurs={valeurs} />
 
       <Horaires
         cabinets={cabinets.filter((c) => c.actif)}

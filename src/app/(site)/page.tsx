@@ -8,15 +8,32 @@ export const dynamic = "force-dynamic";
 /**
  * Accueil.
  *
- * La page avance par bandes pleine largeur qui alternent : papier, aplat clair,
- * papier, violet profond. Le rythme sert à découper un texte long en moments
- * distincts — parcours, publics, lieux — là où un fond uniforme les aurait
- * fondus en une seule coulée.
+ * La page avance par bandes pleine largeur qui alternent : papier, violet
+ * profond, papier, aplat clair, navy, papier. Ce n'est pas une décoration —
+ * c'est ce qui découpe un texte long en moments distincts, là où un fond
+ * uniforme les fondrait en une seule coulée.
  *
- * Les deux aplats sombres ne changent pas avec le thème : ce sont des couleurs
+ * Ni chiffres mis en avant, ni sections numérotées, ni formule inventée pour
+ * faire titre : le texte est celui d'Amandine, la mise en page se contente de
+ * lui donner de l'air.
+ *
+ * Les deux aplats sombres ne suivent pas le thème : ce sont des couleurs
  * pleines, lisibles en blanc dans les deux cas (13,5:1 et 13,9:1). Les faire
- * varier aurait cassé l'alternance.
+ * varier aurait cassé l'alternance, qui est le sujet.
  */
+
+function Chapeau({ children, clair }: { children: React.ReactNode; clair?: boolean }) {
+  return (
+    <p
+      className={`text-[11px] font-bold tracking-[0.2em] uppercase ${
+        clair ? "text-white/50" : "text-accent-text"
+      }`}
+    >
+      {children}
+    </p>
+  );
+}
+
 export default async function Accueil() {
   const cabinets = await prisma.cabinet.findMany({
     where: { actif: true, publie: true },
@@ -25,16 +42,16 @@ export default async function Accueil() {
 
   return (
     <>
-      <section className="px-6 py-14 md:py-20">
-        <div className="mx-auto grid max-w-5xl items-center gap-10 md:grid-cols-[1.1fr_0.9fr] md:gap-14">
+      <section className="px-6 pt-12 pb-16 md:pt-20 md:pb-24">
+        <div className="mx-auto grid max-w-5xl items-end gap-10 md:grid-cols-[1.15fr_0.85fr] md:gap-16">
           <div className="order-2 md:order-1">
-            <p className="text-[11px] font-semibold tracking-[0.22em] text-accent-text uppercase">
-              {SITE.titre}
-            </p>
-            <h1 className="mt-4 font-display text-[2.75rem] leading-[1.05] font-bold tracking-tight md:text-6xl">
-              {SITE.nom}
+            <Chapeau>{SITE.titre}</Chapeau>
+            <h1 className="mt-5 font-display text-[3.25rem] leading-[0.95] font-bold tracking-[-0.03em] md:text-[5.5rem]">
+              Amandine
+              <br />
+              Monsel
             </h1>
-            <p className="mt-6 flex flex-wrap items-center gap-x-3 gap-y-2 text-lg font-medium">
+            <p className="mt-8 flex flex-wrap items-center gap-x-3 gap-y-2 text-lg font-semibold">
               {SITE.publics.map((p, i) => (
                 <span key={p} className="flex items-center gap-3">
                   {i > 0 && <span aria-hidden="true" className="h-1 w-1 rounded-full bg-accent" />}
@@ -42,8 +59,7 @@ export default async function Accueil() {
                 </span>
               ))}
             </p>
-            <p className="mt-6 max-w-lg text-lg leading-relaxed text-ink-muted">{SITE.accroche}</p>
-            <p className="mt-3 text-sm text-ink-muted">{SITE.langues}</p>
+            <p className="mt-5 max-w-lg text-lg leading-relaxed text-ink-muted">{SITE.accroche}</p>
             <div className="mt-9 flex flex-wrap items-center gap-3">
               <Link
                 href="/rendez-vous"
@@ -66,85 +82,114 @@ export default async function Accueil() {
             <img
               src="/images/phare.jpg"
               srcSet="/images/phare-petit.jpg 602w, /images/phare.jpg 1338w"
-              sizes="(max-width: 900px) 100vw, 42vw"
+              sizes="(max-width: 900px) 100vw, 40vw"
               width={1338}
               height={2000}
               alt="Un phare allumé au crépuscule, sous un ciel étoilé"
-              className="h-[20rem] w-full rounded-[20px] object-cover object-center md:h-[34rem]"
+              className="h-[19rem] w-full rounded-[28px] object-cover object-center md:h-[32rem]"
             />
           </div>
         </div>
       </section>
 
-      <section className="bg-bande-claire px-6 py-16 md:py-24">
-        <div className="mx-auto grid max-w-5xl gap-8 md:grid-cols-[0.75fr_1.25fr] md:gap-14">
-          <h2 className="font-display text-3xl leading-tight font-bold tracking-tight md:text-4xl">
-            Mon parcours,
-            <br />
-            mon approche
-          </h2>
-          <div className="flex max-w-xl flex-col gap-5 text-lg leading-relaxed text-ink-muted">
+      <section className="bg-bande-violette px-6 py-16 text-white md:py-20">
+        <div className="mx-auto max-w-5xl">
+          <p className="max-w-3xl font-display text-[1.6rem] leading-snug font-bold tracking-tight md:text-[2.25rem]">
+            Je reçois les enfants dès quatre ans, les adolescents et leurs parents, ainsi que les
+            jeunes adultes.
+          </p>
+          <p className="mt-6 text-white/60">{SITE.langues}</p>
+        </div>
+      </section>
+
+      <section className="px-6 py-20 md:py-28">
+        <div className="mx-auto max-w-5xl">
+          <Chapeau>Mon parcours et mon approche</Chapeau>
+          <div className="mt-8 grid gap-6 md:grid-cols-2 md:gap-14">
             {SITE.parcours.map((p) => (
-              <p key={p.slice(0, 24)}>{p}</p>
+              <p key={p.slice(0, 24)} className="text-lg leading-relaxed text-ink-muted">
+                {p}
+              </p>
             ))}
           </div>
         </div>
       </section>
 
-      <section className="px-6 py-16 md:py-24">
+      <section className="bg-bande-claire px-6 py-20 md:py-28">
         <div className="mx-auto max-w-5xl">
-          <div className="grid gap-8 md:grid-cols-[0.75fr_1.25fr] md:gap-14">
-            <h2 className="font-display text-3xl leading-tight font-bold tracking-tight md:text-4xl">
-              Pour qui,
-              <br />
-              pour quoi
-            </h2>
-            <p className="max-w-xl text-lg leading-relaxed text-ink-muted">{SITE.pourQui}</p>
-          </div>
-          <ul className="mt-12 grid gap-px overflow-hidden rounded-[20px] bg-line sm:grid-cols-2">
-            {SITE.problematiques.map((p, i) => (
-              <li key={p} className="flex items-start gap-4 bg-paper px-6 py-6">
+          <Chapeau>Ce pour quoi l’on vient</Chapeau>
+          <p className="mt-8 max-w-2xl text-lg leading-relaxed text-ink-muted">
+            Je propose un espace de parole et d’accompagnement pour de nombreuses problématiques.
+          </p>
+          <ul className="mt-10 grid gap-px overflow-hidden rounded-[24px] bg-line-strong/50 sm:grid-cols-2">
+            {SITE.problematiques.map((p) => (
+              <li key={p} className="flex items-start gap-4 bg-paper px-7 py-7">
                 <span
                   aria-hidden="true"
-                  className="mt-0.5 text-sm font-bold text-accent-text"
-                  data-numeric
-                >
-                  {String(i + 1).padStart(2, "0")}
-                </span>
-                <span className="leading-snug">{p}</span>
+                  className="mt-2.5 h-1.5 w-1.5 shrink-0 rounded-full bg-accent"
+                />
+                <span className="text-[17px] leading-snug">{p}</span>
               </li>
             ))}
           </ul>
         </div>
       </section>
 
-      <section className="bg-bande-violette px-6 py-16 text-white md:py-24">
+      <section className="bg-bande-navy px-6 py-20 text-white md:py-28">
         <div className="mx-auto max-w-5xl">
-          <h2 className="font-display text-3xl leading-tight font-bold tracking-tight md:text-4xl">
-            Deux cabinets à Bruxelles
-          </h2>
-          <p className="mt-4 max-w-xl text-lg leading-relaxed text-white/70">
-            Les créneaux libres des prochaines semaines sont visibles en ligne. Un premier
-            rendez-vous se confirme par retour de courriel.
-          </p>
-          <div className="mt-10 grid gap-4 sm:grid-cols-2">
+          <Chapeau clair>La première séance</Chapeau>
+          <div className="mt-8 grid gap-8 md:grid-cols-2 md:gap-14">
+            <p className="text-lg leading-relaxed text-white/80">
+              On prend le temps de faire connaissance. Vous racontez ce qui vous amène, à votre
+              rythme, sans avoir à tout dire d’emblée.
+            </p>
+            <div className="flex flex-col items-start gap-6">
+              <p className="text-lg leading-relaxed text-white/80">
+                À la fin, nous décidons ensemble s’il y a lieu de continuer, et à quel rythme. Rien
+                ne vous engage au-delà.
+              </p>
+              <Link
+                href="/questions"
+                className="rounded-full border border-white/30 px-6 py-3 text-sm font-semibold transition-colors hover:border-white"
+              >
+                Toutes les questions
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="px-6 py-20 md:py-28">
+        <div className="mx-auto max-w-5xl">
+          <Chapeau>Où me trouver</Chapeau>
+          <div className="mt-8 grid gap-4 sm:grid-cols-2">
             {cabinets.map((c) => (
-              <div key={c.id} className="rounded-[16px] bg-white/10 px-6 py-5">
-                <p className="text-lg font-bold">{c.nom}</p>
-                <p className="mt-1 text-sm text-white/70">{adresseCabinet(c)}</p>
+              <div
+                key={c.id}
+                style={{ "--cab": c.colorHex, "--cab-fill": c.fillHex } as React.CSSProperties}
+                className="teinte-cabinet rounded-[24px] px-8 py-8"
+              >
+                <p className="font-display text-2xl font-bold">{c.nom}</p>
+                <p className="mt-2 text-sm opacity-80">{adresseCabinet(c)}</p>
               </div>
             ))}
           </div>
-          <div className="mt-10 flex flex-wrap items-center gap-4">
+
+          <div className="mt-14 flex flex-col items-start gap-6 rounded-[24px] bg-accent px-8 py-10 text-accent-contrast md:flex-row md:items-center md:justify-between md:px-12">
+            <div>
+              <p className="font-display text-2xl leading-tight font-bold md:text-3xl">
+                Les créneaux libres sont en ligne.
+              </p>
+              <p className="mt-2 text-sm text-white/75">
+                Un premier rendez-vous se confirme par retour de courriel.
+              </p>
+            </div>
             <Link
               href="/rendez-vous"
-              className="rounded-full bg-white px-7 py-3.5 text-sm font-semibold text-bande-violette transition-opacity hover:opacity-90"
+              className="shrink-0 rounded-full bg-white px-7 py-3.5 text-sm font-semibold text-accent transition-opacity hover:opacity-90"
             >
-              Voir les créneaux libres
+              Prendre rendez-vous
             </Link>
-            <a href={`mailto:${SITE.email}`} className="text-sm font-medium text-white/80 hover:text-white">
-              {SITE.email}
-            </a>
           </div>
         </div>
       </section>

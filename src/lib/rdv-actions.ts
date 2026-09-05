@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { creneauEncoreLibre } from "@/lib/creneaux";
-import { DUREE_SEANCE } from "@/lib/format";
+import { parametres } from "@/lib/parametres";
 
 /**
  * Prise de rendez-vous depuis le site public.
@@ -93,7 +93,7 @@ export async function reserverOuDemander(_etat: ResultatRdv, f: FormData): Promi
         patientId: patient.id,
         cabinetId,
         startsAt: debut,
-        durationMin: DUREE_SEANCE,
+        durationMin: (await parametres()).dureeSeanceMin,
         reserveeEnLigne: true,
       },
     });
@@ -168,7 +168,7 @@ export async function traiterDemande(f: FormData) {
         patientId: patient.id,
         cabinetId: demande.cabinetId,
         startsAt: demande.souhaite,
-        durationMin: DUREE_SEANCE,
+        durationMin: (await parametres()).dureeSeanceMin,
         reserveeEnLigne: true,
       },
     });

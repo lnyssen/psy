@@ -89,6 +89,30 @@ type Semee = {
 };
 
 async function main() {
+  // Paramètres de la pratique. Un battement de quinze minutes plutôt que zéro :
+  // une psychologue note, souffle et accueille entre deux patients, et la
+  // valeur par défaut du schéma serait irréaliste en démonstration.
+  await prisma.parametres.upsert({
+    where: { id: "global" },
+    update: {
+      dureeSeanceMin: DUREE,
+      battementMin: 15,
+      trajetMin: 30,
+      pasMin: 15,
+      horizonSemaines: 4,
+      chainerSeances: true,
+    },
+    create: {
+      id: "global",
+      dureeSeanceMin: DUREE,
+      battementMin: 15,
+      trajetMin: 30,
+      pasMin: 15,
+      horizonSemaines: 4,
+      chainerSeances: true,
+    },
+  });
+
   await prisma.demandeRdv.deleteMany();
   await prisma.disponibilite.deleteMany();
   await prisma.indisponibilite.deleteMany();
@@ -252,7 +276,8 @@ async function main() {
   console.log(
     `Semé : ${CABINETS.length} lieux, ${TARIFS.length} tarifs, ${PATIENTS.length} patients ` +
       `fictifs, ${seances.length + aVenir} séances de ${DUREE} min sur deux semaines, ` +
-      `${notes.length} notes, ${OUVERTURES.length} plages d'ouverture, 1 congé, 1 demande.`,
+      `${notes.length} notes, ${OUVERTURES.length} plages d'ouverture, 1 congé, 1 demande, ` +
+      `paramètres posés.`,
   );
 }
 

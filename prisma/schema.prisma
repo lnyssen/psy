@@ -260,3 +260,30 @@ model Note {
   @@index([patientId, createdAt])
   @@map("notes")
 }
+
+/// Paramètres de la pratique, en une seule ligne.
+///
+/// Ils gouvernent le calcul des créneaux proposés au public. Ils étaient
+/// jusqu'ici des constantes dans le code : la durée d'une séance, le temps de
+/// trajet entre deux lieux, le pas des propositions. Autant de valeurs qui
+/// appartiennent à la praticienne et non au programme.
+model Parametres {
+  id String @id @default("global")
+
+  /// Durée d'une séance, en minutes.
+  dureeSeanceMin   Int @default(45) @map("duree_seance_min")
+  /// Battement laissé entre deux séances consécutives dans le même lieu.
+  battementMin     Int @default(0) @map("battement_min")
+  /// Temps de trajet minimal entre deux lieux différents.
+  trajetMin        Int @default(30) @map("trajet_min")
+  /// Pas de la grille des créneaux proposés.
+  pasMin           Int @default(15) @map("pas_min")
+  /// Nombre de semaines ouvertes à la réservation.
+  horizonSemaines  Int @default(4) @map("horizon_semaines")
+  /// Si vrai, un créneau est aussi proposé juste après une séance existante,
+  /// battement compris — l'agenda se tasse au lieu de laisser des trous que la
+  /// grille seule ne saurait combler.
+  chainerSeances   Boolean @default(true) @map("chainer_seances")
+
+  @@map("parametres")
+}
