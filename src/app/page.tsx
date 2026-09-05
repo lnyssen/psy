@@ -23,6 +23,14 @@ const PAYMENT_COLOR: Record<string, string> = {
   OVERDUE: "text-overdue",
 };
 
+/** Le brief pose que le statut de la séance détermine mécaniquement sa
+ *  facturabilité. C'est donc une propriété dérivée, jamais stockée : une
+ *  annulation à temps ne porte aucun état de paiement, une absence non
+ *  excusée en porte un (elle reste due). */
+function isBillable(status: string) {
+  return status === "ATTENDED" || status === "NO_SHOW";
+}
+
 const SCHEME_LABEL: Record<string, string> = {
   CONVENTIONNE: "conventionné",
   PRIVE: "privé",
@@ -102,8 +110,14 @@ export default async function Page() {
                   <td className="py-2 pr-4 text-ink-muted">{SCHEME_LABEL[s.patient.scheme]}</td>
                   <td className="py-2 pr-4">{STATUS_LABEL[s.status]}</td>
                   <td className="tabular py-2 pr-4 whitespace-nowrap">{euros(s.amountCents)}</td>
-                  <td className={`py-2 font-medium ${PAYMENT_COLOR[s.paymentStatus]}`}>
-                    {PAYMENT_LABEL[s.paymentStatus]}
+                  <td
+                    className={
+                      isBillable(s.status)
+                        ? `py-2 font-medium ${PAYMENT_COLOR[s.paymentStatus]}`
+                        : "py-2 text-ink-muted"
+                    }
+                  >
+                    {isBillable(s.status) ? PAYMENT_LABEL[s.paymentStatus] : "—"}
                   </td>
                 </tr>
               ))}

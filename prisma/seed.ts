@@ -7,7 +7,11 @@
  */
 import { PrismaClient, CareScheme, SessionStatus, PaymentStatus } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
-import "dotenv/config";
+import { config as loadEnv } from "dotenv";
+
+// Comme dans prisma.config.ts : la CLI ne lit pas .env.local d'elle-même.
+loadEnv({ path: ".env.local" });
+loadEnv({ path: ".env" });
 
 const connectionString = process.env.DIRECT_URL ?? process.env.DATABASE_URL;
 if (!connectionString) throw new Error("DIRECT_URL ou DATABASE_URL est requise.");
@@ -52,10 +56,10 @@ async function main() {
   const [camille, thomas, naima, jonas, elise] = patients;
   const seances = [
     { patient: camille, startsAt: at(0, 9), status: SessionStatus.ATTENDED, paymentStatus: PaymentStatus.PAID, amountCents: 6500, paidAt: at(0, 10) },
-    { patient: thomas, startsAt: at(0, 11), status: SessionStatus.ATTENDED, paymentStatus: PaymentStatus.DUE, amountCents: 0 },
+    { patient: thomas, startsAt: at(0, 11), status: SessionStatus.ATTENDED, paymentStatus: PaymentStatus.DUE, amountCents: null },
     { patient: naima, startsAt: at(0, 14), status: SessionStatus.NO_SHOW, paymentStatus: PaymentStatus.OVERDUE, amountCents: 6500 },
     { patient: elise, startsAt: at(1, 9, 30), status: SessionStatus.ATTENDED, paymentStatus: PaymentStatus.DUE, amountCents: 7000 },
-    { patient: jonas, startsAt: at(1, 11), status: SessionStatus.CANCELLED_IN_TIME, paymentStatus: PaymentStatus.PAID, amountCents: null },
+    { patient: jonas, startsAt: at(1, 11), status: SessionStatus.CANCELLED_IN_TIME, paymentStatus: PaymentStatus.DUE, amountCents: null },
     { patient: camille, startsAt: at(2, 9), status: SessionStatus.SCHEDULED, paymentStatus: PaymentStatus.DUE, amountCents: null },
     { patient: thomas, startsAt: at(3, 11), status: SessionStatus.SCHEDULED, paymentStatus: PaymentStatus.DUE, amountCents: null },
     { patient: naima, startsAt: at(4, 14), status: SessionStatus.SCHEDULED, paymentStatus: PaymentStatus.DUE, amountCents: null },

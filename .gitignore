@@ -36,3 +36,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Le modèle ne contient aucun secret et doit être versionné.
+!.env.example
