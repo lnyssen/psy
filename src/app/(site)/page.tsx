@@ -32,13 +32,6 @@ function Titre({ children }: { children: React.ReactNode }) {
   );
 }
 
-/** Surtitre, réservé à la ligne de qualification sous le nom. */
-function Surtitre({ children }: { children: React.ReactNode }) {
-  return (
-    <p className="text-[11px] font-bold tracking-[0.2em] text-accent-text uppercase">{children}</p>
-  );
-}
-
 export default async function Accueil() {
   const cabinets = await prisma.cabinet.findMany({
     where: { actif: true, publie: true },
@@ -119,7 +112,7 @@ export default async function Accueil() {
             Je reçois les enfants dès quatre ans, les adolescents et leurs parents, ainsi que les
             jeunes adultes.
           </p>
-          <p className="mt-6 text-white/60">{SITE.langues}</p>
+          <p className="mt-6 text-lg font-semibold text-white">{SITE.langues}</p>
         </div>
       </section>
 
@@ -156,7 +149,7 @@ export default async function Accueil() {
         </div>
       </section>
 
-      <section className="bg-bande-navy px-6 py-20 text-white md:py-28">
+      <section className="bg-bande-violette px-6 py-20 text-white md:py-28">
         <div className="mx-auto max-w-5xl">
           <Titre>La première séance</Titre>
           <div className="mt-10 grid gap-8 md:grid-cols-2 md:gap-14">
