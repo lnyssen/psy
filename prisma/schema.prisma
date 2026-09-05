@@ -1,0 +1,100 @@
+// Schéma de la base — outil de gestion de pratique (Amandine Monsel, psychologue)
+//
+// Conventions reprises de planning-studios : modèles et champs en anglais
+// (écosystème Prisma/TypeScript), tables et colonnes SQL en snake_case pour
+// rester lisible en psql, commentaires métier en français.
+//
+// Périmètre de ce premier jet : strictement ce qu'il faut pour éprouver la
+// chaîne Neon + Vercel de bout en bout. Le modèle complet (attestations,
+// charges, récurrences, jours fériés) viendra avec les phases 2 à 4 du brief,
+// et seulement après l'entretien avec l'utilisatrice.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Prisma 7 : l'URL de connexion ne vit plus ici mais dans prisma.config.ts
+// (pour la CLI) et dans src/lib/db.ts (pour l'application, via l'adaptateur
+// @prisma/adapter-pg).
+datasource db {
+  provider = "postgresql"
+}
+
+/// Les deux régimes qui coexistent dans la même semaine. C'est la distinction
+/// la plus structurante du projet : ils ne se facturent pas de la même façon.
+/// Le détail exact du circuit conventionné reste à établir avec l'utilisatrice
+/// (voir RESEARCH_PLAN.md, objectif 3) — d'où l'absence, ici, de tout champ
+/// sur les quotas ou le destinataire de la facturation.
+enum CareScheme {
+  CONVENTIONNE
+  PRIVE
+}
+
+/// Statut d'une séance passée. Le brief prévoit qu'un seul geste par séance
+/// suffise à le fixer, et que ce statut détermine mécaniquement si l'acte
+/// devient facturable : SCHEDULED et CANCELLED_IN_TIME ne le sont pas,
+/// ATTENDED et NO_SHOW le sont (une absence non excusée reste due).
+enum SessionStatus {
+  SCHEDULED
+  ATTENDED
+  CANCELLED_IN_TIME
+  NO_SHOW
+}
+
+/// Seule famille de sens portée par de la couleur pleine dans l'interface
+/// (voir la contrainte chromatique du brief) — les autres passent par des
+/// traitements non chromatiques doublés de texte.
+enum PaymentStatus {
+  DUE
+  PAID
+  OVERDUE
+}
+
+model Patient {
+  id        String     @id @default(cuid())
+  /// Prénom et nom séparés : les vues d'ensemble n'affichent que les
+  /// initiales (principe de discrétion), ce qui suppose de les distinguer.
+  firstName String     @map("first_name")
+  lastName  String     @map("last_name")
+  email     String?
+  phone     String?
+  scheme    CareScheme
+  /// Tarif propre au patient, en centimes pour éviter les flottants.
+  /// Null en conventionné : le tarif ne lui appartient pas.
+  feeCents  Int?       @map("fee_cents")
+  notes     String?
+  active    Boolean    @default(true)
+  createdAt DateTime   @default(now()) @map("created_at")
+  updatedAt DateTime   @updatedAt @map("updated_at")
+
+  sessions Session[]
+
+  @@index([lastName, firstName])
+  @@map("patients")
+}
+
+model Session {
+  id            String        @id @default(cuid())
+  patientId     String        @map("patient_id")
+  patient       Patient       @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  startsAt      DateTime      @map("starts_at")
+  /// Durée en minutes plutôt qu'une heure de fin : c'est ainsi qu'une
+  /// praticienne raisonne, et ça simplifie les séries récurrentes à venir.
+  durationMin   Int           @default(50) @map("duration_min")
+  status        SessionStatus @default(SCHEDULED)
+  paymentStatus PaymentStatus @default(DUE) @map("payment_status")
+  /// Montant figé au moment de la séance : le tarif du patient peut changer
+  /// ensuite sans réécrire l'historique comptable.
+  amountCents   Int?          @map("amount_cents")
+  paidAt        DateTime?     @map("paid_at")
+  /// Note clinique. Chiffrement applicatif à venir (le chiffrement de bout en
+  /// bout a été écarté, voir les arbitrages du brief) : ce champ restera vide
+  /// tant que ce chiffrement n'est pas en place.
+  note          String?
+  createdAt     DateTime      @default(now()) @map("created_at")
+  updatedAt     DateTime      @updatedAt @map("updated_at")
+
+  @@index([startsAt])
+  @@index([patientId, startsAt])
+  @@map("sessions")
+}

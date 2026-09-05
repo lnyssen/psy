@@ -1,0 +1,44 @@
+@import "tailwindcss";
+
+/*
+ * Jetons provisoires — placeholder assumé.
+ *
+ * La palette et la typographie définitives viendront du travail Claude Design
+ * (voir .design/pratique-psy/PROMPT_CLAUDE_DESIGN.md), puis de /design-tokens.
+ * Rien ici n'est un choix esthétique : neutres chauds neutres, une seule
+ * teinte d'accent, juste de quoi lire l'écran de vérification sans le
+ * préjuger.
+ */
+:root {
+  --color-paper: #fbfaf8;
+  --color-ink: #23201c;
+  --color-ink-muted: #6b655c;
+  --color-line: #e2ded6;
+  --color-accent: #7a5c3e;
+  --color-due: #8a5a00;
+  --color-paid: #2f6b3f;
+  --color-overdue: #a3341f;
+}
+
+@theme inline {
+  --color-paper: var(--color-paper);
+  --color-ink: var(--color-ink);
+  --color-ink-muted: var(--color-ink-muted);
+  --color-line: var(--color-line);
+  --color-accent: var(--color-accent);
+  --color-due: var(--color-due);
+  --color-paid: var(--color-paid);
+  --color-overdue: var(--color-overdue);
+}
+
+body {
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+/* Chiffres en chasse tabulaire : exigence du brief partout où des dates,
+   heures et montants s'alignent en colonne. */
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
