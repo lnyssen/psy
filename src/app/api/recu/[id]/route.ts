@@ -1,6 +1,14 @@
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 import { prisma } from "@/lib/db";
-import { METHOD_LABEL, OFFICE_LABEL, SCHEME_LABEL, euros, fmtJourMoisAn, fmtHeure } from "@/lib/format";
+import {
+  METHOD_LABEL,
+  OFFICE_ADDRESS,
+  OFFICE_LABEL,
+  SCHEME_LABEL,
+  euros,
+  fmtHeure,
+  fmtJourMoisAn,
+} from "@/lib/format";
 
 /**
  * Reçu d'honoraires, en PDF.
@@ -51,7 +59,11 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   ecrire("Amandine Monsel", { taille: 20, police: gras });
   y -= 16;
   ecrire("AMAPSY SRL — Psychologue", { taille: 9, couleur: gris });
-  y -= 30;
+  y -= 13;
+  ecrire(OFFICE_ADDRESS.UCCLE, { taille: 8, couleur: gris });
+  y -= 11;
+  ecrire(OFFICE_ADDRESS.AUDERGHEM, { taille: 8, couleur: gris });
+  y -= 24;
   page.drawRectangle({ x: M, y, width: 483, height: 2, color: violet });
 
   y -= 42;
@@ -68,7 +80,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
       : []),
     ["Date de la séance", `${fmtJourMoisAn.format(seance.startsAt)} à ${fmtHeure.format(seance.startsAt)}`],
     ["Durée", `${seance.durationMin} minutes`],
-    ["Cabinet", OFFICE_LABEL[seance.office]],
+    ["Lieu de la prestation", `${OFFICE_LABEL[seance.office]} — ${OFFICE_ADDRESS[seance.office]}`],
     ["Régime", SCHEME_LABEL[p.scheme]],
     [
       "Mode de paiement",

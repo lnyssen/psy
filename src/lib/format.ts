@@ -5,6 +5,12 @@ export const OFFICE_LABEL: Record<Office, string> = {
   AUDERGHEM: "Auderghem",
 };
 
+/** Adresses des deux cabinets, telles qu'elles doivent figurer sur un reçu. */
+export const OFFICE_ADDRESS: Record<Office, string> = {
+  UCCLE: "Rue Victor Allard 191, 1180 Uccle",
+  AUDERGHEM: "Place Félix Govaert 4, 1160 Auderghem",
+};
+
 export const SCHEME_LABEL: Record<CareScheme, string> = {
   CONVENTIONNE: "conventionné",
   PRIVE: "privé",

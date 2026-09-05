@@ -2,7 +2,8 @@
 
 Rédigé le 5 septembre 2026, révisé le même jour (voir « Révisions »).
 Praticienne unique, exercice en Belgique sous l'entité AMAPSY SRL, sur deux
-cabinets : Uccle et Auderghem.
+cabinets : rue Victor Allard 191 à 1180 Uccle, et place Félix Govaert 4 à
+1160 Auderghem.
 
 ## Problème
 
@@ -107,9 +108,12 @@ C'est le problème central de la palette, pas sa décoration. Règle retenue :
   outre doublé d'un filet vertical, d'un fond teinté et de son nom écrit : sur
   une pratique à deux sites, c'est l'information qu'on lit en premier.
 - **Conséquence assumée** : cinq familles chromatiques sur un même écran, c'est
-  beaucoup. Compensation retenue — dans les cartes du calendrier, l'état de
+  beaucoup. Deux compensations. Dans les cartes du calendrier, l'état de
   paiement est ramené à une mention grise, et il ne garde sa couleur pleine que
-  dans la facturation, où il est le sujet.
+  dans la facturation, où il est le sujet. Et l'alerte de trajet ne peut pas
+  s'exprimer par le fond de la carte : le fond appartient au cabinet. Elle passe
+  par un cerne et un pictogramme, faute de quoi une carte marquée « Uccle »
+  cessait d'être de la couleur d'Uccle sans que rien ne l'explique.
 - **Régime et statut de séance** passent sans couleur, par la graisse, le filet
   et le cartouche.
 

@@ -1,6 +1,7 @@
 import type { CareScheme, Office, PaymentMethod, PaymentStatus, SessionStatus } from "@prisma/client";
 import {
   METHOD_LABEL,
+  OFFICE_ADDRESS,
   OFFICE_LABEL,
   PAYMENT_LABEL,
   SCHEME_LABEL,
@@ -23,9 +24,11 @@ import {
 export function Tag({
   children,
   tone = "neutre",
+  titre,
 }: {
   children: React.ReactNode;
   tone?: "neutre" | "contour" | "uccle" | "auderghem";
+  titre?: string;
 }) {
   const styles = {
     neutre: "bg-sunken text-ink-muted",
@@ -35,6 +38,7 @@ export function Tag({
   }[tone];
   return (
     <span
+      title={titre}
       className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-medium whitespace-nowrap ${styles}`}
     >
       {children}
@@ -50,7 +54,7 @@ export function RegimeTag({ scheme }: { scheme: CareScheme }) {
  *  se distingue avant la teinte. */
 export function CabinetTag({ office }: { office: Office }) {
   return (
-    <Tag tone={office === "UCCLE" ? "uccle" : "auderghem"}>
+    <Tag tone={office === "UCCLE" ? "uccle" : "auderghem"} titre={OFFICE_ADDRESS[office]}>
       <span
         aria-hidden="true"
         className={`h-1.5 w-1.5 rounded-full ${office === "UCCLE" ? "bg-uccle" : "bg-auderghem"}`}

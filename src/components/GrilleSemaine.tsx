@@ -361,12 +361,8 @@ function Bloc({
       onDragEnd={() => onSaisir(null)}
       style={style}
       className={`group absolute flex cursor-grab overflow-hidden rounded-lg border transition-shadow hover:shadow-[0_2px_8px_rgba(39,39,87,0.10)] active:cursor-grabbing ${
-        seance.conflit
-          ? "border-overdue/60 bg-overdue-soft"
-          : uccle
-            ? "border-uccle/20 bg-uccle-soft/45"
-            : "border-auderghem/20 bg-auderghem-soft/45"
-      }`}
+        uccle ? "border-uccle/20 bg-uccle-soft/45" : "border-auderghem/20 bg-auderghem-soft/45"
+      } ${seance.conflit ? "ring-2 ring-overdue/70" : ""}`}
     >
       <span
         aria-hidden="true"
@@ -383,12 +379,35 @@ function Bloc({
         <span className="shrink-0 truncate text-[12px] leading-tight font-medium">
           {seance.nom}
         </span>
-        <span
-          className={`shrink-0 truncate text-[10.5px] leading-none font-semibold ${
-            uccle ? "text-uccle" : "text-auderghem"
-          }`}
-        >
-          {uccle ? "Uccle" : "Auderghem"}
+        <span className="flex shrink-0 items-center gap-1 overflow-hidden">
+          <span
+            className={`truncate text-[10.5px] leading-none font-semibold ${
+              uccle ? "text-uccle" : "text-auderghem"
+            }`}
+          >
+            {uccle ? "Uccle" : "Auderghem"}
+          </span>
+          {/* Le conflit de trajet ne peut pas s'exprimer par le fond : le fond
+              appartient au cabinet. Il passe donc par un cerne rouge autour de
+              la carte et par ce signe, qui porte son explication en toutes
+              lettres pour qui survole ou lit à l'oreille. */}
+          {seance.conflit && (
+            <span
+              className="shrink-0 text-overdue"
+              title="Trajet trop court depuis l’autre cabinet"
+            >
+              <span className="sr-only">Trajet trop court depuis l’autre cabinet</span>
+              <svg width="11" height="11" viewBox="0 0 12 12" aria-hidden="true">
+                <path
+                  d="M6 1 11.2 10.5H0.8L6 1Z M6 4.6v2.6 M6 8.6v.5"
+                  stroke="currentColor"
+                  strokeWidth="1.2"
+                  strokeLinejoin="round"
+                  fill="none"
+                />
+              </svg>
+            </span>
+          )}
         </span>
         {seance.libellePaiement && (
           <span className="mt-auto shrink-0 truncate text-[10px] leading-none text-ink-muted">
