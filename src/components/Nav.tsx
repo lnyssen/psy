@@ -29,6 +29,14 @@ const ENTREES = [
 export function Nav({ theme }: { theme: "light" | "dark" }) {
   const pathname = usePathname();
   const [ouvert, setOuvert] = useState(false);
+  // Le panneau se referme dès qu'on a navigué : le laisser ouvert masquerait la
+  // page qu'on vient d'atteindre. L'ajustement se fait pendant le rendu et non
+  // dans un effet, qui provoquerait un rendu en cascade.
+  const [cheminAffiche, setCheminAffiche] = useState(pathname);
+  if (cheminAffiche !== pathname) {
+    setCheminAffiche(pathname);
+    setOuvert(false);
+  }
 
   // Le raccourci déclenche le même formulaire que le bouton : verrouiller
   // détruit la session côté serveur, ce qu'un état local ne saurait faire.
@@ -43,10 +51,6 @@ export function Nav({ theme }: { theme: "light" | "dark" }) {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, []);
-
-  // Le panneau se referme dès qu'on a navigué : le laisser ouvert masquerait la
-  // page qu'on vient d'atteindre.
-  useEffect(() => setOuvert(false), [pathname]);
 
   if (pathname === "/connexion") return null;
 
