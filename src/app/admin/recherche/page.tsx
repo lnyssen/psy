@@ -24,7 +24,7 @@ export default async function Recherche({
   if (terme.length < 2) {
     return (
       <div className="flex flex-col gap-6">
-        <h1 className="font-display text-3xl font-bold tracking-tight">Recherche</h1>
+        <h1 className="font-display text-3xl tracking-tight">Recherche</h1>
         <p className="rounded-[14px] border border-dashed border-line-strong px-6 py-12 text-center text-sm text-ink-muted">
           Tapez au moins deux caractères. La recherche porte sur les patients, leurs coordonnées,
           les notes de dossier et les lieux.
@@ -68,7 +68,7 @@ export default async function Recherche({
   return (
     <div className="flex flex-col gap-8">
       <header>
-        <h1 className="font-display text-3xl font-bold tracking-tight">
+        <h1 className="font-display text-3xl tracking-tight">
           « {terme} »
         </h1>
         <p className="mt-2 text-sm text-ink-muted" data-numeric>

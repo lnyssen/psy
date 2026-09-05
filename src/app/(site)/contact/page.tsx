@@ -15,7 +15,7 @@ export default async function Contact() {
     <>
       <section className="px-6 py-14 md:py-20">
        <div className="mx-auto max-w-5xl">
-        <h1 className="font-display text-4xl font-bold tracking-tight">Contact</h1>
+        <h1 className="font-display text-4xl tracking-tight">Contact</h1>
         <p className="mt-4 max-w-2xl text-lg leading-relaxed text-ink-muted">
           Pour une demande de rendez-vous, la{" "}
           <Link href="/rendez-vous" className="text-accent-text hover:underline">
@@ -70,7 +70,7 @@ export default async function Contact() {
 
       <section className="bg-bande-navy px-6 py-16 text-white md:py-20">
        <div className="mx-auto max-w-5xl">
-        <h2 className="font-display text-2xl font-bold tracking-tight md:text-3xl">En cas d’urgence</h2>
+        <h2 className="font-display text-2xl tracking-tight md:text-3xl">En cas d’urgence</h2>
         <div className="mt-4 flex max-w-2xl flex-col gap-3 leading-relaxed text-white/75">
           <p>
             Ce site n’est pas un service d’urgence et les messages ne sont pas relevés en continu.

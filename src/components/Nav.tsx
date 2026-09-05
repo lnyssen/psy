@@ -67,7 +67,7 @@ export function Nav({
     <header className="sans-impression sticky top-0 z-40 border-b border-line bg-paper/90 backdrop-blur-md">
       <div className="mx-auto flex max-w-6xl items-center gap-x-4 px-5 py-2.5 md:px-8">
         <Link href="/admin" className="flex shrink-0 flex-col">
-          <span className="font-display text-[20px] leading-[1.15] font-bold tracking-tight md:text-[22px]">
+          <span className="font-display text-[20px] leading-[1.15] tracking-tight md:text-[22px]">
             Amandine Monsel
           </span>
           <span className="mt-0.5 text-[10px] leading-[1.4] font-semibold tracking-[0.2em] text-accent-text uppercase md:text-[11px]">

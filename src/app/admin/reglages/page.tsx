@@ -31,7 +31,7 @@ export default async function Reglages() {
   return (
     <div className="flex flex-col gap-10">
       <header>
-        <h1 className="font-display text-3xl font-bold tracking-tight">Réglages</h1>
+        <h1 className="font-display text-3xl tracking-tight">Réglages</h1>
         <p className="mt-2 text-sm text-ink-muted">
           Lieux de consultation et grille tarifaire. Ces valeurs alimentent l’agenda, les fiches
           patients et les reçus.
@@ -40,7 +40,7 @@ export default async function Reglages() {
 
       <section className="flex flex-col gap-4">
         <div>
-          <h2 className="text-lg font-bold">Lieux</h2>
+          <h2 className="font-display text-xl">Lieux</h2>
           <p className="mt-1 text-sm text-ink-muted">
             Cabinets et institutions. La couleur se choisit dans une palette dont chaque teinte a
             été vérifiée lisible et distincte des couleurs qui signalent déjà un état de paiement.
@@ -226,7 +226,7 @@ export default async function Reglages() {
 
       <section className="flex flex-col gap-4">
         <div>
-          <h2 className="text-lg font-bold">Tarifs</h2>
+          <h2 className="font-display text-xl">Tarifs</h2>
           <p className="mt-1 text-sm text-ink-muted">
             Grille de référence. Le tarif propre à un patient, s’il en a un, prime toujours sur
             celle-ci.

@@ -133,7 +133,7 @@ export default async function Semaine({ searchParams }: { searchParams: Promise<
             <IconChevronDroite />
           </Link>
         </div>
-        <h1 className="font-mono text-xl tracking-tight" data-numeric>
+        <h1 className="text-xl font-semibold tracking-tight" data-numeric>
           {fmtJourMois.format(lundi)} – {fmtJourMoisAn.format(vendredi)}
         </h1>
         <Link

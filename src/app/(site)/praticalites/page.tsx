@@ -15,7 +15,7 @@ export default async function Praticalites() {
     <>
       <section className="px-6 py-14 md:py-20">
        <div className="mx-auto max-w-5xl">
-        <h1 className="font-display text-4xl font-bold tracking-tight md:text-5xl">Praticalités</h1>
+        <h1 className="font-display text-4xl tracking-tight md:text-5xl">Praticalités</h1>
         <p className="mt-4 max-w-2xl text-lg leading-relaxed text-ink-muted">
           Où me trouver, et comment se faire rembourser.
         </p>
@@ -24,7 +24,7 @@ export default async function Praticalites() {
 
       <section className="bg-bande-claire px-6 py-16 md:py-20">
        <div className="mx-auto max-w-5xl">
-        <h2 className="font-display text-2xl font-bold tracking-tight md:text-3xl">Les cabinets</h2>
+        <h2 className="font-display text-2xl tracking-tight md:text-3xl">Les cabinets</h2>
         <div className="mt-6 grid gap-4 sm:grid-cols-2">
           {cabinets.map((c) => (
             <div key={c.id} className="rounded-[16px] bg-paper px-6 py-5">
@@ -47,7 +47,7 @@ export default async function Praticalites() {
 
       <section className="px-6 py-16 md:py-20">
        <div className="mx-auto max-w-5xl">
-        <h2 className="font-display text-2xl font-bold tracking-tight md:text-3xl">Remboursement</h2>
+        <h2 className="font-display text-2xl tracking-tight md:text-3xl">Remboursement</h2>
         <div className="mt-4 flex max-w-2xl flex-col gap-4 leading-relaxed text-ink-muted">
           <p>
             La plupart des mutuelles belges interviennent partiellement dans le coût des séances

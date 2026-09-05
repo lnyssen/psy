@@ -41,7 +41,7 @@ export function EnteteSite() {
     <header className="sticky top-0 z-40 border-b border-line bg-paper/90 px-6 backdrop-blur-md">
       <div className="mx-auto flex max-w-5xl items-center gap-3 py-3 md:gap-4 md:py-4">
         <Link href="/" className="flex shrink-0 flex-col">
-          <span className="font-display text-[17px] leading-[1.15] font-bold tracking-tight md:text-[20px]">
+          <span className="font-display text-[17px] leading-[1.15] tracking-tight md:text-[20px]">
             Amandine Monsel
           </span>
           <span className="mt-0.5 text-[9px] leading-[1.4] font-semibold tracking-[0.16em] text-accent-text uppercase md:text-[10px] md:tracking-[0.2em]">

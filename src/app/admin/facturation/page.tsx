@@ -56,7 +56,7 @@ export default async function Facturation({ searchParams }: { searchParams: Prom
   return (
     <div className="flex flex-col gap-7">
       <header>
-        <h1 className="font-display text-3xl font-bold tracking-tight">Facturation</h1>
+        <h1 className="font-display text-3xl tracking-tight">Facturation</h1>
         <p className="mt-2 text-sm text-ink-muted">
           Séances facturables uniquement. Les annulations à temps et les séances à venir n’y
           figurent pas.

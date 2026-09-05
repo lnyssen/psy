@@ -72,7 +72,7 @@ export default async function FichePatient({ params }: { params: Promise<{ id: s
           {initiales(patient.firstName, patient.lastName)}
         </span>
         <div className="flex-1">
-          <h1 className="font-display text-3xl font-bold tracking-tight">{nomComplet(patient)}</h1>
+          <h1 className="font-display text-3xl tracking-tight">{nomComplet(patient)}</h1>
           <p className="mt-2 flex flex-wrap items-center gap-2">
             <RegimeTag scheme={patient.scheme} />
             {patient.cabinet && <CabinetTag cabinet={patient.cabinet} />}

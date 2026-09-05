@@ -6,6 +6,20 @@
  * tiers à chaque chargement — sur une application qui touche à des données de
  * santé, ça ne se justifie pas pour quatre fichiers de 25 ko.
  */
+/*
+ * Gambarino porte les titres, Satoshi tout le reste. Toutes deux hébergées
+ * localement plutôt que servies par le CDN de Fontshare : une police distante
+ * ferait partir l'adresse IP du visiteur chez un tiers à chaque chargement, ce
+ * qui ne se justifie pas pour cinq fichiers.
+ */
+@font-face {
+  font-family: "Gambarino";
+  src: url("/fonts/Gambarino-400.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
 @font-face {
   font-family: "Satoshi";
   src: url("/fonts/Satoshi-400.woff2") format("woff2");
@@ -173,12 +187,15 @@
   --color-overdue-soft: var(--color-overdue-soft);
 
   /* Une seule famille de texte : Satoshi porte titres et corps. La mono reste
-     réservée aux heures et aux montants, qui doivent s'aligner en colonne. */
-  /* Satoshi partout, titres, corps et valeurs numériques comprises. Le jeton
-     « mono » ne désigne plus une police à chasse fixe mais le même Satoshi :
-     l'alignement des colonnes de chiffres est obtenu par font-variant-numeric,
-     pas par la police. */
-  --font-display: "Satoshi", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  /* Gambarino aux titres, Satoshi partout ailleurs — corps et valeurs
+     numériques comprises. Le jeton « mono » ne désigne pas une police à chasse
+     fixe mais le même Satoshi : l'alignement des colonnes de chiffres vient de
+     font-variant-numeric, pas de la police.
+
+     Gambarino n'existe qu'en une graisse. Les titres tirent donc leur présence
+     de leur taille et non de leur gras, et le repli reste une serif au cas où
+     la police ne charge pas. */
+  --font-display: "Gambarino", Georgia, "Times New Roman", serif;
   --font-body: "Satoshi", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --font-mono: "Satoshi", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 

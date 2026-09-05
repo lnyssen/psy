@@ -15,7 +15,7 @@ export function Parametres({ valeurs }: { valeurs: ParametresType }) {
   return (
     <section className="flex flex-col gap-4">
       <div>
-        <h2 className="text-lg font-bold">Rythme des séances</h2>
+        <h2 className="font-display text-xl">Rythme des séances</h2>
         <p className="mt-1 text-sm text-ink-muted">
           Ces valeurs décident de ce que le site propose. Elles se combinent aux horaires
           d’ouverture et à l’agenda déjà rempli.

@@ -26,7 +26,7 @@ export const dynamic = "force-dynamic";
  *  la page sans la lire, et une capitale de onze points ne remplit pas ce rôle. */
 function Titre({ children }: { children: React.ReactNode }) {
   return (
-    <h2 className="font-display text-[2rem] leading-[1.05] font-bold tracking-tight md:text-[3rem]">
+    <h2 className="font-display text-[2rem] leading-[1.05] tracking-tight md:text-[3rem]">
       {children}
     </h2>
   );
@@ -51,7 +51,7 @@ export default async function Accueil() {
         <div className="mx-auto grid max-w-5xl items-end gap-10 md:grid-cols-[1.15fr_0.85fr] md:gap-16">
           <div className="order-2 md:order-1">
             <Surtitre>{SITE.titre}</Surtitre>
-            <h1 className="mt-5 font-display text-[3.25rem] leading-[0.95] font-bold tracking-[-0.03em] md:text-[5.5rem]">
+            <h1 className="mt-5 font-display text-[3.25rem] leading-[0.95] tracking-[-0.03em] md:text-[5.5rem]">
               Amandine
               <br />
               Monsel
@@ -99,7 +99,7 @@ export default async function Accueil() {
 
       <section className="bg-bande-violette px-6 py-16 text-white md:py-20">
         <div className="mx-auto max-w-5xl">
-          <p className="max-w-3xl font-display text-[1.6rem] leading-snug font-bold tracking-tight md:text-[2.25rem]">
+          <p className="max-w-3xl font-display text-[1.6rem] leading-snug tracking-tight md:text-[2.25rem]">
             Je reçois les enfants dès quatre ans, les adolescents et leurs parents, ainsi que les
             jeunes adultes.
           </p>
@@ -174,7 +174,7 @@ export default async function Accueil() {
                 style={{ "--cab": c.colorHex, "--cab-fill": c.fillHex } as React.CSSProperties}
                 className="teinte-cabinet rounded-[24px] px-8 py-8"
               >
-                <p className="font-display text-2xl font-bold">{c.nom}</p>
+                <p className="font-display text-2xl">{c.nom}</p>
                 <p className="mt-2 text-sm opacity-80">{adresseCabinet(c)}</p>
               </div>
             ))}
@@ -182,7 +182,7 @@ export default async function Accueil() {
 
           <div className="mt-14 flex flex-col items-start gap-6 rounded-[24px] bg-accent px-8 py-10 text-accent-contrast md:flex-row md:items-center md:justify-between md:px-12">
             <div>
-              <p className="font-display text-2xl leading-tight font-bold md:text-3xl">
+              <p className="font-display text-2xl leading-tight md:text-3xl">
                 Les créneaux libres sont en ligne.
               </p>
               <p className="mt-2 text-sm text-white/75">

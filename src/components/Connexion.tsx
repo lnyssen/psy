@@ -20,7 +20,7 @@ export function Connexion({ suite, verrouille }: { suite: string; verrouille: bo
   return (
     <div className="flex min-h-[80vh] flex-col items-center justify-center gap-8 px-6">
       <div className="flex flex-col items-center gap-2 text-center">
-        <span className="font-display text-4xl font-bold tracking-tight">Amandine Monsel</span>
+        <span className="font-display text-4xl tracking-tight">Amandine Monsel</span>
         <span className="text-sm font-semibold tracking-[0.22em] text-accent-text uppercase">
           Amapsy&nbsp;SRL
         </span>

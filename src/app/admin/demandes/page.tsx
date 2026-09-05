@@ -16,7 +16,7 @@ export default async function Demandes() {
   return (
     <div className="flex flex-col gap-8">
       <header>
-        <h1 className="font-display text-3xl font-bold tracking-tight">Demandes</h1>
+        <h1 className="font-display text-3xl tracking-tight">Demandes</h1>
         <p className="mt-2 text-sm text-ink-muted">
           Rendez-vous demandés depuis le site par des personnes que l’outil ne connaît pas encore.
           Confirmer crée le dossier et la séance.

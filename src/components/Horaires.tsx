@@ -35,7 +35,7 @@ export function Horaires({
     <>
       <section className="flex flex-col gap-4">
         <div>
-          <h2 className="text-lg font-bold">Horaires d’ouverture</h2>
+          <h2 className="font-display text-xl">Horaires d’ouverture</h2>
           <p className="mt-1 text-sm text-ink-muted">
             Ces plages déterminent les créneaux proposés sur le site. En dehors, aucun rendez-vous
             n’est offert. Le week-end n’est jamais proposé.
@@ -150,7 +150,7 @@ export function Horaires({
 
       <section className="flex flex-col gap-4">
         <div>
-          <h2 className="text-lg font-bold">Congés et absences</h2>
+          <h2 className="font-display text-xl">Congés et absences</h2>
           <p className="mt-1 text-sm text-ink-muted">
             Aucun créneau n’est proposé sur ces périodes, et les heures qu’elles couvrent ne sont
             pas comptées comme travaillées.
