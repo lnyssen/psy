@@ -3,7 +3,7 @@ import type { CareScheme } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { CabinetTag, EtatPaiement, RegimeTag } from "@/components/tags";
 import { Encaisser } from "@/components/Encaisser";
-import { EnTeteTri, GroupeFiltre, type Params } from "@/components/filtres";
+import { EnTeteTri, GroupeFiltre, TriMobile, type Params } from "@/components/filtres";
 import { cabinetsActifs, optionsCabinet } from "@/lib/cabinets";
 import { euros, fmtDateCourte, isBillable, nomComplet } from "@/lib/format";
 
@@ -107,7 +107,56 @@ export default async function Facturation({ searchParams }: { searchParams: Prom
         ))}
       </dl>
 
-      <div className="rounded-[14px] border border-line bg-surface">
+      <TriMobile
+        base="/admin/facturation"
+        params={params}
+        champs={[
+          { champ: "date", label: "date" },
+          { champ: "patient", label: "patient" },
+          { champ: "montant", label: "montant" },
+          { champ: "paiement", label: "paiement" },
+        ]}
+      />
+
+      {/* Sous 900 px, la table cède la place à des cartes empilées. Six colonnes
+          ne tiennent pas dans la largeur d'un téléphone, et un tableau qui
+          défile de côté fait défiler la page entière. */}
+      <ul className="flex flex-col gap-2 md:hidden">
+        {seances.map((s) => (
+          <li key={s.id} className="rounded-[14px] border border-line bg-surface px-4 py-3.5">
+            <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+              <Link href={`/admin/patients/${s.patientId}`} className="font-medium">
+                {nomComplet(s.patient)}
+              </Link>
+              <span className="text-sm font-semibold whitespace-nowrap" data-numeric>
+                {euros(s.amountCents)}
+              </span>
+            </div>
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <span className="text-xs text-ink-muted" data-numeric>
+                {fmtDateCourte.format(s.startsAt)}
+              </span>
+              <CabinetTag cabinet={s.cabinet} />
+              <RegimeTag scheme={s.patient.scheme} />
+            </div>
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <EtatPaiement status={s.status} payment={s.paymentStatus} methode={s.paymentMethod} />
+              {s.paymentStatus === "PAID" ? (
+                <a
+                  href={`/api/recu/${s.id}`}
+                  className="rounded-full border border-line-strong px-3 py-1 text-[11px] font-medium"
+                >
+                  reçu PDF
+                </a>
+              ) : (
+                <Encaisser id={s.id} />
+              )}
+            </div>
+          </li>
+        ))}
+      </ul>
+
+      <div className="hidden rounded-[14px] border border-line bg-surface md:block">
         <table className="w-full border-collapse text-sm">
           <caption className="sr-only">Séances facturables</caption>
           <thead>

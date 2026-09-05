@@ -157,3 +157,56 @@ export function EnTeteTri({
     </th>
   );
 }
+
+/**
+ * Tri sur téléphone.
+ *
+ * Les en-têtes de colonne cliquables disparaissent avec le tableau : sous
+ * 900 px les listes deviennent des cartes empilées, et il faut bien rendre le
+ * tri autrement qu'en le supprimant. Ces pilules portent les mêmes paramètres
+ * d'URL que les en-têtes, et un second appui inverse le sens.
+ */
+export function TriMobile({
+  base,
+  params,
+  champs,
+}: {
+  base: string;
+  params: Params;
+  champs: { champ: string; label: string }[];
+}) {
+  const actuel = params.tri ?? champs[0].champ;
+  const sens = params.sens === "desc" ? "desc" : "asc";
+
+  return (
+    <div className="flex flex-wrap items-center gap-1.5 md:hidden">
+      <span className="mr-1 text-[11px] font-semibold tracking-[0.1em] text-ink-muted uppercase">
+        Trier
+      </span>
+      {champs.map((c) => {
+        const actif = actuel === c.champ;
+        const p = new URLSearchParams();
+        for (const [k, v] of Object.entries(params)) {
+          if (v && k !== "tri" && k !== "sens") p.set(k, v);
+        }
+        p.set("tri", c.champ);
+        p.set("sens", actif && sens === "asc" ? "desc" : "asc");
+        return (
+          <Link
+            key={c.champ}
+            href={`${base}?${p.toString()}`}
+            aria-current={actif ? "true" : undefined}
+            className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
+              actif
+                ? "border-accent bg-accent text-accent-contrast"
+                : "border-line-strong text-ink-muted"
+            }`}
+          >
+            {c.label}
+            {actif && <span aria-hidden="true"> {sens === "desc" ? "\u2193" : "\u2191"}</span>}
+          </Link>
+        );
+      })}
+    </div>
+  );
+}

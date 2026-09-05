@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { CareScheme } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { CabinetTag, RegimeTag } from "@/components/tags";
-import { EnTeteTri, GroupeFiltre, type Params } from "@/components/filtres";
+import { EnTeteTri, GroupeFiltre, TriMobile, type Params } from "@/components/filtres";
 import { cabinetsActifs, optionsCabinet } from "@/lib/cabinets";
 import { euros, initiales, isBillable, nomComplet } from "@/lib/format";
 
@@ -79,7 +79,54 @@ export default async function Patients({ searchParams }: { searchParams: Promise
         />
       </div>
 
-      <div className="overflow-x-auto rounded-[14px] border border-line bg-surface">
+      <TriMobile
+        base="/admin/patients"
+        params={params}
+        champs={[
+          { champ: "nom", label: "nom" },
+          { champ: "seances", label: "séances" },
+          { champ: "du", label: "dû" },
+        ]}
+      />
+
+      {/* Cartes empilées sous 900 px, pour la même raison que la facturation. */}
+      <ul className="flex flex-col gap-2 md:hidden">
+        {enrichis.map(({ p, seances, du }) => (
+          <li key={p.id}>
+            <Link
+              href={`/admin/patients/${p.id}`}
+              className="flex flex-col gap-2 rounded-[14px] border border-line bg-surface px-4 py-3.5"
+            >
+              <span className="flex items-center gap-3">
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent-soft text-[11px] font-semibold text-accent-text">
+                  {initiales(p.firstName, p.lastName)}
+                </span>
+                <span className="flex-1 font-medium">{nomComplet(p)}</span>
+                <span
+                  className={`text-sm font-semibold ${du > 0 ? "text-due" : "text-ink-muted"}`}
+                  data-numeric
+                >
+                  {du > 0 ? euros(du) : "—"}
+                </span>
+              </span>
+              <span className="flex flex-wrap items-center gap-2">
+                {p.cabinet && <CabinetTag cabinet={p.cabinet} />}
+                <RegimeTag scheme={p.scheme} />
+                <span className="text-xs text-ink-muted" data-numeric>
+                  {seances} séance{seances > 1 ? "s" : ""}
+                </span>
+                {p.phone && (
+                  <span className="text-xs text-ink-muted" data-numeric>
+                    {p.phone}
+                  </span>
+                )}
+              </span>
+            </Link>
+          </li>
+        ))}
+      </ul>
+
+      <div className="hidden rounded-[14px] border border-line bg-surface md:block">
         <table className="w-full border-collapse text-sm">
           <thead>
             <tr className="border-b border-line bg-sunken text-[11px] tracking-[0.1em] text-ink-muted uppercase">
