@@ -109,7 +109,7 @@ export default async function Accueil() {
 
       <section className="px-6 py-20 md:py-28">
         <div className="mx-auto max-w-5xl">
-          <Titre>Mon parcours et mon approche</Titre>
+          <Titre>Mon approche</Titre>
           <div className="mt-10 grid gap-6 md:grid-cols-2 md:gap-14">
             {SITE.parcours.map((p) => (
               <p key={p.slice(0, 24)} className="text-lg leading-relaxed text-ink-muted">
