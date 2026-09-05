@@ -372,7 +372,7 @@ function Bloc({
         href={`/patients/${seance.patientId}`}
         className="flex min-w-0 flex-1 flex-col gap-[3px] overflow-hidden px-2 py-1.5"
       >
-        <span className="shrink-0 truncate text-[12.5px] leading-none font-bold" data-numeric>
+        <span className="shrink-0 truncate text-[12.5px] leading-[1.25] font-bold" data-numeric>
           {hhmm(seance.minutes)}
           <span className="font-medium text-ink-muted">–{hhmm(seance.minutes + seance.duree)}</span>
         </span>
@@ -381,7 +381,7 @@ function Bloc({
         </span>
         <span className="flex shrink-0 items-center gap-1 overflow-hidden">
           <span
-            className={`truncate text-[10.5px] leading-none font-semibold ${
+            className={`truncate text-[10.5px] leading-[1.45] font-semibold ${
               uccle ? "text-uccle" : "text-auderghem"
             }`}
           >
@@ -410,7 +410,7 @@ function Bloc({
           )}
         </span>
         {seance.libellePaiement && (
-          <span className="mt-auto shrink-0 truncate text-[10px] leading-none text-ink-muted">
+          <span className="mt-auto shrink-0 truncate text-[10px] leading-[1.4] text-ink-muted">
             {seance.libellePaiement}
           </span>
         )}

@@ -37,11 +37,11 @@ export function Nav() {
     <>
       <header className="sans-impression sticky top-0 z-40 border-b border-line bg-paper/85 backdrop-blur-md">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-6 gap-y-3 px-5 py-3 md:px-8">
-          <Link href="/" className="flex shrink-0 flex-col leading-none">
-            <span className="font-display text-[22px] leading-none font-bold tracking-tight">
+          <Link href="/" className="flex shrink-0 flex-col">
+            <span className="font-display text-[22px] leading-[1.15] font-bold tracking-tight">
               Amandine Monsel
             </span>
-            <span className="mt-1.5 text-[11px] font-semibold tracking-[0.2em] text-accent-text uppercase">
+            <span className="mt-0.5 text-[11px] leading-[1.4] font-semibold tracking-[0.2em] text-accent-text uppercase">
               Amapsy&nbsp;SRL
             </span>
           </Link>

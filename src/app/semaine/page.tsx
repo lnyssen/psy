@@ -2,6 +2,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { GrilleSemaine, type JourGrille, type SeanceGrille } from "@/components/GrilleSemaine";
 import { GroupeFiltre, avecParam, type Params } from "@/components/filtres";
+import { IconChevronDroite, IconChevronGauche } from "@/components/icons";
 import {
   JOURS_OUVRES,
   PAYMENT_LABEL,
@@ -112,16 +113,16 @@ export default async function Semaine({ searchParams }: { searchParams: Promise<
           <Link
             href={decalage(-1)}
             aria-label="Semaine précédente"
-            className="flex h-8 w-8 items-center justify-center rounded-full border border-line-strong text-ink-muted transition-colors hover:border-accent hover:text-accent-text"
+            className="flex h-9 w-9 items-center justify-center rounded-full border border-line-strong text-ink-muted transition-colors hover:border-accent hover:text-accent-text"
           >
-            ‹
+            <IconChevronGauche />
           </Link>
           <Link
             href={decalage(1)}
             aria-label="Semaine suivante"
-            className="flex h-8 w-8 items-center justify-center rounded-full border border-line-strong text-ink-muted transition-colors hover:border-accent hover:text-accent-text"
+            className="flex h-9 w-9 items-center justify-center rounded-full border border-line-strong text-ink-muted transition-colors hover:border-accent hover:text-accent-text"
           >
-            ›
+            <IconChevronDroite />
           </Link>
         </div>
         <h1 className="font-mono text-xl tracking-tight" data-numeric>

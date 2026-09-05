@@ -294,6 +294,12 @@ prévoyait au départ.
 - **Grille horaire au demi-heure**, cartes repensées autour de l'heure (la
   première information cherchée), volume hebdomadaire en chiffres pleins, et
   calcul de séances et d'heures sur une plage de dates libre.
+- **Flux iCalendar** suivi depuis Google Calendar ou tout autre agenda, protégé
+  par un jeton secret dans l'adresse. Les événements ne portent que le lieu et
+  l'heure, jamais le nom du patient : les envoyer reviendrait à transférer des
+  données de santé chez un tiers, et à les afficher sur l'écran de verrouillage
+  d'un téléphone. L'adresse du cabinet y figure en revanche, pour permettre de
+  lancer un itinéraire.
 - **Reçu PDF** avec mode de paiement (espèces ou électronique). Ce n'est pas une
   attestation de soins, et les prestations de psychologue sont exonérées de TVA
   en Belgique.
@@ -325,6 +331,12 @@ consignées ici pour qu'elles restent des choix, et non des oublis.
 
 - Portail patient, prise de rendez vous en ligne, rappels automatiques par SMS ou
   courriel.
+- Écriture ou lecture via l'API Google Calendar. Le flux iCalendar couvre le
+  besoin « voir mon agenda sur mon téléphone » sans OAuth, sans jetons à
+  renouveler et sans contrat de sous-traitance avec Google. Sa limite est
+  connue : Google rafraîchit les agendas suivis quand il l'entend, souvent avec
+  plusieurs heures de retard. Passer à l'API ne se justifiera que si cette
+  latence devient gênante — et supposera alors un compte Workspace.
 - Téléconsultation, visioconférence, messagerie avec les patients.
 - Multi praticiens : comptes multiples, cloisonnement des dossiers, agenda
   partagé, gestion de salles.

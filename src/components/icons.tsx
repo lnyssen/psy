@@ -63,3 +63,22 @@ export function IconCadenas({ className }: Props) {
     </svg>
   );
 }
+
+/** Chevrons de navigation. Les caractères « ‹ » et « › » ne se centrent pas
+ *  dans un bouton rond : leurs métriques les décalent vers le haut et la
+ *  gauche, ce qu'aucun alignement CSS ne rattrape proprement. */
+export function IconChevronGauche({ className }: Props) {
+  return (
+    <svg {...base} className={className}>
+      <path d="M12.5 4.5 7 10l5.5 5.5" />
+    </svg>
+  );
+}
+
+export function IconChevronDroite({ className }: Props) {
+  return (
+    <svg {...base} className={className}>
+      <path d="M7.5 4.5 13 10l-5.5 5.5" />
+    </svg>
+  );
+}
