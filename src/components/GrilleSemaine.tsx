@@ -24,7 +24,7 @@ export type JourGrille = { iso: string; nom: string; numero: string; total: stri
 
 // 92 px l'heure : à 68, un bloc de 45 minutes ne laissait pas assez de hauteur
 // au nom du patient, que le flex écrasait à zéro sous la pastille de paiement.
-const PX_PAR_HEURE = 92;
+const PX_PAR_HEURE = 104;
 const PAS_MINUTES = 15;
 // Respiration en haut de grille, sans quoi le premier libellé d'heure, centré
 // sur son filet, se retrouvait coupé par le bord.
@@ -99,21 +99,26 @@ export function GrilleSemaine({
           <div className="grid grid-cols-[3rem_repeat(5,1fr)] border-b border-line">
             <div />
             {jours.map((j) => (
-              <div key={j.iso} className="border-l border-line px-2 py-3 text-center">
-                <div className="font-mono text-[10px] tracking-[0.12em] text-ink-muted uppercase">
-                  {j.nom}
-                </div>
-                <div className="mt-1 flex justify-center">
+              <div key={j.iso} className="border-l border-line px-2 py-2.5 text-center">
+                <div className="flex items-center justify-center gap-1.5">
+                  <span className="text-[11px] font-semibold tracking-[0.1em] text-ink-muted uppercase">
+                    {j.nom}
+                  </span>
                   <span
-                    className={`flex h-7 w-7 items-center justify-center rounded-full font-mono text-sm ${
-                      j.aujourdhui ? "bg-accent font-semibold text-accent-contrast" : ""
+                    className={`flex h-6 min-w-6 items-center justify-center rounded-full px-1.5 text-sm font-bold ${
+                      j.aujourdhui ? "bg-accent text-accent-contrast" : ""
                     }`}
                     data-numeric
                   >
                     {j.numero}
                   </span>
                 </div>
-                <div className="mt-1 font-mono text-[10px] text-ink-muted" data-numeric>
+                <div
+                  className={`mt-1 text-[12px] font-semibold ${
+                    j.total === "—" ? "text-ink-muted/60" : "text-accent-text"
+                  }`}
+                  data-numeric
+                >
                   {j.total}
                 </div>
               </div>
@@ -128,11 +133,24 @@ export function GrilleSemaine({
               {heures.map((h, i) => (
                 <span
                   key={h}
-                  className="absolute right-1.5 -translate-y-1/2 font-mono text-[10px] text-ink-muted"
+                  className="absolute right-1.5 -translate-y-1/2 text-[11px] font-semibold text-ink"
                   style={{ top: i * PX_PAR_HEURE + MARGE_HAUT }}
                   data-numeric
                 >
                   {String(h).padStart(2, "0")}:00
+                </span>
+              ))}
+              {/* Demi-heures : plus discrètes que les heures pleines, mais
+                  présentes — un créneau se cale au quart d'heure, il faut
+                  pouvoir viser sans compter. */}
+              {heures.slice(0, -1).map((h, i) => (
+                <span
+                  key={`${h}-30`}
+                  className="absolute right-1.5 -translate-y-1/2 text-[10px] text-ink-muted/70"
+                  style={{ top: i * PX_PAR_HEURE + PX_PAR_HEURE / 2 + MARGE_HAUT }}
+                  data-numeric
+                >
+                  {String(h).padStart(2, "0")}:30
                 </span>
               ))}
             </div>
@@ -167,6 +185,13 @@ export function GrilleSemaine({
                       key={h}
                       className="absolute right-0 left-0 border-t border-line"
                       style={{ top: (i + 1) * PX_PAR_HEURE + MARGE_HAUT }}
+                    />
+                  ))}
+                  {heures.slice(0, -1).map((h, i) => (
+                    <div
+                      key={`${h}-30`}
+                      className="absolute right-0 left-0 border-t border-line/45"
+                      style={{ top: i * PX_PAR_HEURE + PX_PAR_HEURE / 2 + MARGE_HAUT }}
                     />
                   ))}
 
@@ -311,14 +336,19 @@ function Bloc({
   const hhmm = (m: number) =>
     `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
 
-  const paiement = seance.paiement
-    ? {
-        DUE: "bg-due-soft text-due",
-        PAID: "bg-paid-soft text-paid",
-        OVERDUE: "bg-overdue-soft text-overdue",
-      }[seance.paiement]
-    : null;
+  const uccle = seance.office === "UCCLE";
 
+  /*
+   * Carte d'agenda repensée. Trois informations, dans l'ordre où on les
+   * cherche : quand, qui, où. L'heure passe en tête et gagne en taille — c'est
+   * ce qu'on lit en diagonale dans une grille.
+   *
+   * Le cabinet est porté par un filet vertical épais, la teinte du fond et son
+   * nom écrit : trois canaux pour une information qui doit se lire d'un coup
+   * d'œil sur deux sites. L'état de paiement, lui, est ramené à une mention
+   * discrète — dans le calendrier il est accessoire, et il garde sa couleur
+   * pleine là où il est le sujet, dans la facturation.
+   */
   return (
     <div
       draggable
@@ -330,48 +360,49 @@ function Bloc({
       }}
       onDragEnd={() => onSaisir(null)}
       style={style}
-      className={`group absolute flex cursor-grab flex-col overflow-hidden rounded-md border bg-surface pl-2 shadow-[0_1px_2px_rgba(39,39,87,0.06)] active:cursor-grabbing ${
-        seance.conflit ? "border-overdue/50" : "border-line"
+      className={`group absolute flex cursor-grab overflow-hidden rounded-lg border transition-shadow hover:shadow-[0_2px_8px_rgba(39,39,87,0.10)] active:cursor-grabbing ${
+        seance.conflit
+          ? "border-overdue/60 bg-overdue-soft"
+          : uccle
+            ? "border-uccle/20 bg-uccle-soft/45"
+            : "border-auderghem/20 bg-auderghem-soft/45"
       }`}
     >
-      {/* Filet de cabinet : la couleur porte le lieu, le texte le redit. */}
       <span
         aria-hidden="true"
-        className={`absolute top-0 bottom-0 left-0 w-[3px] ${
-          seance.office === "UCCLE" ? "bg-uccle" : "bg-auderghem"
-        }`}
+        className={`w-[4px] shrink-0 ${uccle ? "bg-uccle" : "bg-auderghem"}`}
       />
       <Link
         href={`/patients/${seance.patientId}`}
-        className="flex min-h-0 flex-1 flex-col gap-px overflow-hidden px-1.5 py-1"
+        className="flex min-w-0 flex-1 flex-col gap-[3px] overflow-hidden px-2 py-1.5"
       >
-        <span className="shrink-0 truncate text-[12px] leading-tight font-semibold">
+        <span className="shrink-0 truncate text-[12.5px] leading-none font-bold" data-numeric>
+          {hhmm(seance.minutes)}
+          <span className="font-medium text-ink-muted">–{hhmm(seance.minutes + seance.duree)}</span>
+        </span>
+        <span className="shrink-0 truncate text-[12px] leading-tight font-medium">
           {seance.nom}
         </span>
-        <span className="shrink-0 truncate font-mono text-[10px] leading-tight" data-numeric>
-          <span className="text-ink-muted">
-            {hhmm(seance.minutes)}–{hhmm(seance.minutes + seance.duree)}
-          </span>
-          <span className={seance.office === "UCCLE" ? "text-uccle" : "text-auderghem"}>
-            {" · "}
-            {seance.office === "UCCLE" ? "Uccle" : "Auderghem"}
-          </span>
+        <span
+          className={`shrink-0 truncate text-[10.5px] leading-none font-semibold ${
+            uccle ? "text-uccle" : "text-auderghem"
+          }`}
+        >
+          {uccle ? "Uccle" : "Auderghem"}
         </span>
-        {paiement && seance.libellePaiement && (
-          <span
-            className={`mt-auto shrink-0 rounded px-1.5 py-[1px] text-center text-[10px] leading-tight font-medium ${paiement}`}
-          >
+        {seance.libellePaiement && (
+          <span className="mt-auto shrink-0 truncate text-[10px] leading-none text-ink-muted">
             {seance.libellePaiement}
           </span>
         )}
       </Link>
 
-      <span className="pointer-events-none absolute top-0.5 right-0.5 flex gap-0.5 opacity-0 transition-opacity group-focus-within:pointer-events-auto group-focus-within:opacity-100 group-hover:pointer-events-auto group-hover:opacity-100">
+      <span className="pointer-events-none absolute top-1 right-1 flex gap-0.5 opacity-0 transition-opacity group-focus-within:pointer-events-auto group-focus-within:opacity-100 group-hover:pointer-events-auto group-hover:opacity-100">
         <button
           type="button"
           onClick={() => onDecaler(-15)}
           aria-label={`Avancer la séance de ${seance.nom} d’un quart d’heure`}
-          className="rounded-full border border-line bg-surface px-1 text-[10px] leading-4"
+          className="rounded-full border border-line bg-surface px-1.5 text-[10px] leading-4"
         >
           ↑
         </button>
@@ -379,7 +410,7 @@ function Bloc({
           type="button"
           onClick={() => onDecaler(15)}
           aria-label={`Retarder la séance de ${seance.nom} d’un quart d’heure`}
-          className="rounded-full border border-line bg-surface px-1 text-[10px] leading-4"
+          className="rounded-full border border-line bg-surface px-1.5 text-[10px] leading-4"
         >
           ↓
         </button>

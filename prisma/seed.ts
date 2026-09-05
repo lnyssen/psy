@@ -152,6 +152,26 @@ async function main() {
     });
   }
 
+  // La semaine suivante est garnie elle aussi : sans quoi la navigation entre
+  // semaines ne montrerait rien, et l'écran d'accueil consulté un samedi
+  // proposerait un lundi vide. Tout y est à venir et dû, par construction.
+  let aVenir = 0;
+  for (const { who, jour, h, m, office } of base) {
+    const debut = at(jour + 7, h, m ?? 0);
+    await prisma.session.create({
+      data: {
+        patientId: p[who].id,
+        startsAt: debut,
+        durationMin: DUREE,
+        office,
+        status: SessionStatus.SCHEDULED,
+        paymentStatus: PaymentStatus.DUE,
+        amountCents: null,
+      },
+    });
+    aVenir++;
+  }
+
   // Notes de dossier — administratives, jamais cliniques : le chiffrement
   // n'est pas en place, et cette base est publique.
   const notes: [string, string][] = [
@@ -166,8 +186,8 @@ async function main() {
   }
 
   console.log(
-    `Semé : ${PATIENTS.length} patients fictifs, ${seances.length} séances de ${DUREE} min, ` +
-      `${notes.length} notes, 2 cabinets, lundi à vendredi.`,
+    `Semé : ${PATIENTS.length} patients fictifs, ${seances.length + aVenir} séances de ${DUREE} min ` +
+      `sur deux semaines, ${notes.length} notes, 2 cabinets, lundi à vendredi.`,
   );
 }
 

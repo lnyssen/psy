@@ -78,11 +78,13 @@
   --color-accent-soft: #f1e6fe;
   --color-accent-contrast: #ffffff;
 
-  /* Cabinets */
-  --color-uccle: #272757;
-  --color-uccle-soft: #e9e9f2;
-  --color-auderghem: #6002be;
-  --color-auderghem-soft: #f1e6fe;
+  /* Cabinets — deux teintes qui leur sont propres, franchement à l'écart du
+     violet de marque comme des trois couleurs de paiement. Écart minimal de
+     teinte avec une couleur déjà employée : 47°. */
+  --color-uccle: #0b7285;
+  --color-uccle-soft: #e0f1f3;
+  --color-auderghem: #a61e78;
+  --color-auderghem-soft: #fbe4f2;
 
   /* États de paiement */
   --color-due: #8a5a00;
@@ -121,9 +123,13 @@
 
   /* Une seule famille de texte : Satoshi porte titres et corps. La mono reste
      réservée aux heures et aux montants, qui doivent s'aligner en colonne. */
+  /* Satoshi partout, titres, corps et valeurs numériques comprises. Le jeton
+     « mono » ne désigne plus une police à chasse fixe mais le même Satoshi :
+     l'alignement des colonnes de chiffres est obtenu par font-variant-numeric,
+     pas par la police. */
   --font-display: "Satoshi", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --font-body: "Satoshi", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  --font-mono: var(--font-mono-face), ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-mono: "Satoshi", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 
   --radius-card: var(--radius-card);
   --breakpoint-md: 56.25rem;

@@ -100,12 +100,16 @@ C'est le problème central de la palette, pas sa décoration. Règle retenue :
 
 - **L'état de paiement** garde la couleur pleine — ambre, vert, rouge. C'est la
   famille la plus scrutée.
-- **Les deux cabinets** reçoivent les deux couleurs de marque, navy pour Uccle
-  et violet pour Auderghem, sur demande explicite qu'ils soient nettement
-  distincts. Les réutiliser plutôt qu'introduire deux teintes de plus était la
-  seule façon de tenir cette demande sans saturer l'écran. Le cabinet est en
-  outre doublé d'une pastille pleine et d'un filet vertical sur les blocs
-  d'agenda : à taille de badge, la forme se lit avant la teinte.
+- **Les deux cabinets** reçoivent chacun une teinte propre, sur demande : teal
+  pour Uccle, rose pour Auderghem. Elles ont été choisies pour être franchement
+  à l'écart du violet de marque comme des trois couleurs de paiement — l'écart
+  de teinte minimal avec une couleur déjà employée est de 47°. Le cabinet est en
+  outre doublé d'un filet vertical, d'un fond teinté et de son nom écrit : sur
+  une pratique à deux sites, c'est l'information qu'on lit en premier.
+- **Conséquence assumée** : cinq familles chromatiques sur un même écran, c'est
+  beaucoup. Compensation retenue — dans les cartes du calendrier, l'état de
+  paiement est ramené à une mention grise, et il ne garde sa couleur pleine que
+  dans la facturation, où il est le sujet.
 - **Régime et statut de séance** passent sans couleur, par la graisse, le filet
   et le cartouche.
 
@@ -278,6 +282,14 @@ prévoyait au départ.
   une liste par jour.
 - **Tri et filtres sur toutes les vues**, portés par l'URL : la vue est
   partageable, le retour arrière fonctionne, rien ne dépend de JavaScript.
+- **Deux couleurs de cabinet propres**, distinctes du violet de marque, qui a
+  cessé de servir à identifier Auderghem.
+- **Satoshi partout**, valeurs numériques comprises : l'alignement des colonnes
+  de chiffres passe par `font-variant-numeric`, plus par une police à chasse
+  fixe.
+- **Grille horaire au demi-heure**, cartes repensées autour de l'heure (la
+  première information cherchée), volume hebdomadaire en chiffres pleins, et
+  calcul de séances et d'heures sur une plage de dates libre.
 - **Reçu PDF** avec mode de paiement (espèces ou électronique). Ce n'est pas une
   attestation de soins, et les prestations de psychologue sont exonérées de TVA
   en Belgique.
