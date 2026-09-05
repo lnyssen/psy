@@ -47,52 +47,68 @@ export default async function Accueil() {
 
   return (
     <>
-      <section className="px-6 pt-12 pb-16 md:pt-20 md:pb-24">
-        <div className="mx-auto grid max-w-5xl items-center gap-10 md:grid-cols-[1.1fr_0.9fr] md:gap-14">
-          <div className="order-2 md:order-1">
-            <Surtitre>{SITE.titre}</Surtitre>
-            <h1 className="mt-5 font-display text-[3.25rem] leading-[0.95] tracking-[-0.03em] md:text-[5.5rem]">
-              Amandine
-              <br />
-              Monsel
-            </h1>
-            <p className="mt-8 flex flex-wrap items-center gap-x-3 gap-y-2 text-lg font-semibold">
-              {SITE.publics.map((p, i) => (
-                <span key={p} className="flex items-center gap-3">
-                  {i > 0 && <span aria-hidden="true" className="h-1 w-1 rounded-full bg-accent" />}
-                  {p}
-                </span>
-              ))}
-            </p>
-            <p className="mt-5 max-w-lg text-lg leading-relaxed text-ink-muted">{SITE.accroche}</p>
-            <div className="mt-9 flex flex-wrap items-center gap-3">
-              <Link
-                href="/rendez-vous"
-                className="rounded-full bg-accent px-7 py-3.5 text-sm font-semibold text-accent-contrast transition-colors hover:bg-accent-hover"
-              >
-                Prendre rendez-vous
-              </Link>
-              <a
-                href={`tel:${SITE.telephoneLien}`}
-                className="rounded-full border border-line-strong px-7 py-3.5 text-sm font-semibold transition-colors hover:border-accent hover:text-accent-text"
-                data-numeric
-              >
-                {SITE.telephone}
-              </a>
-            </div>
-          </div>
+      {/*
+        Portrait pleine image.
+        
+        La photo occupe toute la largeur, le texte se pose dessus. Un voile
+        dégradé, du navy profond en bas à gauche vers presque rien en haut à
+        droite, garantit la lisibilité du blanc sans noyer le phare : le point
+        lumineux reste dans la partie claire du dégradé, là où il fait son
+        effet.
+      */}
+      <section className="relative isolate flex min-h-[36rem] items-end overflow-hidden md:min-h-[44rem]">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/images/phare.jpg"
+          srcSet="/images/phare-petit.jpg 602w, /images/phare.jpg 1338w"
+          sizes="100vw"
+          width={1338}
+          height={2000}
+          alt=""
+          aria-hidden="true"
+          className="absolute inset-0 -z-20 h-full w-full object-cover object-[62%_38%]"
+        />
+        <div
+          aria-hidden="true"
+          className="absolute inset-0 -z-10"
+          style={{
+            background:
+              "linear-gradient(105deg, rgba(28,22,56,0.92) 0%, rgba(28,22,56,0.78) 38%, rgba(28,22,56,0.30) 68%, rgba(28,22,56,0.12) 100%)",
+          }}
+        />
 
-          <div className="order-1 md:order-2">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/images/phare.jpg"
-              srcSet="/images/phare-petit.jpg 602w, /images/phare.jpg 1338w"
-              sizes="(max-width: 900px) 100vw, 40vw"
-              width={1338}
-              height={2000}
-              alt="Un phare allumé au crépuscule, sous un ciel étoilé"
-              className="h-[19rem] w-full rounded-[28px] object-cover object-center md:h-[32rem]"
-            />
+        <div className="mx-auto w-full max-w-5xl px-6 py-16 text-white md:py-24">
+          <p className="text-[11px] font-bold tracking-[0.2em] text-white/70 uppercase">
+            {SITE.titre}
+          </p>
+          <h1 className="mt-5 max-w-3xl font-display text-[3.25rem] leading-[0.95] tracking-[-0.03em] md:text-[5.5rem]">
+            Amandine
+            <br />
+            Monsel
+          </h1>
+          <p className="mt-8 flex flex-wrap items-center gap-x-3 gap-y-2 text-lg font-semibold">
+            {SITE.publics.map((p, i) => (
+              <span key={p} className="flex items-center gap-3">
+                {i > 0 && <span aria-hidden="true" className="h-1 w-1 rounded-full bg-white/60" />}
+                {p}
+              </span>
+            ))}
+          </p>
+          <p className="mt-5 max-w-lg text-lg leading-relaxed text-white/80">{SITE.accroche}</p>
+          <div className="mt-9 flex flex-wrap items-center gap-3">
+            <Link
+              href="/rendez-vous"
+              className="rounded-full bg-accent px-7 py-3.5 text-sm font-semibold text-accent-contrast transition-colors hover:bg-accent-hover"
+            >
+              Prendre rendez-vous
+            </Link>
+            <a
+              href={`tel:${SITE.telephoneLien}`}
+              className="rounded-full border border-white/40 px-7 py-3.5 text-sm font-semibold transition-colors hover:border-white"
+              data-numeric
+            >
+              {SITE.telephone}
+            </a>
           </div>
         </div>
       </section>
