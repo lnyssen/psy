@@ -186,8 +186,8 @@ export function CalendrierRdv({
             onChange={(e) => {
               const v = e.target.value;
               if (!v) return;
-              const [a, m, j] = v.split("-").map(Number);
-              setMois(new Date(a, m - 1, 1));
+              const [annee, mois] = v.split("-").map(Number);
+              setMois(new Date(annee, mois - 1, 1));
               setJourChoisi(v);
               onChoisir(null);
             }}
