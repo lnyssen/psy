@@ -1,5 +1,7 @@
 import { prisma } from "@/lib/db";
 import { creneauxDisponibles } from "@/lib/creneaux";
+import { parametres } from "@/lib/parametres";
+import { debutDeJour } from "@/lib/format";
 import { PriseRdv } from "@/components/PriseRdv";
 import { adresseCabinet } from "@/lib/format";
 
@@ -20,6 +22,14 @@ export default async function RendezVous({
 
   const choisi = cabinets.find((c) => c.id === cabinet) ?? cabinets[0];
   const jours = await creneauxDisponibles(choisi.id);
+
+  // Bornes de la période ouverte : elles viennent des paramètres, pas des jours
+  // qui ont des créneaux. Un congé en fin de période bloquait sinon la
+  // navigation entre mois.
+  const reglages = await parametres();
+  const debut = debutDeJour(new Date());
+  const fin = new Date(debut);
+  fin.setDate(fin.getDate() + reglages.horizonSemaines * 7);
 
   // Le lien personnel vaut reconnaissance : on ne redemande pas ses
   // coordonnées à quelqu'un dont on a déjà le dossier.
@@ -47,6 +57,8 @@ export default async function RendezVous({
       jeton={patient ? (p ?? null) : null}
       nomConnu={patient ? `${patient.firstName} ${patient.lastName}` : null}
         lienInvalide={Boolean(p) && !patient}
+        isoDebut={debut.toISOString()}
+        isoFin={fin.toISOString()}
       />
       </div>
     </div>

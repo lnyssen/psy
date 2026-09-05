@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { IconChevronDroite, IconChevronGauche } from "@/components/icons";
 
 export type Jour = { iso: string; creneaux: { iso: string; minutes: number }[] };
 
@@ -48,20 +49,30 @@ export function CalendrierRdv({
   jours,
   creneau,
   onChoisir,
+  isoDebut,
+  isoFin,
 }: {
   jours: Jour[];
   creneau: string | null;
   onChoisir: (iso: string | null) => void;
+  /** Bornes de la période ouverte à la réservation. Les mois se parcourent
+   *  jusqu'à ces bornes, et non jusqu'au dernier jour qui a des créneaux :
+   *  sinon un congé en fin de période bloquait la navigation, ce qui donnait
+   *  des flèches inertes sans qu'on comprenne pourquoi. */
+  isoDebut: string;
+  isoFin: string;
 }) {
   const parJour = useMemo(() => new Map(jours.map((j) => [cle(new Date(j.iso)), j])), [jours]);
 
-  const premier = jours[0] ? new Date(jours[0].iso) : new Date();
+  const borneDebut = new Date(isoDebut);
+  const borneFin = new Date(isoFin);
+  const premier = jours[0] ? new Date(jours[0].iso) : borneDebut;
+
   const [mois, setMois] = useState(() => new Date(premier.getFullYear(), premier.getMonth(), 1));
   const [jourChoisi, setJourChoisi] = useState<string | null>(jours[0] ? cle(premier) : null);
 
-  const dernier = jours.length ? new Date(jours[jours.length - 1].iso) : premier;
-  const moisMin = new Date(premier.getFullYear(), premier.getMonth(), 1);
-  const moisMax = new Date(dernier.getFullYear(), dernier.getMonth(), 1);
+  const moisMin = new Date(borneDebut.getFullYear(), borneDebut.getMonth(), 1);
+  const moisMax = new Date(borneFin.getFullYear(), borneFin.getMonth(), 1);
 
   // Grille du mois, commençant un lundi et complétée jusqu'à la fin de semaine.
   const grille = useMemo(() => {
@@ -103,9 +114,9 @@ export function CalendrierRdv({
             onClick={() => changerMois(-1)}
             disabled={new Date(mois.getFullYear(), mois.getMonth() - 1, 1) < moisMin}
             aria-label="Mois précédent"
-            className="flex h-9 w-9 items-center justify-center rounded-full border border-line-strong text-ink-muted disabled:opacity-30"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-line-strong text-ink-muted transition-colors hover:border-accent hover:text-accent-text disabled:opacity-30 disabled:hover:border-line-strong disabled:hover:text-ink-muted"
           >
-            ‹
+            <IconChevronGauche />
           </button>
           <p className="font-semibold first-letter:uppercase" aria-live="polite">
             {fmtMois.format(mois)}
@@ -115,9 +126,9 @@ export function CalendrierRdv({
             onClick={() => changerMois(1)}
             disabled={new Date(mois.getFullYear(), mois.getMonth() + 1, 1) > moisMax}
             aria-label="Mois suivant"
-            className="flex h-9 w-9 items-center justify-center rounded-full border border-line-strong text-ink-muted disabled:opacity-30"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-line-strong text-ink-muted transition-colors hover:border-accent hover:text-accent-text disabled:opacity-30 disabled:hover:border-line-strong disabled:hover:text-ink-muted"
           >
-            ›
+            <IconChevronDroite />
           </button>
         </div>
 
@@ -165,7 +176,26 @@ export function CalendrierRdv({
           })}
         </div>
 
-        <p className="mt-4 flex items-center gap-2 text-xs text-ink-muted">
+        <label className="mt-5 flex flex-wrap items-center gap-2 text-xs text-ink-muted">
+          <span className="font-semibold">Aller à une date</span>
+          <input
+            type="date"
+            min={cle(borneDebut)}
+            max={cle(borneFin)}
+            value={jourChoisi ?? ""}
+            onChange={(e) => {
+              const v = e.target.value;
+              if (!v) return;
+              const [a, m, j] = v.split("-").map(Number);
+              setMois(new Date(a, m - 1, 1));
+              setJourChoisi(v);
+              onChoisir(null);
+            }}
+            className="rounded-full border border-line bg-surface px-3 py-1.5 text-sm"
+          />
+        </label>
+
+        <p className="mt-3 flex items-center gap-2 text-xs text-ink-muted">
           <span aria-hidden="true" className="h-3 w-3 rounded bg-accent-soft" />
           jours avec des créneaux libres
         </p>
@@ -200,6 +230,10 @@ export function CalendrierRdv({
               ))}
             </div>
           </>
+        ) : jourChoisi ? (
+          <p className="rounded-[16px] border border-dashed border-line-strong px-6 py-10 text-center text-sm text-ink-muted">
+            Aucun créneau libre ce jour-là. Les jours qui en ont sont teintés dans le calendrier.
+          </p>
         ) : (
           <p className="rounded-[16px] border border-dashed border-line-strong px-6 py-10 text-center text-sm text-ink-muted">
             Choisissez un jour dans le calendrier.

@@ -23,10 +23,14 @@ export function PriseRdv({
   jeton,
   nomConnu,
   lienInvalide,
+  isoDebut,
+  isoFin,
 }: {
   cabinets: CabinetChoix[];
   cabinetChoisi: string;
   jours: Jour[];
+  isoDebut: string;
+  isoFin: string;
   jeton: string | null;
   nomConnu: string | null;
   lienInvalide: boolean;
@@ -102,7 +106,13 @@ export function PriseRdv({
             Choisir un créneau
           </h2>
           <div className="mt-5">
-            <CalendrierRdv jours={jours} creneau={creneau} onChoisir={setCreneau} />
+            <CalendrierRdv
+              jours={jours}
+              creneau={creneau}
+              onChoisir={setCreneau}
+              isoDebut={isoDebut}
+              isoFin={isoFin}
+            />
           </div>
         </section>
 
