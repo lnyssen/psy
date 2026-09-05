@@ -144,3 +144,19 @@ export function IconDemandes({ className }: Props) {
     </svg>
   );
 }
+
+export function IconMenu({ className }: Props) {
+  return (
+    <svg {...base} className={className}>
+      <path d="M3 5.5h14M3 10h14M3 14.5h14" />
+    </svg>
+  );
+}
+
+export function IconFermer({ className }: Props) {
+  return (
+    <svg {...base} className={className}>
+      <path d="m5 5 10 10M15 5 5 15" />
+    </svg>
+  );
+}

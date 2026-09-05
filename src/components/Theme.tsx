@@ -28,7 +28,7 @@ export function Theme({ initial }: { initial: "light" | "dark" }) {
       onClick={basculer}
       aria-pressed={theme === "dark"}
       title={theme === "dark" ? "Passer en thème clair" : "Passer en thème sombre"}
-      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-line-strong text-ink-muted transition-colors hover:border-accent hover:text-accent-text"
+      className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-line-strong text-ink-muted transition-colors hover:border-accent hover:text-accent-text md:h-9 md:w-9"
     >
       <span className="sr-only">
         {theme === "dark" ? "Passer en thème clair" : "Passer en thème sombre"}
