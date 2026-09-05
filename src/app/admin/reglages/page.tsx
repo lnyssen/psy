@@ -33,11 +33,113 @@ export default async function Reglages() {
       <header>
         <h1 className="font-display text-3xl tracking-tight">Réglages</h1>
         <p className="mt-2 text-sm text-ink-muted">
-          Lieux de consultation et grille tarifaire. Ces valeurs alimentent l’agenda, les fiches
-          patients et les reçus.
+          Le rythme des séances et les horaires d’ouverture décident de ce que le site propose.
+          Viennent ensuite les tarifs, puis les lieux, qu’on touche plus rarement.
         </p>
       </header>
 
+      <Parametres valeurs={valeurs} />
+
+      <Horaires
+        cabinets={cabinets.filter((c) => c.actif)}
+        disponibilites={disponibilites}
+        conges={conges}
+      />
+
+      <section className="flex flex-col gap-4">
+        <div>
+          <h2 className="font-display text-xl">Tarifs</h2>
+          <p className="mt-1 text-sm text-ink-muted">
+            Grille de référence. Le tarif propre à un patient, s’il en a un, prime toujours sur
+            celle-ci.
+          </p>
+        </div>
+
+        <ul className="overflow-hidden rounded-[14px] border border-line bg-surface">
+          {tarifs.map((t) => (
+            <li key={t.id} className="border-b border-line px-5 py-3 last:border-b-0">
+              <form action={enregistrerTarif} className="flex flex-wrap items-end gap-3">
+                <input type="hidden" name="id" value={t.id} />
+                <label className="min-w-52 flex-1">
+                  <span className={libelleChamp}>Libellé</span>
+                  <input name="libelle" defaultValue={t.libelle} required className={`mt-1 ${champ}`} />
+                </label>
+                <label className="w-32">
+                  <span className={libelleChamp}>Montant (€)</span>
+                  <input
+                    name="montant"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    defaultValue={(t.amountCents / 100).toFixed(2)}
+                    required
+                    className={`mt-1 ${champ}`}
+                  />
+                </label>
+                <label className="flex items-center gap-2 pb-2 text-sm">
+                  <input type="checkbox" name="parDefaut" defaultChecked={t.parDefaut} />
+                  Par défaut
+                </label>
+                <label className="flex items-center gap-2 pb-2 text-sm">
+                  <input type="checkbox" name="actif" defaultChecked={t.actif} />
+                  Actif
+                </label>
+                <button
+                  type="submit"
+                  className="rounded-full bg-accent px-4 py-1.5 text-sm font-medium text-accent-contrast transition-colors hover:bg-accent-hover"
+                >
+                  Enregistrer
+                </button>
+                <button
+                  type="submit"
+                  formAction={supprimerTarif}
+                  className="rounded-full border border-line-strong px-4 py-1.5 text-sm font-medium text-ink-muted transition-colors hover:border-overdue hover:text-overdue"
+                >
+                  Supprimer
+                </button>
+              </form>
+            </li>
+          ))}
+        </ul>
+
+        <form
+          action={enregistrerTarif}
+          className="flex flex-wrap items-end gap-3 rounded-[14px] border border-dashed border-line-strong bg-surface px-5 py-4"
+        >
+          <label className="min-w-52 flex-1">
+            <span className={libelleChamp}>Nouveau tarif</span>
+            <input name="libelle" required placeholder="Bilan" className={`mt-1 ${champ}`} />
+          </label>
+          <label className="w-32">
+            <span className={libelleChamp}>Montant (€)</span>
+            <input
+              name="montant"
+              type="number"
+              step="0.01"
+              min="0"
+              required
+              className={`mt-1 ${champ}`}
+            />
+          </label>
+          <label className="flex items-center gap-2 pb-2 text-sm">
+            <input type="checkbox" name="actif" defaultChecked />
+            Actif
+          </label>
+          <button
+            type="submit"
+            className="rounded-full bg-accent px-4 py-1.5 text-sm font-medium text-accent-contrast transition-colors hover:bg-accent-hover"
+          >
+            Ajouter
+          </button>
+        </form>
+
+        <p className="text-xs text-ink-muted">
+          Tarif par défaut actuel :{" "}
+          <span className="font-semibold" data-numeric>
+            {euros(tarifs.find((t) => t.parDefaut)?.amountCents ?? null)}
+          </span>
+        </p>
+      </section>
       <section className="flex flex-col gap-4">
         <div>
           <h2 className="font-display text-xl">Lieux</h2>
@@ -216,108 +318,6 @@ export default async function Reglages() {
         </form>
       </section>
 
-      <Parametres valeurs={valeurs} />
-
-      <Horaires
-        cabinets={cabinets.filter((c) => c.actif)}
-        disponibilites={disponibilites}
-        conges={conges}
-      />
-
-      <section className="flex flex-col gap-4">
-        <div>
-          <h2 className="font-display text-xl">Tarifs</h2>
-          <p className="mt-1 text-sm text-ink-muted">
-            Grille de référence. Le tarif propre à un patient, s’il en a un, prime toujours sur
-            celle-ci.
-          </p>
-        </div>
-
-        <ul className="overflow-hidden rounded-[14px] border border-line bg-surface">
-          {tarifs.map((t) => (
-            <li key={t.id} className="border-b border-line px-5 py-3 last:border-b-0">
-              <form action={enregistrerTarif} className="flex flex-wrap items-end gap-3">
-                <input type="hidden" name="id" value={t.id} />
-                <label className="min-w-52 flex-1">
-                  <span className={libelleChamp}>Libellé</span>
-                  <input name="libelle" defaultValue={t.libelle} required className={`mt-1 ${champ}`} />
-                </label>
-                <label className="w-32">
-                  <span className={libelleChamp}>Montant (€)</span>
-                  <input
-                    name="montant"
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    defaultValue={(t.amountCents / 100).toFixed(2)}
-                    required
-                    className={`mt-1 ${champ}`}
-                  />
-                </label>
-                <label className="flex items-center gap-2 pb-2 text-sm">
-                  <input type="checkbox" name="parDefaut" defaultChecked={t.parDefaut} />
-                  Par défaut
-                </label>
-                <label className="flex items-center gap-2 pb-2 text-sm">
-                  <input type="checkbox" name="actif" defaultChecked={t.actif} />
-                  Actif
-                </label>
-                <button
-                  type="submit"
-                  className="rounded-full bg-accent px-4 py-1.5 text-sm font-medium text-accent-contrast transition-colors hover:bg-accent-hover"
-                >
-                  Enregistrer
-                </button>
-                <button
-                  type="submit"
-                  formAction={supprimerTarif}
-                  className="rounded-full border border-line-strong px-4 py-1.5 text-sm font-medium text-ink-muted transition-colors hover:border-overdue hover:text-overdue"
-                >
-                  Supprimer
-                </button>
-              </form>
-            </li>
-          ))}
-        </ul>
-
-        <form
-          action={enregistrerTarif}
-          className="flex flex-wrap items-end gap-3 rounded-[14px] border border-dashed border-line-strong bg-surface px-5 py-4"
-        >
-          <label className="min-w-52 flex-1">
-            <span className={libelleChamp}>Nouveau tarif</span>
-            <input name="libelle" required placeholder="Bilan" className={`mt-1 ${champ}`} />
-          </label>
-          <label className="w-32">
-            <span className={libelleChamp}>Montant (€)</span>
-            <input
-              name="montant"
-              type="number"
-              step="0.01"
-              min="0"
-              required
-              className={`mt-1 ${champ}`}
-            />
-          </label>
-          <label className="flex items-center gap-2 pb-2 text-sm">
-            <input type="checkbox" name="actif" defaultChecked />
-            Actif
-          </label>
-          <button
-            type="submit"
-            className="rounded-full bg-accent px-4 py-1.5 text-sm font-medium text-accent-contrast transition-colors hover:bg-accent-hover"
-          >
-            Ajouter
-          </button>
-        </form>
-
-        <p className="text-xs text-ink-muted">
-          Tarif par défaut actuel :{" "}
-          <span className="font-semibold" data-numeric>
-            {euros(tarifs.find((t) => t.parDefaut)?.amountCents ?? null)}
-          </span>
-        </p>
-      </section>
     </div>
   );
 }
