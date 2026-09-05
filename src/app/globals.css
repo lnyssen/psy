@@ -207,6 +207,40 @@ html {
   background: var(--color-paper);
 }
 
+/*
+ * Grain.
+ *
+ * Une turbulence SVG en fond fixe, à quatre pour cent d'opacité. Posée en
+ * surimpression plutôt qu'en fond de page : les bandes de couleur ont leur
+ * propre aplat, qui masquerait un grain resté derrière elles — or c'est
+ * précisément sur ces grands aplats qu'il évite l'effet plastique.
+ *
+ * Elle ne capte aucun clic et ne coûte aucune requête : l'image est un data-URI
+ * de quelques centaines d'octets, et le motif se répète.
+ */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  pointer-events: none;
+  opacity: 0.04;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* En thème sombre, le grain doit éclaircir et non assombrir, sans quoi il
+   disparaît dans le noir. */
+:root[data-theme="dark"] body::after {
+  opacity: 0.055;
+  mix-blend-mode: screen;
+}
+
+@media print {
+  body::after {
+    display: none;
+  }
+}
+
 body {
   background: var(--color-paper);
   color: var(--color-ink);

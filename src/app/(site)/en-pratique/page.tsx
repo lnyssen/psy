@@ -29,10 +29,7 @@ export default async function Praticalites() {
         <div className="mt-6 grid gap-4 sm:grid-cols-2">
           {cabinets.map((c) => (
             <div key={c.id} className="rounded-[16px] bg-paper px-6 py-5">
-              <p
-                style={{ "--cab-vif": c.vividHex } as React.CSSProperties}
-                className="texte-cabinet text-lg font-bold"
-              >
+              <p className="font-display text-xl">
                 {c.nom}
               </p>
               <p className="mt-1 text-sm text-ink-muted">{adresseCabinet(c)}</p>

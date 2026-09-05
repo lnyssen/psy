@@ -110,8 +110,12 @@ export async function reserverOuDemander(_etat: ResultatRdv, f: FormData): Promi
   const firstName = texte(f, "firstName");
   const lastName = texte(f, "lastName");
   const email = texte(f, "email");
-  if (!firstName || !lastName || !email.includes("@")) {
-    return { ok: false, message: "Nom, prénom et adresse électronique sont nécessaires." };
+  const phone = texte(f, "phone");
+  if (!firstName || !lastName || !email.includes("@") || !phone) {
+    return {
+      ok: false,
+      message: "Nom, prénom, adresse électronique et téléphone sont nécessaires.",
+    };
   }
 
   const trop = await tropDeDemandes(email);
@@ -122,7 +126,7 @@ export async function reserverOuDemander(_etat: ResultatRdv, f: FormData): Promi
       firstName,
       lastName,
       email: email.toLowerCase(),
-      phone: texte(f, "phone") || null,
+      phone,
       message: texte(f, "message") || null,
       souhaite: debut,
       cabinetId,

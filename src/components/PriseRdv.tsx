@@ -78,17 +78,10 @@ export function PriseRdv({
                 key={c.id}
                 href={`/rendez-vous?cabinet=${c.id}${jeton ? `&p=${jeton}` : ""}`}
                 aria-current={actif ? "true" : undefined}
-                style={
-                  {
-                    "--cab": c.colorHex,
-                    "--cab-vif": c.vividHex,
-                    ...(actif
-                      ? { backgroundColor: "var(--cab)", borderColor: "var(--cab)", color: "#fff" }
-                      : { borderColor: "color-mix(in srgb, var(--cab-vif) 55%, transparent)" }),
-                  } as unknown as React.CSSProperties
-                }
-                className={`flex flex-col rounded-[14px] border px-5 py-3 transition-colors ${
-                  actif ? "" : "texte-cabinet"
+                className={`flex flex-col rounded-[16px] border px-5 py-3 transition-colors ${
+                  actif
+                    ? "border-accent bg-accent text-accent-contrast"
+                    : "border-line-strong hover:border-accent hover:text-accent-text"
                 }`}
               >
                 <span className="font-semibold">{c.nom}</span>
@@ -122,7 +115,7 @@ export function PriseRdv({
               <input name="firstName" placeholder="Prénom" required className={champ} />
               <input name="lastName" placeholder="Nom" required className={champ} />
               <input name="email" type="email" placeholder="Adresse électronique" required className={champ} />
-              <input name="phone" type="tel" placeholder="Téléphone (facultatif)" className={champ} />
+              <input name="phone" type="tel" placeholder="Téléphone" required className={champ} />
             </div>
             <textarea
               name="message"

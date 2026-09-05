@@ -48,7 +48,7 @@ export default async function Accueil() {
   return (
     <>
       <section className="px-6 pt-12 pb-16 md:pt-20 md:pb-24">
-        <div className="mx-auto grid max-w-5xl items-end gap-10 md:grid-cols-[1.15fr_0.85fr] md:gap-16">
+        <div className="mx-auto grid max-w-5xl items-center gap-10 md:grid-cols-[1.1fr_0.9fr] md:gap-14">
           <div className="order-2 md:order-1">
             <Surtitre>{SITE.titre}</Surtitre>
             <h1 className="mt-5 font-display text-[3.25rem] leading-[0.95] tracking-[-0.03em] md:text-[5.5rem]">
@@ -167,21 +167,15 @@ export default async function Accueil() {
       <section className="px-6 py-20 md:py-28">
         <div className="mx-auto max-w-5xl">
           <Titre>Où me trouver</Titre>
+          {/* Cartes neutres, à dessein. Le code couleur des lieux sert à les
+              distinguer d'un coup d'œil dans l'agenda, où ils se croisent vingt
+              fois par semaine. Un visiteur, lui, voit deux adresses : la couleur
+              n'y apporte rien et fait bariolé. Elle reste dans l'outil. */}
           <div className="mt-10 grid gap-4 sm:grid-cols-2">
             {cabinets.map((c) => (
-              <div
-                key={c.id}
-                style={
-                  {
-                    "--cab": c.colorHex,
-                    "--cab-fill": c.fillHex,
-                    "--cab-vif": c.vividHex,
-                  } as React.CSSProperties
-                }
-                className="teinte-cabinet rounded-[24px] px-8 py-8"
-              >
+              <div key={c.id} className="rounded-[24px] bg-sunken px-8 py-8">
                 <p className="font-display text-2xl">{c.nom}</p>
-                <p className="mt-2 text-sm opacity-80">{adresseCabinet(c)}</p>
+                <p className="mt-2 text-sm text-ink-muted">{adresseCabinet(c)}</p>
               </div>
             ))}
           </div>
