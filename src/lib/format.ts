@@ -23,6 +23,18 @@ export const PAYMENT_LABEL: Record<PaymentStatus, string> = {
   OVERDUE: "en retard",
 };
 
+export const METHOD_LABEL: Record<"CASH" | "ELECTRONIC", string> = {
+  CASH: "espèces",
+  ELECTRONIC: "électronique",
+};
+
+/** Durée d'une séance dans cette pratique. */
+export const DUREE_SEANCE = 45;
+
+/** Pas de séance le week-end : la grille s'arrête au vendredi, et un créneau
+ *  déplacé ne peut pas y atterrir. */
+export const JOURS_OUVRES = 5;
+
 /**
  * Le brief pose que le statut de la séance détermine mécaniquement sa
  * facturabilité : c'est une propriété dérivée, jamais stockée. Une annulation
@@ -39,6 +51,24 @@ export function isBillable(status: SessionStatus) {
  * une hypothèse prudente, à confirmer avec l'utilisatrice.
  */
 export const TRAJET_MIN = 30;
+
+/** Total des heures de séance d'un ensemble, en heures décimales. Les séances
+ *  annulées à temps n'y comptent pas : elles n'occupent plus le fauteuil. */
+export function heuresTotales(seances: { durationMin: number; status: SessionStatus }[]) {
+  const minutes = seances
+    .filter((s) => s.status !== "CANCELLED_IN_TIME")
+    .reduce((n, s) => n + s.durationMin, 0);
+  return minutes / 60;
+}
+
+/** « 3 h 45 » plutôt que « 3,75 h » : c'est ainsi qu'on lit une journée. */
+export function formatDuree(heures: number) {
+  const total = Math.round(heures * 60);
+  const h = Math.floor(total / 60);
+  const m = total % 60;
+  if (h === 0) return `${m} min`;
+  return m === 0 ? `${h} h` : `${h} h ${String(m).padStart(2, "0")}`;
+}
 
 export type SeanceLike = { startsAt: Date; durationMin: number; office: Office };
 
@@ -65,10 +95,21 @@ export function conflitsDeTrajet<T extends SeanceLike>(seances: T[]): Set<number
   return conflits;
 }
 
-/** Principe de discrétion : les vues d'ensemble n'affichent pas les noms
- *  complets. L'écran est potentiellement visible depuis le fauteuil. */
+/**
+ * Les noms complets sont affichés partout, y compris dans l'agenda : décision
+ * explicite de la praticienne, qui prime sur la retenue prévue au brief. La
+ * confidentialité repose donc désormais sur le verrouillage rapide de l'écran,
+ * et non sur ce que les vues d'ensemble laissent lire.
+ *
+ * Les initiales restent utilisées là où la place manque : pastilles, listes
+ * compactes.
+ */
+export function nomComplet(p: { firstName: string; lastName: string }) {
+  return `${p.firstName} ${p.lastName}`;
+}
+
 export function initiales(firstName: string, lastName: string) {
-  return `${firstName[0]}.${lastName[0]}.`;
+  return `${firstName[0]}${lastName[0]}`;
 }
 
 const LOCALE = "fr-BE";
@@ -102,6 +143,18 @@ export const fmtJourLong = new Intl.DateTimeFormat(LOCALE, {
 export const fmtJourCourt = new Intl.DateTimeFormat(LOCALE, {
   weekday: "short",
   day: "2-digit",
+  timeZone: FUSEAU,
+});
+export const fmtNomJour = new Intl.DateTimeFormat(LOCALE, { weekday: "short", timeZone: FUSEAU });
+export const fmtJourMois = new Intl.DateTimeFormat(LOCALE, {
+  day: "numeric",
+  month: "short",
+  timeZone: FUSEAU,
+});
+export const fmtJourMoisAn = new Intl.DateTimeFormat(LOCALE, {
+  day: "numeric",
+  month: "short",
+  year: "numeric",
   timeZone: FUSEAU,
 });
 export const fmtDateCourte = new Intl.DateTimeFormat(LOCALE, {
@@ -162,6 +215,7 @@ export function partiesJour(d: Date) {
       month: "2-digit",
       day: "2-digit",
       hour: "2-digit",
+      minute: "2-digit",
     })
       .formatToParts(d)
       .map((p) => [p.type, p.value]),
@@ -171,7 +225,14 @@ export function partiesJour(d: Date) {
     mois: Number(parts.month),
     jour: Number(parts.day),
     heure: Number(parts.hour) % 24,
+    minute: Number(parts.minute),
   };
+}
+
+/** Minutes écoulées depuis minuit, heure de Bruxelles. */
+export function minutesDeJour(d: Date) {
+  const { heure, minute } = partiesJour(d);
+  return heure * 60 + minute;
 }
 
 /** Heure bruxelloise d'une séance, pour la placer dans la grille. */

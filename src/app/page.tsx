@@ -1,45 +1,82 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
-import { CabinetTag, EtatPaiement, RegimeTag, StatutSeance, AlerteTrajet } from "@/components/tags";
+import { AlerteTrajet, CabinetTag, EtatPaiement, RegimeTag, StatutSeance } from "@/components/tags";
+import { GroupeFiltre, type Params } from "@/components/filtres";
 import {
+  DUREE_SEANCE,
   OFFICE_LABEL,
   conflitsDeTrajet,
   debutDeJour,
   euros,
   fmtHeure,
   fmtJourLong,
-  initiales,
+  formatDuree,
+  heuresTotales,
   isBillable,
+  minutesDeJour,
+  nomComplet,
+  partiesJour,
 } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
 
-export default async function Aujourdhui() {
-  const debut = debutDeJour(new Date());
+/** Prochain jour ouvré à partir de la date donnée, elle comprise. */
+function prochainJourOuvre(d: Date) {
+  const x = new Date(d);
+  for (let i = 0; i < 7; i++) {
+    const { annee, mois, jour } = partiesJour(x);
+    const semaine = new Date(Date.UTC(annee, mois - 1, jour)).getUTCDay();
+    if (semaine !== 0 && semaine !== 6) return x;
+    x.setDate(x.getDate() + 1);
+  }
+  return x;
+}
+
+export default async function Aujourdhui({ searchParams }: { searchParams: Promise<Params> }) {
+  const params = await searchParams;
+  const maintenant = new Date();
+  // Le week-end, l'écran montre la prochaine journée travaillée plutôt qu'un
+  // vide : c'est ce qu'on vient y chercher un samedi.
+  const cible = prochainJourOuvre(maintenant);
+  const estAujourdhui = debutDeJour(cible).getTime() === debutDeJour(maintenant).getTime();
+
+  const debut = debutDeJour(cible);
   const fin = new Date(debut);
   fin.setDate(fin.getDate() + 1);
 
   const seances = await prisma.session.findMany({
-    where: { startsAt: { gte: debut, lt: fin } },
+    where: {
+      startsAt: { gte: debut, lt: fin },
+      ...(params.cabinet ? { office: params.cabinet as "UCCLE" | "AUDERGHEM" } : {}),
+      ...(params.regime ? { patient: { scheme: params.regime as "CONVENTIONNE" | "PRIVE" } } : {}),
+    },
     orderBy: { startsAt: "asc" },
     include: { patient: true },
   });
 
   const conflits = conflitsDeTrajet(seances);
   const cabinets = [...new Set(seances.map((s) => s.office))];
-  const aStatuer = seances.filter((s) => s.status === "SCHEDULED" && s.startsAt < new Date());
+  const aStatuer = seances.filter((s) => s.status === "SCHEDULED" && s.startsAt < maintenant);
+  const total = heuresTotales(seances);
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-7">
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
+          {!estAujourdhui && (
+            <p className="mb-1 text-xs font-semibold tracking-[0.1em] text-accent-text uppercase">
+              Prochaine journée travaillée
+            </p>
+          )}
           <h1 className="font-display text-3xl tracking-tight first-letter:uppercase">
             {fmtJourLong.format(debut)}
           </h1>
           <p className="mt-2 flex flex-wrap items-center gap-2 text-sm text-ink-muted">
-            {seances.length === 0
-              ? "Aucune séance"
-              : `${seances.length} séance${seances.length > 1 ? "s" : ""}`}
+            <span data-numeric>
+              {seances.length === 0
+                ? "Aucune séance"
+                : `${seances.length} séance${seances.length > 1 ? "s" : ""} · ${formatDuree(total)}`}
+            </span>
             {cabinets.map((c) => (
               <CabinetTag key={c} office={c} />
             ))}
@@ -47,11 +84,34 @@ export default async function Aujourdhui() {
         </div>
         <Link
           href="/semaine"
-          className="rounded-full border border-line-strong px-5 py-2.5 text-sm font-medium transition-colors hover:border-accent hover:text-accent"
+          className="rounded-full border border-line-strong px-5 py-2.5 text-sm font-medium transition-colors hover:border-accent hover:text-accent-text"
         >
           Voir la semaine
         </Link>
       </header>
+
+      <div className="flex flex-wrap gap-x-6 gap-y-3">
+        <GroupeFiltre
+          base="/"
+          params={params}
+          cle="cabinet"
+          libelle="Cabinet"
+          options={[
+            { valeur: "UCCLE", label: "Uccle" },
+            { valeur: "AUDERGHEM", label: "Auderghem" },
+          ]}
+        />
+        <GroupeFiltre
+          base="/"
+          params={params}
+          cle="regime"
+          libelle="Régime"
+          options={[
+            { valeur: "PRIVE", label: "privé" },
+            { valeur: "CONVENTIONNE", label: "conventionné" },
+          ]}
+        />
+      </div>
 
       {aStatuer.length > 0 && (
         <p className="rounded-[14px] border border-line bg-surface px-5 py-4 text-sm">
@@ -65,7 +125,7 @@ export default async function Aujourdhui() {
         <div className="rounded-[14px] border border-dashed border-line-strong bg-surface px-6 py-16 text-center">
           <p className="font-display text-xl">Journée libre</p>
           <p className="mx-auto mt-2 max-w-sm text-sm text-ink-muted">
-            Aucune séance n’est prévue aujourd’hui, dans aucun des deux cabinets.
+            Aucune séance ne correspond, dans aucun des deux cabinets.
           </p>
         </div>
       ) : (
@@ -78,14 +138,18 @@ export default async function Aujourdhui() {
               >
                 <time
                   dateTime={s.startsAt.toISOString()}
-                  className="w-14 shrink-0 text-base font-semibold"
+                  className="w-28 shrink-0 font-mono text-sm font-semibold"
                 >
                   {fmtHeure.format(s.startsAt)}
+                  <span className="font-normal text-ink-muted">
+                    –
+                    {`${String(Math.floor((minutesDeJour(s.startsAt) + s.durationMin) / 60)).padStart(2, "0")}:${String((minutesDeJour(s.startsAt) + s.durationMin) % 60).padStart(2, "0")}`}
+                  </span>
                 </time>
-                <span className="w-14 shrink-0 text-base">
-                  {initiales(s.patient.firstName, s.patient.lastName)}
+                <span className="min-w-40 flex-1 text-base font-medium">
+                  {nomComplet(s.patient)}
                 </span>
-                <span className="flex flex-1 flex-wrap items-center gap-2">
+                <span className="flex flex-wrap items-center gap-2">
                   <CabinetTag office={s.office} />
                   <RegimeTag scheme={s.patient.scheme} />
                   {conflits.has(i) && <AlerteTrajet />}
@@ -97,7 +161,11 @@ export default async function Aujourdhui() {
                       {euros(s.amountCents)}
                     </span>
                   )}
-                  <EtatPaiement status={s.status} payment={s.paymentStatus} />
+                  <EtatPaiement
+                    status={s.status}
+                    payment={s.paymentStatus}
+                    methode={s.paymentMethod}
+                  />
                 </span>
               </Link>
               {conflits.has(i) && (
@@ -110,6 +178,10 @@ export default async function Aujourdhui() {
           ))}
         </ol>
       )}
+
+      <p className="text-xs text-ink-muted" data-numeric>
+        Une séance dure {DUREE_SEANCE} minutes.
+      </p>
     </div>
   );
 }

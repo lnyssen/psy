@@ -47,12 +47,15 @@ module à alimenter mais la conséquence de ce qu'elle a déjà fait.
    rattachée. Conséquence de conception : aucun écran ne demande de resaisir un
    nom, une date ou un montant déjà connus ailleurs.
 
-2. **Discrétion par défaut.** L'écran est potentiellement visible depuis le
-   fauteuil du patient. Rien de nominatif ni de clinique ne s'affiche au delà de
-   ce que la tâche en cours exige, un verrouillage immédiat reste toujours à
-   portée, et les vues d'ensemble privilégient les initiales et les compteurs aux
-   noms complets. Le confort de lecture cède ici devant la confidentialité, pas
-   l'inverse.
+2. **Le verrouillage porte seul la confidentialité.** L'écran reste
+   potentiellement visible depuis le fauteuil du patient, mais les noms complets
+   s'affichent partout, y compris dans l'agenda : décision explicite de la
+   praticienne, qui a primé sur la retenue prévue au départ (les vues d'ensemble
+   devaient s'en tenir aux initiales). La conséquence doit être assumée plutôt
+   que subie : la confidentialité de l'écran ne repose plus sur ce qu'il tait,
+   mais sur la rapidité avec laquelle on peut le masquer. Le bouton de
+   verrouillage est donc permanent, doublé d'un raccourci clavier, et aucun
+   contenu clinique n'apparaît hors de l'éditeur de notes.
 
 3. **Parité de fonction, pas de mise en page.** Tout ce qu'elle fait au bureau,
    elle doit pouvoir le faire depuis son téléphone. Mais ce qui est une matrice
@@ -63,8 +66,13 @@ module à alimenter mais la conséquence de ce qu'elle a déjà fait.
 
 - **Philosophie** : calme éditorial. Composition plate et précise, filets pleins,
   aplats sans transparence, hiérarchie portée par la graisse et la taille plutôt
-  que par la couleur. Fond blanc cassé chaud, un unique accent indigo, boutons
-  et cartouches en pilule. Rythme vertical plus généreux que celui d'un outil de
+  que par la couleur. Fond blanc cassé chaud, violet #7F00FF pour ce qui se
+  clique, navy #272757 en guise d'encre, boutons et cartouches en pilule.
+- **Typographie** : Satoshi comme unique famille de texte, titres et corps
+  confondus, hébergée localement plutôt que servie par un CDN tiers — une police
+  distante ferait partir l'adresse IP de l'utilisatrice chez ce tiers à chaque
+  chargement. Une mono accompagne les heures, durées et montants, qui doivent
+  s'aligner en colonne. Rythme vertical plus généreux que celui d'un outil de
   planification d'équipe : les écrans sont consultés entre deux consultations,
   pas parcourus vingt fois par heure.
 - **Tonalité** : posée, sobre, attentive. Ni froideur clinique, ni douceur
@@ -88,15 +96,21 @@ petits aplats dans une même ligne de tableau, sur fond clair :
 - **État de paiement** : dû, payé, en retard.
 - **Cabinet** : Uccle, Auderghem.
 
-C'est le problème central de la palette, pas sa décoration. Règle retenue : une
-seule de ces familles est portée par de la couleur pleine — l'état de paiement,
-le plus scruté. Les trois autres passent par des traitements non chromatiques
-(graisse, filet, cartouche discret) doublés de texte. Chaque valeur porteuse de
-sens est écrite en toutes lettres à côté de son signal visuel.
+C'est le problème central de la palette, pas sa décoration. Règle retenue :
 
-Corollaire pour la couleur de marque : l'accent ne peut être ni vert, ni ambré,
-ni rouge, sous peine d'entrer en concurrence avec un état de paiement. D'où
-l'indigo retenu, chromatiquement à l'écart des trois.
+- **L'état de paiement** garde la couleur pleine — ambre, vert, rouge. C'est la
+  famille la plus scrutée.
+- **Les deux cabinets** reçoivent les deux couleurs de marque, navy pour Uccle
+  et violet pour Auderghem, sur demande explicite qu'ils soient nettement
+  distincts. Les réutiliser plutôt qu'introduire deux teintes de plus était la
+  seule façon de tenir cette demande sans saturer l'écran. Le cabinet est en
+  outre doublé d'une pastille pleine et d'un filet vertical sur les blocs
+  d'agenda : à taille de badge, la forme se lit avant la teinte.
+- **Régime et statut de séance** passent sans couleur, par la graisse, le filet
+  et le cartouche.
+
+Chaque valeur porteuse de sens est écrite en toutes lettres à côté de son signal
+visuel. Aucune information ne repose sur la seule couleur.
 
 ## Patterns existants
 
@@ -112,12 +126,11 @@ des conventions techniques, pas de l'identité visuelle.
 - **Ce qui ne suit pas** : la palette violette, les polices Noka et Hanken
   Grotesk et le logo appartiennent à Média Animation. L'outil d'Amandine a besoin
   de sa propre identité.
-- **Typographie à définir** (voir `/design-tokens`) : direction recommandée, une
-  serif de labeur pour les titres et une sans humaniste pour le corps, avec
-  chiffres en chasse tabulaire obligatoires partout où figurent des dates, des
-  heures, des montants ou des compteurs.
-- **Couleurs à définir** : neutres chauds plutôt que gris froids, encre proche du
-  noir mais teintée, une seule teinte d'accent.
+- **Typographie arrêtée** : Satoshi (400, 500, 700, 900) en local, JetBrains Mono
+  pour les valeurs numériques. Chiffres en chasse tabulaire partout où figurent
+  des dates, des heures, des montants ou des compteurs.
+- **Couleurs arrêtées** : voir `src/app/globals.css`, seule source de vérité, où
+  chaque rapport de contraste mesuré est consigné en commentaire.
 
 ## Inventaire des composants
 
@@ -141,6 +154,12 @@ des conventions techniques, pas de l'identité visuelle.
 | Tableau de bord financier | Nouveau | Revenus par mois et par régime, impayés, charges |
 | Saisie de charges | Nouveau | Poste, montant, justificatif joint |
 | Export comptable | Nouveau | Récapitulatif annuel destiné au comptable |
+| Tri de colonne | Nouveau | En-tête cliquable, état porté par l'URL |
+| Filtres | Nouveau | Cabinet, régime, état de paiement ; pilules liées, état porté par l'URL |
+| Glisser-déposer d'agenda | Nouveau | Déplacement au quart d'heure, doublé de boutons pour le clavier |
+| Notes de dossier | Nouveau | Datées et empilées, jamais réécrites |
+| Encaissement | Nouveau | Espèces ou électronique, demandé au moment du geste |
+| Reçu PDF | Nouveau | Composé côté serveur, identique quel que soit le navigateur |
 | États vides | Nouveau | Premier lancement, journée sans rendez vous, patient sans historique |
 | Champs de formulaire | Nouveau | Base commune, cibles tactiles conformes sur téléphone |
 | Modale de confirmation | Nouveau | Réservée aux actions destructrices ou irréversibles |
@@ -242,8 +261,26 @@ prévoyait au départ.
   seul. Conséquences : le lieu devient une propriété de la séance, il s'ajoute
   aux familles de sens qui se disputent l'écran, et l'agenda doit signaler les
   enchaînements impossibles entre les deux sites.
-- **Identité arrêtée** : AMANDINE MONSEL / AMAPSY SRL, accent indigo sur blanc
-  cassé, boutons en pilule. La palette n'est plus une question ouverte.
+- **Identité arrêtée** : AMANDINE MONSEL / AMAPSY SRL, violet #7F00FF et navy
+  #272757 sur blanc cassé, Satoshi, boutons en pilule, navigation à icônes. La
+  palette n'est plus une question ouverte. L'indigo d'une première version a été
+  remplacé par ce violet, sur demande.
+- **Noms complets partout**, y compris agenda et calendrier. Renverse le principe
+  de discrétion initial ; voir le principe 2, réécrit en conséquence.
+- **Cabinets visuellement distincts**, portés par les deux couleurs de marque.
+- **Séance de 45 minutes, pas de séance le week-end.** Deux questions ouvertes
+  refermées : l'agenda va du lundi au vendredi, et le serveur refuse un
+  déplacement vers un samedi ou un dimanche — une règle qui ne vivrait que dans
+  le navigateur n'en serait pas une.
+- **Agenda positionné à l'heure réelle**, blocs dimensionnés à leur durée et
+  répartis en colonnes parallèles quand ils se chevauchent, sans défilement
+  interne : c'est la page qui défile, et sous 900 px la grille cède la place à
+  une liste par jour.
+- **Tri et filtres sur toutes les vues**, portés par l'URL : la vue est
+  partageable, le retour arrière fonctionne, rien ne dépend de JavaScript.
+- **Reçu PDF** avec mode de paiement (espèces ou électronique). Ce n'est pas une
+  attestation de soins, et les prestations de psychologue sont exonérées de TVA
+  en Belgique.
 
 ## Arbitrages assumés
 
@@ -288,12 +325,11 @@ consignées ici pour qu'elles restent des choix, et non des oublis.
 
 - Volume de patientèle et rythme hebdomadaire, qui déterminent la densité utile
   de l'agenda.
-- Jours réellement travaillés. L'agenda affiche pour l'instant lundi à samedi,
-  par hypothèse.
 - Répartition des journées entre Uccle et Auderghem, et temps de trajet réel
-  entre les deux. La valeur retenue par défaut, trente minutes, est une
-  supposition prudente qui conditionne les alertes d'agenda.
-- Tarifs pratiqués en privé, et durée standard d'une séance.
+  entre les deux. La valeur retenue par défaut, trente minutes, reste une
+  supposition qui conditionne les alertes d'agenda.
+- Contenu exact attendu sur un reçu par sa comptable.
+- Tarifs pratiqués en privé.
 - Fonctionnement exact du régime conventionné dans son cas : quotas de séances,
   destinataire de la facturation, pièces exigées.
 - Exigences précises des mutuelles belges sur le contenu d'une attestation.

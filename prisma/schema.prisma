@@ -41,6 +41,12 @@ enum SessionStatus {
   NO_SHOW
 }
 
+/// Comment le paiement est entré. Sert au reçu, qui doit le mentionner.
+enum PaymentMethod {
+  CASH
+  ELECTRONIC
+}
+
 /// Seule famille de sens portée par de la couleur pleine dans l'interface
 /// (voir la contrainte chromatique du brief) — les autres passent par des
 /// traitements non chromatiques doublés de texte.
@@ -66,6 +72,12 @@ model Patient {
   lastName  String     @map("last_name")
   email     String?
   phone     String?
+  /// Adresse postale, en champs séparés : un reçu doit pouvoir la composer
+  /// proprement, ce qu'une chaîne unique ne permet pas.
+  addressLine String?  @map("address_line")
+  postalCode  String?  @map("postal_code")
+  city        String?
+  birthDate   DateTime? @map("birth_date")
   scheme    CareScheme
   /// Tarif propre au patient, en centimes pour éviter les flottants.
   /// Null en conventionné : le tarif ne lui appartient pas.
@@ -78,6 +90,7 @@ model Patient {
   updatedAt DateTime   @updatedAt @map("updated_at")
 
   sessions Session[]
+  patientNotes Note[]
 
   @@index([lastName, firstName])
   @@map("patients")
@@ -94,13 +107,17 @@ model Session {
   office        Office        @default(UCCLE)
   /// Durée en minutes plutôt qu'une heure de fin : c'est ainsi qu'une
   /// praticienne raisonne, et ça simplifie les séries récurrentes à venir.
-  durationMin   Int           @default(50) @map("duration_min")
+  /// Quarante-cinq minutes est la durée d'une séance dans cette pratique.
+  durationMin   Int           @default(45) @map("duration_min")
   status        SessionStatus @default(SCHEDULED)
   paymentStatus PaymentStatus @default(DUE) @map("payment_status")
   /// Montant figé au moment de la séance : le tarif du patient peut changer
   /// ensuite sans réécrire l'historique comptable.
   amountCents   Int?          @map("amount_cents")
   paidAt        DateTime?     @map("paid_at")
+  paymentMethod PaymentMethod? @map("payment_method")
+  /// Date d'émission du reçu, pour ne pas en délivrer deux fois sans le savoir.
+  receiptAt     DateTime?     @map("receipt_at")
   /// Note clinique. Chiffrement applicatif à venir (le chiffrement de bout en
   /// bout a été écarté, voir les arbitrages du brief) : ce champ restera vide
   /// tant que ce chiffrement n'est pas en place.
@@ -111,4 +128,21 @@ model Session {
   @@index([startsAt])
   @@index([patientId, startsAt])
   @@map("sessions")
+}
+
+/// Notes libres attachées au dossier, datées et empilées plutôt que réécrites :
+/// un dossier se lit dans le temps.
+///
+/// Le champ reste en clair pour l'instant. Le chiffrement applicatif prévu par
+/// le brief n'est pas encore en place ; tant qu'il ne l'est pas, cette
+/// instance ne doit recevoir aucune note clinique réelle.
+model Note {
+  id        String   @id @default(cuid())
+  patientId String   @map("patient_id")
+  patient   Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  body      String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([patientId, createdAt])
+  @@map("notes")
 }

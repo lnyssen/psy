@@ -1,15 +1,22 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
-import { CabinetTag, EtatPaiement } from "@/components/tags";
+import { GrilleSemaine, type JourGrille, type SeanceGrille } from "@/components/GrilleSemaine";
+import { GroupeFiltre, avecParam, type Params } from "@/components/filtres";
 import {
-  OFFICE_LABEL,
+  JOURS_OUVRES,
+  PAYMENT_LABEL,
   conflitsDeTrajet,
-  fmtHeure,
-  fmtJourCourt,
-  initiales,
+  fmtJourMois,
+  fmtJourMoisAn,
+  fmtNomJour,
+  formatDuree,
+  heuresTotales,
+  isBillable,
   lundiDe,
   memeJour,
-  heureDe,
+  minutesDeJour,
+  nomComplet,
+  partiesJour,
 } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
@@ -17,149 +24,131 @@ export const dynamic = "force-dynamic";
 const HEURE_DEBUT = 8;
 const HEURE_FIN = 19;
 
-export default async function Semaine() {
-  const lundi = lundiDe(new Date());
-  const fin = new Date(lundi);
-  fin.setDate(fin.getDate() + 7);
+export default async function Semaine({ searchParams }: { searchParams: Promise<Params> }) {
+  const params = await searchParams;
+  const ancre = params.semaine ? new Date(params.semaine) : new Date();
+  const lundi = lundiDe(Number.isNaN(ancre.getTime()) ? new Date() : ancre);
+
+  const finSemaine = new Date(lundi);
+  finSemaine.setDate(finSemaine.getDate() + JOURS_OUVRES);
 
   const seances = await prisma.session.findMany({
-    where: { startsAt: { gte: lundi, lt: fin } },
+    where: {
+      startsAt: { gte: lundi, lt: finSemaine },
+      ...(params.cabinet ? { office: params.cabinet as "UCCLE" | "AUDERGHEM" } : {}),
+      ...(params.regime ? { patient: { scheme: params.regime as "CONVENTIONNE" | "PRIVE" } } : {}),
+    },
     orderBy: { startsAt: "asc" },
     include: { patient: true },
   });
 
   const conflits = conflitsDeTrajet(seances);
-  // Six colonnes, lundi à samedi : une pratique libérale reçoit couramment le
-  // samedi. Le dimanche est exclu — à confirmer avec l'utilisatrice, c'est
-  // l'un des points ouverts du plan de recherche.
-  const jours = Array.from({ length: 6 }, (_, i) => {
+  const maintenant = new Date();
+
+  const jours: JourGrille[] = Array.from({ length: JOURS_OUVRES }, (_, i) => {
     const d = new Date(lundi);
     d.setDate(d.getDate() + i);
-    return d;
+    const duJour = seances.filter((s) => memeJour(s.startsAt, d));
+    return {
+      iso: d.toISOString(),
+      nom: fmtNomJour.format(d).replace(".", ""),
+      numero: String(partiesJour(d).jour),
+      total: duJour.length ? formatDuree(heuresTotales(duJour)) : "—",
+      aujourdhui: memeJour(d, maintenant),
+    };
   });
-  const heures = Array.from({ length: HEURE_FIN - HEURE_DEBUT }, (_, i) => HEURE_DEBUT + i);
-  const aujourdhui = new Date();
-  // Le compteur ne doit annoncer que ce que la grille montre réellement.
-  const affichees = seances.filter((s) => jours.some((j) => memeJour(s.startsAt, j)));
+
+  const pourGrille: SeanceGrille[] = seances.map((s, i) => ({
+    id: s.id,
+    patientId: s.patientId,
+    nom: nomComplet(s.patient),
+    isoDebut: s.startsAt.toISOString(),
+    minutes: minutesDeJour(s.startsAt),
+    duree: s.durationMin,
+    jour: jours.findIndex((j) => memeJour(new Date(j.iso), s.startsAt)),
+    office: s.office,
+    paiement: isBillable(s.status) ? s.paymentStatus : null,
+    libellePaiement: isBillable(s.status) ? PAYMENT_LABEL[s.paymentStatus] : null,
+    conflit: conflits.has(i),
+  }));
+
+  const decalage = (semaines: number) => {
+    const d = new Date(lundi);
+    d.setDate(d.getDate() + semaines * 7);
+    return avecParam("/semaine", params, "semaine", d.toISOString().slice(0, 10));
+  };
+
+  const vendredi = new Date(lundi);
+  vendredi.setDate(vendredi.getDate() + JOURS_OUVRES - 1);
+  const totalSemaine = heuresTotales(seances);
 
   return (
-    <div className="flex flex-col gap-8">
-      <header>
-        <h1 className="font-display text-3xl tracking-tight">Semaine</h1>
-        <p className="mt-2 text-sm text-ink-muted">
-          {affichees.length} séance{affichees.length > 1 ? "s" : ""} du{" "}
-          {fmtJourCourt.format(jours[0])} au {fmtJourCourt.format(jours[5])}.
-        </p>
+    <div className="flex flex-col gap-6">
+      <header className="flex flex-wrap items-center gap-x-4 gap-y-3">
+        <div className="flex items-center gap-1">
+          <Link
+            href={decalage(-1)}
+            aria-label="Semaine précédente"
+            className="flex h-8 w-8 items-center justify-center rounded-full border border-line-strong text-ink-muted transition-colors hover:border-accent hover:text-accent-text"
+          >
+            ‹
+          </Link>
+          <Link
+            href={decalage(1)}
+            aria-label="Semaine suivante"
+            className="flex h-8 w-8 items-center justify-center rounded-full border border-line-strong text-ink-muted transition-colors hover:border-accent hover:text-accent-text"
+          >
+            ›
+          </Link>
+        </div>
+        <h1 className="font-mono text-xl tracking-tight" data-numeric>
+          {fmtJourMois.format(lundi)} – {fmtJourMoisAn.format(vendredi)}
+        </h1>
+        <Link
+          href={avecParam("/semaine", params, "semaine")}
+          className="rounded-full border border-line-strong px-3.5 py-1.5 text-xs font-medium text-ink-muted transition-colors hover:border-accent hover:text-accent-text"
+        >
+          Cette semaine
+        </Link>
+        <span className="ml-auto text-sm text-ink-muted" data-numeric>
+          {seances.length} séance{seances.length > 1 ? "s" : ""} · {formatDuree(totalSemaine)}
+        </span>
       </header>
 
-      {/* Sur écran large : la matrice. En dessous de 900 px, elle cède la place
-          à une liste chronologique — pas à un tableau qui défile de côté. */}
-      <div className="hidden overflow-hidden rounded-[14px] border border-line bg-surface md:block">
-        <div className="grid grid-cols-[3.5rem_repeat(6,1fr)]">
-          <div className="border-b border-line bg-sunken" />
-          {jours.map((j) => (
-            <div
-              key={j.toISOString()}
-              className={`border-b border-l border-line px-3 py-2.5 text-center text-xs font-semibold first-letter:uppercase ${
-                memeJour(j, aujourdhui) ? "bg-accent-soft text-accent" : "bg-sunken text-ink-muted"
-              }`}
-            >
-              {fmtJourCourt.format(j)}
-            </div>
-          ))}
-
-          {heures.map((h) => (
-            <div key={h} className="contents">
-              <div className="border-b border-line px-2 py-1 text-right text-[11px] text-ink-muted">
-                {String(h).padStart(2, "0")}h
-              </div>
-              {jours.map((j) => {
-                const cellules = seances.filter(
-                  (s) => memeJour(s.startsAt, j) && heureDe(s.startsAt) === h,
-                );
-                return (
-                  <div
-                    key={`${h}-${j.toISOString()}`}
-                    className={`min-h-[3.25rem] border-b border-l border-line p-1 ${
-                      memeJour(j, aujourdhui) ? "bg-accent-soft/30" : ""
-                    }`}
-                  >
-                    {cellules.map((s) => {
-                      const i = seances.indexOf(s);
-                      return (
-                        <Link
-                          key={s.id}
-                          href={`/patients/${s.patientId}`}
-                          className={`mb-1 block rounded-lg border px-2 py-1.5 text-[11px] leading-tight transition-colors last:mb-0 ${
-                            conflits.has(i)
-                              ? "border-overdue/50 bg-overdue-soft"
-                              : "border-line bg-paper hover:border-accent"
-                          }`}
-                        >
-                          <span className="flex items-baseline justify-between gap-1">
-                            <span className="font-semibold">
-                              {initiales(s.patient.firstName, s.patient.lastName)}
-                            </span>
-                            <span className="text-ink-muted">{fmtHeure.format(s.startsAt)}</span>
-                          </span>
-                          <span className="mt-0.5 block text-ink-muted">
-                            {OFFICE_LABEL[s.office]}
-                          </span>
-                        </Link>
-                      );
-                    })}
-                  </div>
-                );
-              })}
-            </div>
-          ))}
-        </div>
+      <div className="flex flex-wrap gap-x-6 gap-y-3">
+        <GroupeFiltre
+          base="/semaine"
+          params={params}
+          cle="cabinet"
+          libelle="Cabinet"
+          options={[
+            { valeur: "UCCLE", label: "Uccle" },
+            { valeur: "AUDERGHEM", label: "Auderghem" },
+          ]}
+        />
+        <GroupeFiltre
+          base="/semaine"
+          params={params}
+          cle="regime"
+          libelle="Régime"
+          options={[
+            { valeur: "PRIVE", label: "privé" },
+            { valeur: "CONVENTIONNE", label: "conventionné" },
+          ]}
+        />
       </div>
 
-      {/* Téléphone : même périmètre, forme séquentielle. */}
-      <div className="flex flex-col gap-6 md:hidden">
-        {jours.map((j) => {
-          const duJour = seances.filter((s) => memeJour(s.startsAt, j));
-          return (
-            <section key={j.toISOString()}>
-              <h2
-                className={`mb-2 text-sm font-semibold first-letter:uppercase ${
-                  memeJour(j, aujourdhui) ? "text-accent" : ""
-                }`}
-              >
-                {fmtJourCourt.format(j)}
-              </h2>
-              {duJour.length === 0 ? (
-                <p className="rounded-[14px] border border-dashed border-line-strong px-4 py-5 text-center text-xs text-ink-muted">
-                  Journée libre
-                </p>
-              ) : (
-                <ol className="flex flex-col gap-2">
-                  {duJour.map((s) => (
-                    <li key={s.id}>
-                      <Link
-                        href={`/patients/${s.patientId}`}
-                        className="flex items-center gap-3 rounded-[14px] border border-line bg-surface px-4 py-3"
-                      >
-                        <time className="w-12 shrink-0 text-sm font-semibold">
-                          {fmtHeure.format(s.startsAt)}
-                        </time>
-                        <span className="w-12 shrink-0 text-sm">
-                          {initiales(s.patient.firstName, s.patient.lastName)}
-                        </span>
-                        <span className="flex-1">
-                          <CabinetTag office={s.office} />
-                        </span>
-                        <EtatPaiement status={s.status} payment={s.paymentStatus} />
-                      </Link>
-                    </li>
-                  ))}
-                </ol>
-              )}
-            </section>
-          );
-        })}
-      </div>
+      <GrilleSemaine
+        seances={pourGrille}
+        jours={jours}
+        heureDebut={HEURE_DEBUT}
+        heureFin={HEURE_FIN}
+      />
+
+      <p className="text-xs text-ink-muted">
+        Glissez une séance pour la déplacer, au quart d’heure près. Au clavier, les deux flèches
+        qui apparaissent sur un bloc la décalent d’un quart d’heure. Le week-end est refusé.
+      </p>
     </div>
   );
 }

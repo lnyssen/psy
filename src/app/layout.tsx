@@ -1,15 +1,9 @@
 import type { Metadata } from "next";
-import { Inter, Newsreader } from "next/font/google";
+import { JetBrains_Mono } from "next/font/google";
 import { Nav } from "@/components/Nav";
 import "./globals.css";
 
-const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
-const newsreader = Newsreader({
-  subsets: ["latin"],
-  variable: "--font-newsreader",
-  display: "swap",
-  weight: ["400", "500"],
-});
+const mono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-mono-face", display: "swap" });
 
 export const metadata: Metadata = {
   title: "Amandine Monsel — Amapsy SRL",
@@ -19,7 +13,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="fr" className={`${inter.variable} ${newsreader.variable}`}>
+    <html lang="fr" className={mono.variable}>
       <body>
         <Nav />
         <main className="mx-auto max-w-6xl px-5 py-8 md:px-8 md:py-12">{children}</main>
