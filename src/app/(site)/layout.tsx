@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { adresseCabinet } from "@/lib/format";
+import { SITE } from "@/lib/site";
 
 const PAGES = [
   { href: "/", label: "Accueil" },
@@ -11,7 +12,7 @@ const PAGES = [
 
 export default async function SiteLayout({ children }: { children: React.ReactNode }) {
   const cabinets = await prisma.cabinet.findMany({
-    where: { actif: true },
+    where: { actif: true, publie: true },
     orderBy: { ordre: "asc" },
   });
 
@@ -24,7 +25,7 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
               Amandine Monsel
             </span>
             <span className="mt-0.5 text-[11px] leading-[1.4] font-semibold tracking-[0.2em] text-accent-text uppercase">
-              Psychologue
+              Psychologue clinicienne
             </span>
           </Link>
           <nav aria-label="Navigation du site" className="flex flex-wrap gap-x-5 gap-y-1">
@@ -51,13 +52,26 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
 
       <footer className="border-t border-line">
         <div className="mx-auto flex max-w-4xl flex-col gap-6 px-6 py-10 text-sm">
-          <div className="flex flex-wrap gap-8">
+          <div className="flex flex-wrap gap-x-12 gap-y-6">
             {cabinets.map((c) => (
               <div key={c.id}>
                 <p className="font-semibold">{c.nom}</p>
                 <p className="mt-1 text-ink-muted">{adresseCabinet(c)}</p>
               </div>
             ))}
+            <div>
+              <p className="font-semibold">Contact</p>
+              <p className="mt-1">
+                <a href={`tel:${SITE.telephoneLien}`} className="text-ink-muted hover:text-accent-text" data-numeric>
+                  {SITE.telephone}
+                </a>
+              </p>
+              <p>
+                <a href={`mailto:${SITE.email}`} className="text-ink-muted hover:text-accent-text">
+                  {SITE.email}
+                </a>
+              </p>
+            </div>
           </div>
           <p className="text-xs text-ink-muted">
             Amandine Monsel — Amapsy SRL. Psychologue inscrite à la Commission des psychologues.

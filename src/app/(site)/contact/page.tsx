@@ -1,12 +1,13 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { adresseCabinet } from "@/lib/format";
+import { SITE } from "@/lib/site";
 
 export const dynamic = "force-dynamic";
 
 export default async function Contact() {
   const cabinets = await prisma.cabinet.findMany({
-    where: { actif: true },
+    where: { actif: true, publie: true },
     orderBy: { ordre: "asc" },
   });
 
@@ -38,12 +39,27 @@ export default async function Contact() {
         ))}
       </section>
 
-      <section className="rounded-[14px] border border-dashed border-line-strong px-6 py-5">
-        <p className="text-sm">
-          <span className="font-semibold">À compléter</span> — adresse électronique et numéro de
-          téléphone professionnels. Je ne les invente pas : ce sont des coordonnées réelles qui
-          engagent, et elles doivent venir d’elle.
-        </p>
+      <section className="flex flex-wrap gap-4">
+        <a
+          href={`tel:${SITE.telephoneLien}`}
+          className="rounded-[14px] border border-line px-6 py-5 transition-colors hover:border-accent"
+        >
+          <p className="text-[11px] font-semibold tracking-[0.12em] text-ink-muted uppercase">
+            Téléphone
+          </p>
+          <p className="mt-1 text-lg font-semibold" data-numeric>
+            {SITE.telephone}
+          </p>
+        </a>
+        <a
+          href={`mailto:${SITE.email}`}
+          className="rounded-[14px] border border-line px-6 py-5 transition-colors hover:border-accent"
+        >
+          <p className="text-[11px] font-semibold tracking-[0.12em] text-ink-muted uppercase">
+            Courriel
+          </p>
+          <p className="mt-1 text-lg font-semibold">{SITE.email}</p>
+        </a>
       </section>
 
       <section>

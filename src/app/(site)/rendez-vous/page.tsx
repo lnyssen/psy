@@ -13,7 +13,7 @@ export default async function RendezVous({
   const { cabinet, p } = await searchParams;
 
   const cabinets = await prisma.cabinet.findMany({
-    where: { actif: true },
+    where: { actif: true, publie: true },
     orderBy: { ordre: "asc" },
   });
   if (cabinets.length === 0) return null;

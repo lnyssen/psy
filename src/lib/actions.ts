@@ -113,6 +113,7 @@ export async function enregistrerCabinet(f: FormData) {
     city: texte(f, "city"),
     colorHex: texte(f, "colorHex"),
     actif: f.get("actif") === "on",
+    publie: f.get("publie") === "on",
   };
   if (!donnees.nom) return;
 

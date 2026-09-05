@@ -105,10 +105,16 @@ export default async function Reglages() {
                   </fieldset>
 
                   <div className="flex flex-wrap items-center justify-between gap-3">
-                    <label className="flex items-center gap-2 text-sm">
-                      <input type="checkbox" name="actif" defaultChecked={c.actif} />
-                      Proposé à la création d’une séance
-                    </label>
+                    <span className="flex flex-wrap gap-x-5 gap-y-1">
+                      <label className="flex items-center gap-2 text-sm">
+                        <input type="checkbox" name="actif" defaultChecked={c.actif} />
+                        Proposé à la création d’une séance
+                      </label>
+                      <label className="flex items-center gap-2 text-sm">
+                        <input type="checkbox" name="publie" defaultChecked={c.publie} />
+                        Visible sur le site public
+                      </label>
+                    </span>
                     <span className="text-xs text-ink-muted" data-numeric>
                       {nb} séance{nb > 1 ? "s" : ""} enregistrée{nb > 1 ? "s" : ""}
                     </span>
@@ -185,10 +191,14 @@ export default async function Reglages() {
               </label>
             ))}
           </fieldset>
-          <div className="mt-3 flex items-center gap-4">
+          <div className="mt-3 flex flex-wrap items-center gap-4">
             <label className="flex items-center gap-2 text-sm">
               <input type="checkbox" name="actif" defaultChecked />
               Proposé à la création d’une séance
+            </label>
+            <label className="flex items-center gap-2 text-sm">
+              <input type="checkbox" name="publie" defaultChecked />
+              Visible sur le site public
             </label>
             <button
               type="submit"

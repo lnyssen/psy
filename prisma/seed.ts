@@ -69,6 +69,9 @@ const CABINETS = [
     colorHex: "#1B4F9C",
     fillHex: "#E5ECF8",
     ordre: 2,
+    // L'école n'est pas un lieu où l'on prend rendez-vous : elle n'a rien à
+    // faire sur le site public.
+    publie: false,
   },
 ];
 

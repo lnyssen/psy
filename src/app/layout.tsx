@@ -3,9 +3,9 @@ import { cookies } from "next/headers";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Amandine Monsel — Psychologue à Uccle et Auderghem",
+  title: "Amandine Monsel — Psychologue clinicienne à Uccle et Auderghem",
   description:
-    "Psychologue clinicienne à Bruxelles. Consultations à Uccle et Auderghem, sur rendez-vous.",
+    "Psychologue clinicienne et psychothérapeute à Bruxelles. Enfants, adolescents et jeunes adultes. Orientations analytique et systémique. Consultations en français et en anglais.",
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {

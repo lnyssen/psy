@@ -82,6 +82,11 @@ model Cabinet {
   fillHex     String  @map("fill_hex")
   /// Un cabinet fermé n'est plus proposé, mais ses séances passées le gardent.
   actif       Boolean @default(true)
+  /// Visible sur le site public et proposé à la réservation. Faux pour un lieu
+  /// où l'on ne prend pas rendez-vous — l'école, par exemple, où Amandine
+  /// intervient pour l'établissement et non pour une patientèle qui la
+  /// solliciterait directement.
+  publie      Boolean @default(true)
   ordre       Int     @default(0)
 
   sessions       Session[]

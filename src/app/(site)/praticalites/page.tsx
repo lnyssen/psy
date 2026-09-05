@@ -1,21 +1,22 @@
 import { prisma } from "@/lib/db";
-import { adresseCabinet, euros } from "@/lib/format";
+import { adresseCabinet } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
 
 export default async function Praticalites() {
-  const [cabinets, tarifs] = await Promise.all([
-    prisma.cabinet.findMany({ where: { actif: true }, orderBy: { ordre: "asc" } }),
-    prisma.tarif.findMany({ where: { actif: true }, orderBy: { ordre: "asc" } }),
-  ]);
+  // Les tarifs ne figurent pas sur le site : ils se disent au téléphone ou en
+  // séance, comme le veut la praticienne. Ils restent gérés dans l'outil.
+  const cabinets = await prisma.cabinet.findMany({
+    where: { actif: true, publie: true },
+    orderBy: { ordre: "asc" },
+  });
 
   return (
     <div className="flex flex-col gap-14">
       <section>
         <h1 className="font-display text-4xl font-bold tracking-tight">Praticalités</h1>
         <p className="mt-4 max-w-2xl text-lg leading-relaxed text-ink-muted">
-          Où, combien, et comment se faire rembourser. Autant de choses qu’il vaut mieux savoir
-          avant d’appeler.
+          Où me trouver, et comment se faire rembourser.
         </p>
       </section>
 
@@ -38,27 +39,6 @@ export default async function Praticalites() {
             </div>
           ))}
         </div>
-      </section>
-
-      <section>
-        <h2 className="font-display text-2xl font-bold tracking-tight">Tarifs</h2>
-        <ul className="mt-5 overflow-hidden rounded-[14px] border border-line">
-          {tarifs.map((t) => (
-            <li
-              key={t.id}
-              className="flex items-baseline justify-between gap-4 border-b border-line px-6 py-4 last:border-b-0"
-            >
-              <span>{t.libelle}</span>
-              <span className="font-semibold" data-numeric>
-                {euros(t.amountCents)}
-              </span>
-            </li>
-          ))}
-        </ul>
-        <p className="mt-4 max-w-2xl text-sm leading-relaxed text-ink-muted">
-          Le règlement se fait à la fin de chaque séance, en espèces ou par voie électronique. Un
-          reçu vous est remis sur demande.
-        </p>
       </section>
 
       <section>
