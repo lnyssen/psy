@@ -1,19 +1,28 @@
-import type { Office, PaymentStatus, SessionStatus, CareScheme } from "@prisma/client";
+import type { PaymentStatus, SessionStatus, CareScheme } from "@prisma/client";
 
-export const OFFICE_LABEL: Record<Office, string> = {
-  UCCLE: "Uccle",
-  AUDERGHEM: "Auderghem",
+/**
+ * Vue minimale d'un cabinet, telle que les composants d'affichage en ont
+ * besoin. Nom, adresse et couleurs viennent désormais de la base : ce ne sont
+ * plus des constantes, et aucun composant ne doit les redéduire.
+ */
+export type CabinetVue = {
+  id: string;
+  nom: string;
+  addressLine: string;
+  postalCode: string;
+  city: string;
+  colorHex: string;
+  fillHex: string;
 };
 
-/** Adresses des deux cabinets, telles qu'elles doivent figurer sur un reçu. */
-export const OFFICE_ADDRESS: Record<Office, string> = {
-  UCCLE: "Rue Victor Allard 191, 1180 Uccle",
-  AUDERGHEM: "Place Félix Govaert 4, 1160 Auderghem",
-};
+export function adresseCabinet(c: Pick<CabinetVue, "addressLine" | "postalCode" | "city">) {
+  return `${c.addressLine}, ${c.postalCode} ${c.city}`;
+}
 
 export const SCHEME_LABEL: Record<CareScheme, string> = {
   CONVENTIONNE: "conventionné",
   PRIVE: "privé",
+  INSTITUTION: "institution",
 };
 
 export const STATUS_LABEL: Record<SessionStatus, string> = {
@@ -52,9 +61,11 @@ export function isBillable(status: SessionStatus) {
 }
 
 /**
- * Temps de trajet minimal entre les deux cabinets, en minutes. Uccle et
- * Auderghem sont aux deux extrémités du sud de Bruxelles : trente minutes est
- * une hypothèse prudente, à confirmer avec l'utilisatrice.
+ * Temps de trajet minimal entre deux cabinets, en minutes. Valeur unique et
+ * prudente plutôt qu'une matrice de trajets : tant que les lieux se comptent
+ * sur une main et se trouvent tous dans le sud de Bruxelles, une matrice
+ * coûterait plus à tenir qu'elle ne rapporterait. À confirmer avec
+ * l'utilisatrice.
  */
 export const TRAJET_MIN = 30;
 
@@ -76,7 +87,7 @@ export function formatDuree(heures: number) {
   return m === 0 ? `${h} h` : `${h} h ${String(m).padStart(2, "0")}`;
 }
 
-export type SeanceLike = { startsAt: Date; durationMin: number; office: Office };
+export type SeanceLike = { startsAt: Date; durationMin: number; cabinetId: string };
 
 /**
  * Signale, pour chaque séance, qu'elle suit immédiatement une séance dans
@@ -90,7 +101,7 @@ export function conflitsDeTrajet<T extends SeanceLike>(seances: T[]): Set<number
   for (let i = 1; i < tri.length; i++) {
     const avant = tri[i - 1];
     const apres = tri[i];
-    if (avant.office === apres.office) continue;
+    if (avant.cabinetId === apres.cabinetId) continue;
     const finAvant = avant.startsAt.getTime() + avant.durationMin * 60_000;
     const battement = (apres.startsAt.getTime() - finAvant) / 60_000;
     if (battement < TRAJET_MIN) {

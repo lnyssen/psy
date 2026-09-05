@@ -1,8 +1,10 @@
 import Link from "next/link";
+import type { CareScheme } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { GrilleSemaine, type JourGrille, type SeanceGrille } from "@/components/GrilleSemaine";
 import { GroupeFiltre, avecParam, type Params } from "@/components/filtres";
 import { IconChevronDroite, IconChevronGauche } from "@/components/icons";
+import { cabinetsActifs, optionsCabinet } from "@/lib/cabinets";
 import {
   JOURS_OUVRES,
   PAYMENT_LABEL,
@@ -36,12 +38,13 @@ export default async function Semaine({ searchParams }: { searchParams: Promise<
   const seances = await prisma.session.findMany({
     where: {
       startsAt: { gte: lundi, lt: finSemaine },
-      ...(params.cabinet ? { office: params.cabinet as "UCCLE" | "AUDERGHEM" } : {}),
-      ...(params.regime ? { patient: { scheme: params.regime as "CONVENTIONNE" | "PRIVE" } } : {}),
+      ...(params.cabinet ? { cabinetId: params.cabinet } : {}),
+      ...(params.regime ? { patient: { scheme: params.regime as CareScheme } } : {}),
     },
     orderBy: { startsAt: "asc" },
-    include: { patient: true },
+    include: { patient: true, cabinet: true },
   });
+  const cabinets = await cabinetsActifs();
 
   const conflits = conflitsDeTrajet(seances);
   const maintenant = new Date();
@@ -69,7 +72,9 @@ export default async function Semaine({ searchParams }: { searchParams: Promise<
     minutes: minutesDeJour(s.startsAt),
     duree: s.durationMin,
     jour: jours.findIndex((j) => memeJour(new Date(j.iso), s.startsAt)),
-    office: s.office,
+    cabinetNom: s.cabinet.nom,
+    cabinetColor: s.cabinet.colorHex,
+    cabinetFill: s.cabinet.fillHex,
     paiement: isBillable(s.status) ? s.paymentStatus : null,
     libellePaiement: isBillable(s.status) ? PAYMENT_LABEL[s.paymentStatus] : null,
     conflit: conflits.has(i),
@@ -99,10 +104,8 @@ export default async function Semaine({ searchParams }: { searchParams: Promise<
     ? await prisma.session.findMany({
         where: {
           startsAt: { gte: duBrut!, lt: finPeriode! },
-          ...(params.cabinet ? { office: params.cabinet as "UCCLE" | "AUDERGHEM" } : {}),
-          ...(params.regime
-            ? { patient: { scheme: params.regime as "CONVENTIONNE" | "PRIVE" } }
-            : {}),
+          ...(params.cabinet ? { cabinetId: params.cabinet } : {}),
+          ...(params.regime ? { patient: { scheme: params.regime as CareScheme } } : {}),
         },
         select: { durationMin: true, status: true },
       })
@@ -218,10 +221,7 @@ export default async function Semaine({ searchParams }: { searchParams: Promise<
           params={params}
           cle="cabinet"
           libelle="Cabinet"
-          options={[
-            { valeur: "UCCLE", label: "Uccle", ton: "uccle" as const },
-            { valeur: "AUDERGHEM", label: "Auderghem", ton: "auderghem" as const },
-          ]}
+          options={optionsCabinet(cabinets)}
         />
         <GroupeFiltre
           base="/semaine"
@@ -231,6 +231,7 @@ export default async function Semaine({ searchParams }: { searchParams: Promise<
           options={[
             { valeur: "PRIVE", label: "privé" },
             { valeur: "CONVENTIONNE", label: "conventionné" },
+            { valeur: "INSTITUTION", label: "institution" },
           ]}
         />
       </div>

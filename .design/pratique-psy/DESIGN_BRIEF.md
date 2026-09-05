@@ -144,7 +144,11 @@ des conventions techniques, pas de l'identité visuelle.
 
 | Composant | Statut | Notes |
 | --- | --- | --- |
-| Coquille applicative | Nouveau | Navigation supérieure fixe, entrées en pilules ; sous 900 px elle passe sur sa propre ligne |
+| Coquille applicative | Nouveau | Navigation supérieure fixe, sans défilement horizontal : les libellés s'effacent au profit des icônes quand la place manque |
+| Réglages | Nouveau | Lieux et grille tarifaire |
+| Recherche globale | Nouveau | Patients, notes et lieux ; raccourci ⌘K |
+| Bascule de thème | Nouveau | Clair / sombre, conservé en cookie |
+| Écran de connexion | Nouveau | Fait aussi office d'écran verrouillé |
 | Verrouillage rapide | Nouveau | Bouton toujours visible et raccourci clavier, écran neutre immédiat |
 | Agenda semaine | Nouveau | Matrice jours × créneaux, glisser pour déplacer, écran large uniquement |
 | Agenda jour | Nouveau | Liste chronologique verticale, vue par défaut sur téléphone |
@@ -300,6 +304,23 @@ prévoyait au départ.
   données de santé chez un tiers, et à les afficher sur l'écran de verrouillage
   d'un téléphone. L'adresse du cabinet y figure en revanche, pour permettre de
   lancer un itinéraire.
+- **Les lieux sont devenus des données** : nom, adresse et couleur s'éditent
+  dans les réglages, on en ajoute et on en ferme. L'énumération figée dans le
+  code était une limite atteinte dès l'apparition d'un troisième lieu.
+- **Troisième lieu et troisième régime** : Amandine intervient aussi comme
+  indépendante dans une école, souvent le matin. Le payeur n'y est ni le
+  patient ni l'INAMI mais l'établissement — c'est exactement la question que
+  tranchent déjà les deux autres régimes, d'où l'ajout d'une valeur plutôt
+  qu'un cas particulier.
+- **Grille tarifaire** éditable, dont un tarif par défaut. Le tarif propre à un
+  patient prime toujours.
+- **Authentification** par mot de passe, et verrouillage qui détruit la session
+  au lieu de la masquer. L'écran de connexion et l'écran verrouillé ne font
+  qu'un : reprendre la main exige le mot de passe.
+- **Thème clair et sombre**, choix conservé dans un cookie et appliqué dès le
+  rendu serveur, sans éclair blanc au chargement.
+- **Recherche globale** sur les patients, leurs coordonnées, les notes et les
+  lieux, accessible au raccourci ⌘K.
 - **Reçu PDF** avec mode de paiement (espèces ou électronique). Ce n'est pas une
   attestation de soins, et les prestations de psychologue sont exonérées de TVA
   en Belgique.

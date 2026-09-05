@@ -15,7 +15,9 @@ export type SeanceGrille = {
   minutes: number;
   duree: number;
   jour: number; // 0 = lundi
-  office: "UCCLE" | "AUDERGHEM";
+  cabinetNom: string;
+  cabinetColor: string;
+  cabinetFill: string;
   paiement: "DUE" | "PAID" | "OVERDUE" | null;
   libellePaiement: string | null;
   conflit: boolean;
@@ -260,16 +262,14 @@ export function GrilleSemaine({
                       >
                         <span
                           aria-hidden="true"
-                          className={`h-9 w-[3px] shrink-0 rounded-full ${
-                            s.office === "UCCLE" ? "bg-uccle" : "bg-auderghem"
-                          }`}
+                          style={{ "--cab": s.cabinetColor } as React.CSSProperties}
+                          className="filet-cabinet h-9 w-[3px] shrink-0 rounded-full"
                         />
                         <span className="min-w-0 flex-1">
                           <span className="block truncate text-sm font-medium">{s.nom}</span>
                           <span className="font-mono text-[11px] text-ink-muted" data-numeric>
                             {String(Math.floor(s.minutes / 60)).padStart(2, "0")}:
-                            {String(s.minutes % 60).padStart(2, "0")} ·{" "}
-                            {s.office === "UCCLE" ? "Uccle" : "Auderghem"}
+                            {String(s.minutes % 60).padStart(2, "0")} · {s.cabinetNom}
                           </span>
                         </span>
                         {s.libellePaiement && (
@@ -337,8 +337,6 @@ function Bloc({
   const hhmm = (m: number) =>
     `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
 
-  const uccle = seance.office === "UCCLE";
-
   /*
    * Carte d'agenda repensée. Trois informations, dans l'ordre où on les
    * cherche : quand, qui, où. L'heure passe en tête et gagne en taille — c'est
@@ -360,45 +358,44 @@ function Bloc({
         onSaisir(seance.id);
       }}
       onDragEnd={() => onSaisir(null)}
-      style={style}
-      className={`group absolute flex cursor-grab overflow-hidden rounded-lg border transition-shadow hover:shadow-[0_2px_8px_rgba(39,39,87,0.10)] active:cursor-grabbing ${
-        uccle ? "border-uccle/20 bg-uccle-soft/45" : "border-auderghem/20 bg-auderghem-soft/45"
-      } ${seance.conflit ? "ring-2 ring-overdue/70" : ""}`}
+      style={
+        {
+          ...style,
+          "--cab": seance.cabinetColor,
+          "--cab-fill": seance.cabinetFill,
+          borderColor: "color-mix(in srgb, var(--cab) 25%, transparent)",
+        } as React.CSSProperties
+      }
+      className={`teinte-cabinet group absolute flex cursor-grab overflow-hidden rounded-lg border transition-shadow hover:shadow-[0_2px_8px_rgba(39,39,87,0.10)] active:cursor-grabbing ${
+        seance.conflit ? "ring-2 ring-overdue/70" : ""
+      }`}
     >
-      <span
-        aria-hidden="true"
-        className={`w-[4px] shrink-0 ${uccle ? "bg-uccle" : "bg-auderghem"}`}
-      />
+      <span aria-hidden="true" className="filet-cabinet w-[4px] shrink-0" />
       <Link
         href={`/patients/${seance.patientId}`}
         className="flex min-w-0 flex-1 flex-col gap-[3px] overflow-hidden px-2 py-1.5"
       >
         <span className="shrink-0 truncate text-[12.5px] leading-[1.25] font-bold" data-numeric>
-          {hhmm(seance.minutes)}
-          <span className="font-medium text-ink-muted">–{hhmm(seance.minutes + seance.duree)}</span>
+          {hhmm(seance.minutes)}–{hhmm(seance.minutes + seance.duree)}
         </span>
         <span className="shrink-0 truncate text-[12px] leading-tight font-medium">
           {seance.nom}
         </span>
-        <span className="flex shrink-0 items-center gap-1 overflow-hidden">
-          <span
-            className={`truncate text-[10.5px] leading-[1.45] font-semibold ${
-              uccle ? "text-uccle" : "text-auderghem"
-            }`}
-          >
-            {uccle ? "Uccle" : "Auderghem"}
+        {/* Cabinet, alerte et paiement sur une seule ligne : un bloc de
+            quarante-cinq minutes n'a pas la hauteur pour quatre lignes, et la
+            pastille de paiement s'y trouvait coupée. Le nom du cabinet cède le
+            premier à l'étroitesse, le paiement ne se tronque jamais. */}
+        <span className="flex min-w-0 shrink-0 items-center gap-1">
+          <span className="texte-cabinet min-w-0 truncate text-[10.5px] leading-[1.45] font-semibold">
+            {seance.cabinetNom}
           </span>
-          {/* Le conflit de trajet ne peut pas s'exprimer par le fond : le fond
-              appartient au cabinet. Il passe donc par un cerne rouge autour de
-              la carte et par ce signe, qui porte son explication en toutes
-              lettres pour qui survole ou lit à l'oreille. */}
           {seance.conflit && (
             <span
               className="shrink-0 text-overdue"
               title="Trajet trop court depuis l’autre cabinet"
             >
               <span className="sr-only">Trajet trop court depuis l’autre cabinet</span>
-              <svg width="11" height="11" viewBox="0 0 12 12" aria-hidden="true">
+              <svg width="10" height="10" viewBox="0 0 12 12" aria-hidden="true">
                 <path
                   d="M6 1 11.2 10.5H0.8L6 1Z M6 4.6v2.6 M6 8.6v.5"
                   stroke="currentColor"
@@ -409,24 +406,20 @@ function Bloc({
               </svg>
             </span>
           )}
+          {seance.paiement && seance.libellePaiement && (
+            <span
+              className={`ml-auto shrink-0 rounded px-1.5 text-[10px] leading-[1.45] font-semibold ${
+                {
+                  DUE: "bg-due-soft text-due",
+                  PAID: "bg-paid-soft text-paid",
+                  OVERDUE: "bg-overdue-soft text-overdue",
+                }[seance.paiement]
+              }`}
+            >
+              {seance.libellePaiement}
+            </span>
+          )}
         </span>
-        {/* L'état de paiement reprend exactement le code couleur de la
-            facturation : ambre, vert, rouge. Il suit la ligne du cabinet plutôt
-            que d'être poussé en pied de carte, où un « dû » flottait loin de ce
-            à quoi il se rapporte. */}
-        {seance.paiement && seance.libellePaiement && (
-          <span
-            className={`shrink-0 self-start rounded px-1.5 py-[1px] text-[10px] leading-[1.4] font-semibold ${
-              {
-                DUE: "bg-due-soft text-due",
-                PAID: "bg-paid-soft text-paid",
-                OVERDUE: "bg-overdue-soft text-overdue",
-              }[seance.paiement]
-            }`}
-          >
-            {seance.libellePaiement}
-          </span>
-        )}
       </Link>
 
       <span className="pointer-events-none absolute top-1 right-1 flex gap-0.5 opacity-0 transition-opacity group-focus-within:pointer-events-auto group-focus-within:opacity-100 group-hover:pointer-events-auto group-hover:opacity-100">

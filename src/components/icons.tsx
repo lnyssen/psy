@@ -100,3 +100,38 @@ export function IconFlecheBas({ className }: Props) {
     </svg>
   );
 }
+
+export function IconReglages({ className }: Props) {
+  return (
+    <svg {...base} className={className}>
+      <circle cx="10" cy="10" r="2.7" />
+      <path d="M15.9 12.3a1.3 1.3 0 0 0 .27 1.44l.05.05a1.6 1.6 0 1 1-2.26 2.26l-.05-.05a1.3 1.3 0 0 0-1.44-.27 1.3 1.3 0 0 0-.8 1.2v.14a1.6 1.6 0 1 1-3.2 0v-.07a1.3 1.3 0 0 0-.86-1.2 1.3 1.3 0 0 0-1.44.27l-.05.05a1.6 1.6 0 1 1-2.26-2.26l.05-.05a1.3 1.3 0 0 0 .27-1.44 1.3 1.3 0 0 0-1.2-.8h-.14a1.6 1.6 0 1 1 0-3.2h.07a1.3 1.3 0 0 0 1.2-.86 1.3 1.3 0 0 0-.27-1.44l-.05-.05a1.6 1.6 0 1 1 2.26-2.26l.05.05a1.3 1.3 0 0 0 1.44.27h.06a1.3 1.3 0 0 0 .8-1.2v-.14a1.6 1.6 0 1 1 3.2 0v.07a1.3 1.3 0 0 0 .8 1.2 1.3 1.3 0 0 0 1.44-.27l.05-.05a1.6 1.6 0 1 1 2.26 2.26l-.05.05a1.3 1.3 0 0 0-.27 1.44v.06a1.3 1.3 0 0 0 1.2.8h.14a1.6 1.6 0 1 1 0 3.2h-.07a1.3 1.3 0 0 0-1.2.8Z" />
+    </svg>
+  );
+}
+
+export function IconRecherche({ className }: Props) {
+  return (
+    <svg {...base} className={className}>
+      <circle cx="8.8" cy="8.8" r="5.3" />
+      <path d="m12.7 12.7 4 4" />
+    </svg>
+  );
+}
+
+export function IconSoleil({ className }: Props) {
+  return (
+    <svg {...base} className={className}>
+      <circle cx="10" cy="10" r="3.3" />
+      <path d="M10 1.8v1.9M10 16.3v1.9M18.2 10h-1.9M3.7 10H1.8M15.8 4.2l-1.35 1.35M5.55 14.45 4.2 15.8M15.8 15.8l-1.35-1.35M5.55 5.55 4.2 4.2" />
+    </svg>
+  );
+}
+
+export function IconLune({ className }: Props) {
+  return (
+    <svg {...base} className={className}>
+      <path d="M16.5 11.6A6.9 6.9 0 0 1 8.4 3.5a6.9 6.9 0 1 0 8.1 8.1Z" />
+    </svg>
+  );
+}

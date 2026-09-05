@@ -1,7 +1,9 @@
 import Link from "next/link";
+import type { CareScheme } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { CabinetTag, RegimeTag } from "@/components/tags";
 import { EnTeteTri, GroupeFiltre, type Params } from "@/components/filtres";
+import { cabinetsActifs, optionsCabinet } from "@/lib/cabinets";
 import { euros, initiales, isBillable, nomComplet } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
@@ -11,11 +13,12 @@ export default async function Patients({ searchParams }: { searchParams: Promise
 
   const patients = await prisma.patient.findMany({
     where: {
-      ...(params.cabinet ? { usualOffice: params.cabinet as "UCCLE" | "AUDERGHEM" } : {}),
-      ...(params.regime ? { scheme: params.regime as "CONVENTIONNE" | "PRIVE" } : {}),
+      ...(params.cabinet ? { cabinetId: params.cabinet } : {}),
+      ...(params.regime ? { scheme: params.regime as CareScheme } : {}),
     },
-    include: { sessions: true, patientNotes: true },
+    include: { sessions: true, patientNotes: true, cabinet: true },
   });
+  const cabinets = await cabinetsActifs();
 
   // Le tri se fait ici plutôt qu'en base : deux des colonnes triables (nombre
   // de séances, solde dû) sont calculées et n'existent pas comme champs.
@@ -32,7 +35,7 @@ export default async function Patients({ searchParams }: { searchParams: Promise
     nom: (a, b) => a.p.lastName.localeCompare(b.p.lastName, "fr"),
     seances: (a, b) => a.seances - b.seances,
     du: (a, b) => a.du - b.du,
-    cabinet: (a, b) => (a.p.usualOffice ?? "").localeCompare(b.p.usualOffice ?? ""),
+    cabinet: (a, b) => (a.p.cabinet?.nom ?? "").localeCompare(b.p.cabinet?.nom ?? "", "fr"),
     regime: (a, b) => a.p.scheme.localeCompare(b.p.scheme),
   };
   const tri = comparateurs[params.tri ?? "nom"] ?? comparateurs.nom;
@@ -61,10 +64,7 @@ export default async function Patients({ searchParams }: { searchParams: Promise
           params={params}
           cle="cabinet"
           libelle="Cabinet"
-          options={[
-            { valeur: "UCCLE", label: "Uccle", ton: "uccle" as const },
-            { valeur: "AUDERGHEM", label: "Auderghem", ton: "auderghem" as const },
-          ]}
+          options={optionsCabinet(cabinets)}
         />
         <GroupeFiltre
           base="/patients"
@@ -74,6 +74,7 @@ export default async function Patients({ searchParams }: { searchParams: Promise
           options={[
             { valeur: "PRIVE", label: "privé" },
             { valeur: "CONVENTIONNE", label: "conventionné" },
+            { valeur: "INSTITUTION", label: "institution" },
           ]}
         />
       </div>
@@ -114,7 +115,7 @@ export default async function Patients({ searchParams }: { searchParams: Promise
                   </Link>
                 </td>
                 <td className="px-3 py-3">
-                  {p.usualOffice ? <CabinetTag office={p.usualOffice} /> : "—"}
+                  {p.cabinet ? <CabinetTag cabinet={p.cabinet} /> : "—"}
                 </td>
                 <td className="px-3 py-3">
                   <RegimeTag scheme={p.scheme} />

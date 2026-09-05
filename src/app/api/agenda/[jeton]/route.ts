@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/db";
-import { OFFICE_ADDRESS, OFFICE_LABEL } from "@/lib/format";
+import { adresseCabinet } from "@/lib/format";
 
 /**
  * Flux iCalendar des séances, destiné à être suivi depuis Google Calendar,
@@ -77,6 +77,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ jeton: 
   const seances = await prisma.session.findMany({
     where: { startsAt: { gte: debut, lt: fin } },
     orderBy: { startsAt: "asc" },
+    include: { cabinet: true },
   });
 
   const maintenant = horodatage(new Date());
@@ -104,8 +105,8 @@ export async function GET(_req: Request, { params }: { params: Promise<{ jeton: 
       `DTSTART:${horodatage(s.startsAt)}`,
       `DTEND:${horodatage(finSeance)}`,
       // Le titre ne porte que le lieu : jamais le patient.
-      `SUMMARY:${echapper(`Séance — ${OFFICE_LABEL[s.office]}`)}`,
-      `LOCATION:${echapper(OFFICE_ADDRESS[s.office])}`,
+      `SUMMARY:${echapper(`Séance — ${s.cabinet.nom}`)}`,
+      `LOCATION:${echapper(adresseCabinet(s.cabinet))}`,
       `DESCRIPTION:${echapper("Détail du rendez-vous dans l’outil de gestion.")}`,
       // Une annulation à temps reste dans le flux, marquée annulée : l'agenda
       // qui suit le flux la fait alors disparaître de lui-même.

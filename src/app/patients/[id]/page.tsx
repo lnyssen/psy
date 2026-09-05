@@ -29,8 +29,9 @@ export default async function FichePatient({ params }: { params: Promise<{ id: s
   const patient = await prisma.patient.findUnique({
     where: { id },
     include: {
-      sessions: { orderBy: { startsAt: "desc" } },
+      sessions: { orderBy: { startsAt: "desc" }, include: { cabinet: true } },
       patientNotes: { orderBy: { createdAt: "desc" } },
+      cabinet: true,
     },
   });
   if (!patient) notFound();
@@ -74,7 +75,7 @@ export default async function FichePatient({ params }: { params: Promise<{ id: s
           <h1 className="font-display text-3xl font-bold tracking-tight">{nomComplet(patient)}</h1>
           <p className="mt-2 flex flex-wrap items-center gap-2">
             <RegimeTag scheme={patient.scheme} />
-            {patient.usualOffice && <CabinetTag office={patient.usualOffice} />}
+            {patient.cabinet && <CabinetTag cabinet={patient.cabinet} />}
           </p>
         </div>
         <button
@@ -138,7 +139,7 @@ export default async function FichePatient({ params }: { params: Promise<{ id: s
                 <time className="w-36 shrink-0 font-mono text-xs" data-numeric>
                   {fmtDateCourte.format(s.startsAt)} · {fmtHeure.format(s.startsAt)}
                 </time>
-                <CabinetTag office={s.office} />
+                <CabinetTag cabinet={s.cabinet} />
                 <span className="flex-1">
                   <StatutSeance status={s.status} />
                 </span>

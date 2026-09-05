@@ -22,7 +22,7 @@ export function avecParam(base: string, params: Params, cle: string, valeur?: st
  * les aurait rendus indistincts au moment précis où l'on choisit entre eux.
  * Blanc sur teal : 5,59:1. Blanc sur pourpre : 6,82:1.
  */
-export type TonOption = "uccle" | "auderghem";
+export type TonOption = { colorHex: string };
 
 export function GroupeFiltre({
   base,
@@ -71,36 +71,42 @@ function Pilule({
   ton?: TonOption;
   children: React.ReactNode;
 }) {
-  const actifStyle = {
-    uccle: "border-uccle bg-uccle text-white",
-    auderghem: "border-auderghem bg-auderghem text-white",
-  };
-  const reposStyle = {
-    uccle: "border-line-strong text-ink-muted hover:border-uccle hover:text-uccle",
-    auderghem: "border-line-strong text-ink-muted hover:border-auderghem hover:text-auderghem",
-  };
+  // Les couleurs de cabinet venant de la base, elles passent par des styles en
+  // ligne : Tailwind ne peut pas générer une classe pour une valeur qui
+  // n'existe qu'à l'exécution.
+  const style: React.CSSProperties | undefined = ton
+    ? ({
+        "--cab": ton.colorHex,
+        ...(actif
+          ? { backgroundColor: "var(--cab)", borderColor: "var(--cab)", color: "#fff" }
+          : { borderColor: "color-mix(in srgb, var(--cab) 35%, transparent)" }),
+      } as unknown as React.CSSProperties)
+    : undefined;
 
   return (
     <Link
       href={href}
       aria-current={actif ? "true" : undefined}
+      style={style}
       className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
-        actif
-          ? (ton ? actifStyle[ton] : "border-accent bg-accent text-accent-contrast")
-          : (ton ? reposStyle[ton] : "border-line-strong text-ink-muted hover:border-accent hover:text-accent-text")
+        ton
+          ? actif
+            ? ""
+            : "texte-cabinet"
+          : actif
+            ? "border-accent bg-accent text-accent-contrast"
+            : "border-line-strong text-ink-muted hover:border-accent hover:text-accent-text"
       }`}
     >
-      {/* Le point rappelle la couleur du cabinet avant même la sélection : sans
-          lui, il faudrait choisir pour découvrir de quelle teinte on parle.
-          Il est rendu dans les deux états, et passe simplement au blanc une
-          fois la pastille pleine — ne l'afficher qu'au repos faisait varier la
-          largeur du bouton d'un état à l'autre, et les boutons sautaient. */}
+      {/* Le point rappelle la couleur du cabinet avant même la sélection. Il est
+          rendu dans les deux états et passe au blanc sur fond plein : ne
+          l'afficher qu'au repos faisait varier la largeur du bouton d'un état à
+          l'autre, et les boutons sautaient. */}
       {ton && (
         <span
           aria-hidden="true"
-          className={`h-1.5 w-1.5 rounded-full ${
-            actif ? "bg-white" : ton === "uccle" ? "bg-uccle" : "bg-auderghem"
-          }`}
+          style={actif ? { backgroundColor: "#fff" } : undefined}
+          className={`h-1.5 w-1.5 rounded-full ${actif ? "" : "filet-cabinet"}`}
         />
       )}
       {children}

@@ -1,10 +1,11 @@
 import Link from "next/link";
+import type { CareScheme } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { AlerteTrajet, CabinetTag, EtatPaiement, RegimeTag, StatutSeance } from "@/components/tags";
 import { GroupeFiltre, type Params } from "@/components/filtres";
+import { cabinetsActifs, optionsCabinet } from "@/lib/cabinets";
 import {
   DUREE_SEANCE,
-  OFFICE_LABEL,
   conflitsDeTrajet,
   debutDeJour,
   euros,
@@ -47,15 +48,16 @@ export default async function Aujourdhui({ searchParams }: { searchParams: Promi
   const seances = await prisma.session.findMany({
     where: {
       startsAt: { gte: debut, lt: fin },
-      ...(params.cabinet ? { office: params.cabinet as "UCCLE" | "AUDERGHEM" } : {}),
-      ...(params.regime ? { patient: { scheme: params.regime as "CONVENTIONNE" | "PRIVE" } } : {}),
+      ...(params.cabinet ? { cabinetId: params.cabinet } : {}),
+      ...(params.regime ? { patient: { scheme: params.regime as CareScheme } } : {}),
     },
     orderBy: { startsAt: "asc" },
-    include: { patient: true },
+    include: { patient: true, cabinet: true },
   });
+  const cabinets = await cabinetsActifs();
 
   const conflits = conflitsDeTrajet(seances);
-  const cabinets = [...new Set(seances.map((s) => s.office))];
+  const lieuxDuJour = [...new Map(seances.map((s) => [s.cabinetId, s.cabinet])).values()];
   const aStatuer = seances.filter((s) => s.status === "SCHEDULED" && s.startsAt < maintenant);
   const total = heuresTotales(seances);
 
@@ -77,8 +79,8 @@ export default async function Aujourdhui({ searchParams }: { searchParams: Promi
                 ? "Aucune séance"
                 : `${seances.length} séance${seances.length > 1 ? "s" : ""} · ${formatDuree(total)}`}
             </span>
-            {cabinets.map((c) => (
-              <CabinetTag key={c} office={c} />
+            {lieuxDuJour.map((c) => (
+              <CabinetTag key={c.id} cabinet={c} />
             ))}
           </p>
         </div>
@@ -96,10 +98,7 @@ export default async function Aujourdhui({ searchParams }: { searchParams: Promi
           params={params}
           cle="cabinet"
           libelle="Cabinet"
-          options={[
-            { valeur: "UCCLE", label: "Uccle", ton: "uccle" as const },
-            { valeur: "AUDERGHEM", label: "Auderghem", ton: "auderghem" as const },
-          ]}
+          options={optionsCabinet(cabinets)}
         />
         <GroupeFiltre
           base="/"
@@ -109,6 +108,7 @@ export default async function Aujourdhui({ searchParams }: { searchParams: Promi
           options={[
             { valeur: "PRIVE", label: "privé" },
             { valeur: "CONVENTIONNE", label: "conventionné" },
+            { valeur: "INSTITUTION", label: "institution" },
           ]}
         />
       </div>
@@ -150,7 +150,7 @@ export default async function Aujourdhui({ searchParams }: { searchParams: Promi
                   {nomComplet(s.patient)}
                 </span>
                 <span className="flex flex-wrap items-center gap-2">
-                  <CabinetTag office={s.office} />
+                  <CabinetTag cabinet={s.cabinet} />
                   <RegimeTag scheme={s.patient.scheme} />
                   {conflits.has(i) && <AlerteTrajet />}
                 </span>
@@ -170,8 +170,8 @@ export default async function Aujourdhui({ searchParams }: { searchParams: Promi
               </Link>
               {conflits.has(i) && (
                 <p className="mt-1.5 pl-5 text-xs text-overdue">
-                  Séance précédente à {OFFICE_LABEL[seances[i - 1].office]} : moins de trente
-                  minutes pour rejoindre {OFFICE_LABEL[s.office]}.
+                  Séance précédente à {seances[i - 1].cabinet.nom} : moins de trente minutes
+                  pour rejoindre {s.cabinet.nom}.
                 </p>
               )}
             </li>

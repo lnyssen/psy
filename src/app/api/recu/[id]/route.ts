@@ -2,9 +2,8 @@ import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 import { prisma } from "@/lib/db";
 import {
   METHOD_LABEL,
-  OFFICE_ADDRESS,
-  OFFICE_LABEL,
   SCHEME_LABEL,
+  adresseCabinet,
   euros,
   fmtHeure,
   fmtJourMoisAn,
@@ -24,7 +23,14 @@ import {
  */
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const seance = await prisma.session.findUnique({ where: { id }, include: { patient: true } });
+  const seance = await prisma.session.findUnique({
+    where: { id },
+    include: { patient: true, cabinet: true },
+  });
+  const cabinets = await prisma.cabinet.findMany({
+    where: { actif: true },
+    orderBy: { ordre: "asc" },
+  });
 
   if (!seance) return new Response("Séance introuvable.", { status: 404 });
   if (seance.paymentStatus !== "PAID") {
@@ -59,10 +65,10 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   ecrire("Amandine Monsel", { taille: 20, police: gras });
   y -= 16;
   ecrire("AMAPSY SRL — Psychologue", { taille: 9, couleur: gris });
-  y -= 13;
-  ecrire(OFFICE_ADDRESS.UCCLE, { taille: 8, couleur: gris });
-  y -= 11;
-  ecrire(OFFICE_ADDRESS.AUDERGHEM, { taille: 8, couleur: gris });
+  for (const c of cabinets) {
+    y -= 11;
+    ecrire(`${c.nom} — ${adresseCabinet(c)}`, { taille: 8, couleur: gris });
+  }
   y -= 24;
   page.drawRectangle({ x: M, y, width: 483, height: 2, color: violet });
 
@@ -80,7 +86,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
       : []),
     ["Date de la séance", `${fmtJourMoisAn.format(seance.startsAt)} à ${fmtHeure.format(seance.startsAt)}`],
     ["Durée", `${seance.durationMin} minutes`],
-    ["Lieu de la prestation", `${OFFICE_LABEL[seance.office]} — ${OFFICE_ADDRESS[seance.office]}`],
+    ["Lieu de la prestation", `${seance.cabinet.nom} — ${adresseCabinet(seance.cabinet)}`],
     ["Régime", SCHEME_LABEL[p.scheme]],
     [
       "Mode de paiement",

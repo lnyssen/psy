@@ -1,8 +1,10 @@
 import Link from "next/link";
+import type { CareScheme } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { CabinetTag, EtatPaiement, RegimeTag } from "@/components/tags";
 import { Encaisser } from "@/components/Encaisser";
 import { EnTeteTri, GroupeFiltre, type Params } from "@/components/filtres";
+import { cabinetsActifs, optionsCabinet } from "@/lib/cabinets";
 import { euros, fmtDateCourte, isBillable, nomComplet } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
@@ -12,14 +14,15 @@ export default async function Facturation({ searchParams }: { searchParams: Prom
 
   const toutes = await prisma.session.findMany({
     where: {
-      ...(params.cabinet ? { office: params.cabinet as "UCCLE" | "AUDERGHEM" } : {}),
-      ...(params.regime ? { patient: { scheme: params.regime as "CONVENTIONNE" | "PRIVE" } } : {}),
+      ...(params.cabinet ? { cabinetId: params.cabinet } : {}),
+      ...(params.regime ? { patient: { scheme: params.regime as CareScheme } } : {}),
       ...(params.paiement
         ? { paymentStatus: params.paiement as "DUE" | "PAID" | "OVERDUE" }
         : {}),
     },
-    include: { patient: true },
+    include: { patient: true, cabinet: true },
   });
+  const cabinets = await cabinetsActifs();
 
   // Une séance à venir ou annulée à temps n'est pas un acte facturable : elle
   // n'a rien à faire dans cette table.
@@ -29,7 +32,7 @@ export default async function Facturation({ searchParams }: { searchParams: Prom
   const comparateurs: Record<string, (a: (typeof seances)[number], b: (typeof seances)[number]) => number> = {
     date: (a, b) => a.startsAt.getTime() - b.startsAt.getTime(),
     patient: (a, b) => a.patient.lastName.localeCompare(b.patient.lastName, "fr"),
-    cabinet: (a, b) => a.office.localeCompare(b.office),
+    cabinet: (a, b) => a.cabinet.nom.localeCompare(b.cabinet.nom, "fr"),
     regime: (a, b) => a.patient.scheme.localeCompare(b.patient.scheme),
     montant: (a, b) => (a.amountCents ?? 0) - (b.amountCents ?? 0),
     paiement: (a, b) => a.paymentStatus.localeCompare(b.paymentStatus),
@@ -76,10 +79,7 @@ export default async function Facturation({ searchParams }: { searchParams: Prom
           params={params}
           cle="cabinet"
           libelle="Cabinet"
-          options={[
-            { valeur: "UCCLE", label: "Uccle", ton: "uccle" as const },
-            { valeur: "AUDERGHEM", label: "Auderghem", ton: "auderghem" as const },
-          ]}
+          options={optionsCabinet(cabinets)}
         />
         <GroupeFiltre
           base="/facturation"
@@ -89,6 +89,7 @@ export default async function Facturation({ searchParams }: { searchParams: Prom
           options={[
             { valeur: "PRIVE", label: "privé" },
             { valeur: "CONVENTIONNE", label: "conventionné" },
+            { valeur: "INSTITUTION", label: "institution" },
           ]}
         />
       </div>
@@ -130,7 +131,7 @@ export default async function Facturation({ searchParams }: { searchParams: Prom
                     {nomComplet(s.patient)}
                   </Link>
                 </td>
-                <td className="px-3 py-3"><CabinetTag office={s.office} /></td>
+                <td className="px-3 py-3"><CabinetTag cabinet={s.cabinet} /></td>
                 <td className="px-3 py-3"><RegimeTag scheme={s.patient.scheme} /></td>
                 <td className="px-3 py-3 text-right font-mono whitespace-nowrap" data-numeric>
                   {euros(s.amountCents)}

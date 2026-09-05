@@ -1,24 +1,23 @@
-import type { CareScheme, Office, PaymentMethod, PaymentStatus, SessionStatus } from "@prisma/client";
+import type { CareScheme, PaymentMethod, PaymentStatus, SessionStatus } from "@prisma/client";
 import {
   METHOD_LABEL,
-  OFFICE_ADDRESS,
-  OFFICE_LABEL,
   PAYMENT_LABEL,
   SCHEME_LABEL,
   STATUS_LABEL,
+  adresseCabinet,
   isBillable,
+  type CabinetVue,
 } from "@/lib/format";
 
 /**
- * Contrainte chromatique : quatre familles de sens se disputent une même ligne.
+ * Contrainte chromatique : plusieurs familles de sens se disputent une même
+ * ligne. L'état de paiement garde la couleur pleine — ambre, vert, rouge. Les
+ * cabinets portent chacun la leur, choisie dans une palette vérifiée. Restent
+ * le régime et le statut de séance, tous deux traités sans couleur.
  *
- * L'état de paiement garde la couleur pleine — ambre, vert, rouge. Les deux
- * cabinets reçoivent les deux couleurs de marque, navy et violet, sur demande
- * explicite qu'ils soient nettement distincts. Restent le régime et le statut
- * de séance, tous deux traités sans couleur, par la forme et la graisse.
- *
- * Chaque valeur est écrite en toutes lettres : aucune information ne repose sur
- * la seule couleur.
+ * Les couleurs de cabinet venant de la base, elles passent par des styles en
+ * ligne et non par des classes : une classe Tailwind ne peut pas être générée
+ * pour une valeur qui n'existe qu'à l'exécution.
  */
 
 export function Tag({
@@ -27,14 +26,12 @@ export function Tag({
   titre,
 }: {
   children: React.ReactNode;
-  tone?: "neutre" | "contour" | "uccle" | "auderghem";
+  tone?: "neutre" | "contour";
   titre?: string;
 }) {
   const styles = {
     neutre: "bg-sunken text-ink-muted",
     contour: "border border-line-strong text-ink-muted",
-    uccle: "bg-uccle-soft text-uccle",
-    auderghem: "bg-auderghem-soft text-auderghem",
   }[tone];
   return (
     <span
@@ -47,20 +44,19 @@ export function Tag({
 }
 
 export function RegimeTag({ scheme }: { scheme: CareScheme }) {
-  return <Tag tone={scheme === "CONVENTIONNE" ? "contour" : "neutre"}>{SCHEME_LABEL[scheme]}</Tag>;
+  return <Tag tone={scheme === "PRIVE" ? "neutre" : "contour"}>{SCHEME_LABEL[scheme]}</Tag>;
 }
 
-/** Le cabinet porte en plus une pastille pleine : à taille de badge, la forme
- *  se distingue avant la teinte. */
-export function CabinetTag({ office }: { office: Office }) {
+export function CabinetTag({ cabinet }: { cabinet: CabinetVue }) {
   return (
-    <Tag tone={office === "UCCLE" ? "uccle" : "auderghem"} titre={OFFICE_ADDRESS[office]}>
-      <span
-        aria-hidden="true"
-        className={`h-1.5 w-1.5 rounded-full ${office === "UCCLE" ? "bg-uccle" : "bg-auderghem"}`}
-      />
-      {OFFICE_LABEL[office]}
-    </Tag>
+    <span
+      title={adresseCabinet(cabinet)}
+      style={{ "--cab": cabinet.colorHex, "--cab-fill": cabinet.fillHex } as React.CSSProperties}
+      className="teinte-cabinet inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-medium whitespace-nowrap"
+    >
+      <span aria-hidden="true" className="filet-cabinet h-1.5 w-1.5 rounded-full" />
+      {cabinet.nom}
+    </span>
   );
 }
 

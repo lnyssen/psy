@@ -28,6 +28,12 @@ datasource db {
 enum CareScheme {
   CONVENTIONNE
   PRIVE
+  /// Prestations facturées à une institution — l'école où Amandine intervient
+  /// comme indépendante, souvent le matin. Le payeur n'est ni le patient ni
+  /// l'INAMI : c'est l'établissement. C'est bien la même question que
+  /// tranchent les deux autres valeurs — qui paie, et comment — d'où
+  /// l'ajout ici plutôt qu'un cas particulier ailleurs.
+  INSTITUTION
 }
 
 /// Statut d'une séance passée. Le brief prévoit qu'un seul geste par séance
@@ -56,12 +62,45 @@ enum PaymentStatus {
   OVERDUE
 }
 
-/// Les deux cabinets bruxellois. Le lieu est porté par la séance et non par
-/// le patient : une même personne peut être reçue dans l'un ou l'autre selon
-/// le jour. Le champ du patient ne sert qu'à pré-remplir.
-enum Office {
-  UCCLE
-  AUDERGHEM
+/// Les cabinets sont des données, pas une énumération figée dans le code : on
+/// doit pouvoir en corriger l'adresse, en ajouter un, en retirer un, sans
+/// migration ni déploiement.
+///
+/// Leur couleur suit la même logique. Elle est choisie dans une palette
+/// restreinte (voir src/lib/palette.ts) dont chaque teinte a été vérifiée AA
+/// sur les trois usages et tenue à l'écart des couleurs qui portent déjà du
+/// sens — les trois états de paiement et le violet de marque.
+model Cabinet {
+  id          String  @id @default(cuid())
+  nom         String  @unique
+  addressLine String  @map("address_line")
+  postalCode  String  @map("postal_code")
+  city        String
+  /// Teinte du texte et des filets.
+  colorHex    String  @map("color_hex")
+  /// Aplat clair correspondant.
+  fillHex     String  @map("fill_hex")
+  /// Un cabinet fermé n'est plus proposé, mais ses séances passées le gardent.
+  actif       Boolean @default(true)
+  ordre       Int     @default(0)
+
+  sessions Session[]
+  patients Patient[]
+
+  @@map("cabinets")
+}
+
+/// Grille tarifaire. Le tarif d'un patient peut s'en écarter — le sien fait
+/// foi — mais celui marqué par défaut sert à la création d'une fiche.
+model Tarif {
+  id          String  @id @default(cuid())
+  libelle     String
+  amountCents Int     @map("amount_cents")
+  parDefaut   Boolean @default(false) @map("par_defaut")
+  actif       Boolean @default(true)
+  ordre       Int     @default(0)
+
+  @@map("tarifs")
 }
 
 model Patient {
@@ -83,7 +122,8 @@ model Patient {
   /// Null en conventionné : le tarif ne lui appartient pas.
   feeCents  Int?       @map("fee_cents")
   /// Cabinet habituel, simple valeur par défaut à la création d'une séance.
-  usualOffice Office?  @map("usual_office")
+  cabinetId   String?  @map("cabinet_id")
+  cabinet     Cabinet? @relation(fields: [cabinetId], references: [id], onDelete: SetNull)
   notes     String?
   active    Boolean    @default(true)
   createdAt DateTime   @default(now()) @map("created_at")
@@ -103,8 +143,9 @@ model Session {
   startsAt      DateTime      @map("starts_at")
   /// Cabinet où se tient la séance. Deux séances consécutives dans des
   /// cabinets différents sans temps de trajet sont signalées à l'écran :
-  /// c'est le principal risque d'agenda d'une pratique sur deux sites.
-  office        Office        @default(UCCLE)
+  /// c'est le principal risque d'agenda d'une pratique sur plusieurs sites.
+  cabinetId     String        @map("cabinet_id")
+  cabinet       Cabinet       @relation(fields: [cabinetId], references: [id], onDelete: Restrict)
   /// Durée en minutes plutôt qu'une heure de fin : c'est ainsi qu'une
   /// praticienne raisonne, et ça simplifie les séries récurrentes à venir.
   /// Quarante-cinq minutes est la durée d'une séance dans cette pratique.
@@ -127,6 +168,7 @@ model Session {
 
   @@index([startsAt])
   @@index([patientId, startsAt])
+  @@index([cabinetId, startsAt])
   @@map("sessions")
 }
 

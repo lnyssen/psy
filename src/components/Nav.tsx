@@ -2,12 +2,16 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
+import { verrouiller } from "@/lib/auth-actions";
+import { Recherche } from "@/components/Recherche";
+import { Theme } from "@/components/Theme";
 import {
   IconCadenas,
   IconFacturation,
   IconJour,
   IconPatients,
+  IconReglages,
   IconSemaine,
 } from "@/components/icons";
 
@@ -18,111 +22,99 @@ const ENTREES = [
   { href: "/facturation", label: "Facturation", Icone: IconFacturation },
 ];
 
-export function Nav() {
+export function Nav({ theme }: { theme: "light" | "dark" }) {
   const pathname = usePathname();
-  const [verrouille, setVerrouille] = useState(false);
-
+  // Le raccourci déclenche le même formulaire que le bouton : verrouiller
+  // détruit la session côté serveur, ce qu'un état local ne saurait faire.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key.toLowerCase() === "l" && (e.metaKey || e.ctrlKey) && e.shiftKey) {
         e.preventDefault();
-        setVerrouille(true);
+        document.getElementById("verrouiller")?.click();
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
+  // L'écran verrouillé ne montre rien d'autre que la signature : ni navigation,
+  // ni recherche, ni bascule de thème. C'est l'écran que voit quelqu'un
+  // d'autre.
+  if (pathname === "/connexion") return null;
+
   return (
-    <>
-      <header className="sans-impression sticky top-0 z-40 border-b border-line bg-paper/85 backdrop-blur-md">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-6 gap-y-3 px-5 py-3 md:px-8">
-          <Link href="/" className="flex shrink-0 flex-col">
-            <span className="font-display text-[22px] leading-[1.15] font-bold tracking-tight">
-              Amandine Monsel
-            </span>
-            <span className="mt-0.5 text-[11px] leading-[1.4] font-semibold tracking-[0.2em] text-accent-text uppercase">
-              Amapsy&nbsp;SRL
-            </span>
+    <header className="sans-impression sticky top-0 z-40 border-b border-line bg-paper/85 backdrop-blur-md">
+      <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-4 gap-y-2 px-5 py-2.5 md:px-8">
+        {/* Rangée du haut sur téléphone : signature à gauche, outils à droite.
+            La navigation passe en dessous. Aucun défilement horizontal nulle
+            part — les libellés s'effacent au profit des seules icônes quand la
+            place manque, plutôt que de déborder. */}
+        <Link href="/" className="flex shrink-0 flex-col">
+          <span className="font-display text-[22px] leading-[1.15] font-bold tracking-tight">
+            Amandine Monsel
+          </span>
+          <span className="mt-0.5 text-[11px] leading-[1.4] font-semibold tracking-[0.2em] text-accent-text uppercase">
+            Amapsy&nbsp;SRL
+          </span>
+        </Link>
+
+        <nav
+          aria-label="Navigation principale"
+          className="order-last flex w-full min-w-0 flex-1 gap-1 md:order-none md:w-auto"
+        >
+          {ENTREES.map(({ href, label, Icone }) => {
+            const actif = href === "/" ? pathname === "/" : pathname.startsWith(href);
+            return (
+              <Link
+                key={href}
+                href={href}
+                aria-current={actif ? "page" : undefined}
+                title={label}
+                className={`flex min-w-0 shrink items-center justify-center gap-2 rounded-full px-3 py-2 text-[13px] font-medium transition-colors md:justify-start md:px-4 ${
+                  actif
+                    ? "bg-accent text-accent-contrast"
+                    : "text-ink-muted hover:bg-accent-soft hover:text-accent-text"
+                }`}
+              >
+                <Icone className="shrink-0" />
+                <span className="hidden truncate lg:inline">{label}</span>
+              </Link>
+            );
+          })}
+        </nav>
+
+        <div className="ml-auto flex shrink-0 items-center gap-2">
+          <Recherche />
+
+          <Link
+            href="/reglages"
+            aria-current={pathname.startsWith("/reglages") ? "page" : undefined}
+            title="Réglages"
+            className={`flex h-9 w-9 items-center justify-center rounded-full border transition-colors ${
+              pathname.startsWith("/reglages")
+                ? "border-accent bg-accent text-accent-contrast"
+                : "border-line-strong text-ink-muted hover:border-accent hover:text-accent-text"
+            }`}
+          >
+            <span className="sr-only">Réglages</span>
+            <IconReglages />
           </Link>
 
-          {/* Sous 900 px la navigation passe sur sa propre ligne : coincée entre
-              la signature et le bouton de verrouillage, elle était écrasée au
-              point de tronquer ses libellés. */}
-          <nav
-            aria-label="Navigation principale"
-            className="order-last -mx-1 flex w-full gap-1 overflow-x-auto px-1 md:order-none md:mx-0 md:w-auto md:flex-1 md:px-0"
-          >
-            {ENTREES.map(({ href, label, Icone }) => {
-              const actif = href === "/" ? pathname === "/" : pathname.startsWith(href);
-              return (
-                <Link
-                  key={href}
-                  href={href}
-                  aria-current={actif ? "page" : undefined}
-                  className={`flex shrink-0 items-center gap-2 rounded-full px-4 py-2 text-[13px] font-medium transition-colors ${
-                    actif
-                      ? "bg-accent text-accent-contrast"
-                      : "text-ink-muted hover:bg-accent-soft hover:text-accent-text"
-                  }`}
-                >
-                  <Icone />
-                  {label}
-                </Link>
-              );
-            })}
-          </nav>
+          <Theme initial={theme} />
 
-          <button
-            type="button"
-            onClick={() => setVerrouille(true)}
-            title="Verrouiller l’écran (⌘⇧L)"
-            className="ml-auto flex shrink-0 items-center gap-2 rounded-full border border-line-strong px-4 py-2 text-[13px] font-medium text-ink-muted transition-colors hover:border-accent hover:text-accent-text md:ml-0"
-          >
-            <IconCadenas />
-            Verrouiller
-          </button>
+          <form action={verrouiller}>
+            <button
+              id="verrouiller"
+              type="submit"
+              title="Verrouiller l’écran (⌘⇧L)"
+              className="flex h-9 w-9 items-center justify-center rounded-full border border-line-strong text-ink-muted transition-colors hover:border-accent hover:text-accent-text"
+            >
+              <span className="sr-only">Verrouiller l’écran</span>
+              <IconCadenas />
+            </button>
+          </form>
         </div>
-      </header>
-
-      {verrouille && <EcranVerrouille onDeverrouiller={() => setVerrouille(false)} />}
-    </>
-  );
-}
-
-/**
- * Ce que voit quelqu'un qui regarde l'écran une fois verrouillé. Il ne laisse
- * rien lire, et reste posé : ni écran noir brutal, ni message anxiogène.
- *
- * Il porte désormais seul la confidentialité de l'écran : les vues d'ensemble
- * affichent les noms complets, sur décision explicite de la praticienne.
- */
-function EcranVerrouille({ onDeverrouiller }: { onDeverrouiller: () => void }) {
-  return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-label="Écran verrouillé"
-      className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-8 bg-paper px-6"
-    >
-      <div className="flex flex-col items-center gap-2 text-center">
-        <span className="font-display text-4xl font-bold tracking-tight">Amandine Monsel</span>
-        <span className="text-sm font-semibold tracking-[0.22em] text-accent-text uppercase">
-          Amapsy&nbsp;SRL
-        </span>
       </div>
-      <p className="max-w-xs text-center text-sm text-ink-muted">
-        Session verrouillée. Rien n’est affiché tant que vous n’avez pas repris la main.
-      </p>
-      <button
-        type="button"
-        autoFocus
-        onClick={onDeverrouiller}
-        className="flex items-center gap-2 rounded-full bg-accent px-6 py-2.5 text-sm font-medium text-accent-contrast transition-colors hover:bg-accent-hover"
-      >
-        <IconCadenas />
-        Reprendre
-      </button>
-    </div>
+    </header>
   );
 }
