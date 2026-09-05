@@ -1,134 +1,115 @@
+import Link from "next/link";
 import { prisma } from "@/lib/db";
+import { CabinetTag, EtatPaiement, RegimeTag, StatutSeance, AlerteTrajet } from "@/components/tags";
+import {
+  OFFICE_LABEL,
+  conflitsDeTrajet,
+  debutDeJour,
+  euros,
+  fmtHeure,
+  fmtJourLong,
+  initiales,
+  isBillable,
+} from "@/lib/format";
 
-// La page lit la base à chaque requête : pas de prérendu au build, qui
-// échouerait faute de base accessible à ce moment-là.
 export const dynamic = "force-dynamic";
 
-const STATUS_LABEL: Record<string, string> = {
-  SCHEDULED: "à venir",
-  ATTENDED: "honorée",
-  CANCELLED_IN_TIME: "annulée à temps",
-  NO_SHOW: "absence non excusée",
-};
+export default async function Aujourdhui() {
+  const debut = debutDeJour(new Date());
+  const fin = new Date(debut);
+  fin.setDate(fin.getDate() + 1);
 
-const PAYMENT_LABEL: Record<string, string> = {
-  DUE: "dû",
-  PAID: "payé",
-  OVERDUE: "en retard",
-};
+  const seances = await prisma.session.findMany({
+    where: { startsAt: { gte: debut, lt: fin } },
+    orderBy: { startsAt: "asc" },
+    include: { patient: true },
+  });
 
-const PAYMENT_COLOR: Record<string, string> = {
-  DUE: "text-due",
-  PAID: "text-paid",
-  OVERDUE: "text-overdue",
-};
-
-/** Le brief pose que le statut de la séance détermine mécaniquement sa
- *  facturabilité. C'est donc une propriété dérivée, jamais stockée : une
- *  annulation à temps ne porte aucun état de paiement, une absence non
- *  excusée en porte un (elle reste due). */
-function isBillable(status: string) {
-  return status === "ATTENDED" || status === "NO_SHOW";
-}
-
-const SCHEME_LABEL: Record<string, string> = {
-  CONVENTIONNE: "conventionné",
-  PRIVE: "privé",
-};
-
-/** Principe de discrétion du brief : les vues d'ensemble n'affichent pas les
- *  noms complets. L'écran est potentiellement visible depuis le fauteuil. */
-function initials(firstName: string, lastName: string) {
-  return `${firstName[0]}.${lastName[0]}.`;
-}
-
-const dateFmt = new Intl.DateTimeFormat("fr-BE", {
-  weekday: "short",
-  day: "2-digit",
-  month: "2-digit",
-});
-const timeFmt = new Intl.DateTimeFormat("fr-BE", { hour: "2-digit", minute: "2-digit" });
-
-function euros(cents: number | null) {
-  if (cents === null) return "—";
-  return new Intl.NumberFormat("fr-BE", { style: "currency", currency: "EUR" }).format(cents / 100);
-}
-
-export default async function Page() {
-  let sessions;
-  let error: string | null = null;
-
-  try {
-    sessions = await prisma.session.findMany({
-      orderBy: { startsAt: "asc" },
-      include: { patient: true },
-    });
-  } catch (e) {
-    error = e instanceof Error ? e.message : String(e);
-  }
+  const conflits = conflitsDeTrajet(seances);
+  const cabinets = [...new Set(seances.map((s) => s.office))];
+  const aStatuer = seances.filter((s) => s.status === "SCHEDULED" && s.startsAt < new Date());
 
   return (
-    <main className="mx-auto max-w-3xl px-6 py-12">
-      <p className="mb-6 border border-line bg-white px-4 py-3 text-sm text-ink-muted">
-        Instance de vérification technique. Toutes les personnes affichées sont
-        fictives. Aucune donnée réelle de patient ne doit être saisie ici.
-      </p>
-
-      <h1 className="text-2xl font-semibold">Chaîne Neon → Prisma → Vercel</h1>
-      <p className="mt-2 text-sm text-ink-muted">
-        Si les séances ci-dessous s’affichent, la base répond et l’application la
-        lit correctement.
-      </p>
-
-      {error ? (
-        <div className="mt-8 border border-overdue bg-white p-4">
-          <p className="font-semibold text-overdue">La base n’a pas répondu.</p>
-          <pre className="mt-2 overflow-x-auto text-xs text-ink-muted">{error}</pre>
+    <div className="flex flex-col gap-8">
+      <header className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h1 className="font-display text-3xl tracking-tight first-letter:uppercase">
+            {fmtJourLong.format(debut)}
+          </h1>
+          <p className="mt-2 flex flex-wrap items-center gap-2 text-sm text-ink-muted">
+            {seances.length === 0
+              ? "Aucune séance"
+              : `${seances.length} séance${seances.length > 1 ? "s" : ""}`}
+            {cabinets.map((c) => (
+              <CabinetTag key={c} office={c} />
+            ))}
+          </p>
         </div>
-      ) : sessions && sessions.length > 0 ? (
-        <div className="mt-8 overflow-x-auto">
-          <table className="w-full border-collapse text-sm">
-            <thead>
-              <tr className="border-b border-line text-left text-xs uppercase tracking-wide text-ink-muted">
-                <th className="py-2 pr-4 font-medium">Quand</th>
-                <th className="py-2 pr-4 font-medium">Patient</th>
-                <th className="py-2 pr-4 font-medium">Régime</th>
-                <th className="py-2 pr-4 font-medium">Séance</th>
-                <th className="py-2 pr-4 font-medium">Montant</th>
-                <th className="py-2 font-medium">Paiement</th>
-              </tr>
-            </thead>
-            <tbody>
-              {sessions.map((s) => (
-                <tr key={s.id} className="border-b border-line/60">
-                  <td className="tabular py-2 pr-4 whitespace-nowrap">
-                    {dateFmt.format(s.startsAt)} {timeFmt.format(s.startsAt)}
-                  </td>
-                  <td className="tabular py-2 pr-4">
-                    {initials(s.patient.firstName, s.patient.lastName)}
-                  </td>
-                  <td className="py-2 pr-4 text-ink-muted">{SCHEME_LABEL[s.patient.scheme]}</td>
-                  <td className="py-2 pr-4">{STATUS_LABEL[s.status]}</td>
-                  <td className="tabular py-2 pr-4 whitespace-nowrap">{euros(s.amountCents)}</td>
-                  <td
-                    className={
-                      isBillable(s.status)
-                        ? `py-2 font-medium ${PAYMENT_COLOR[s.paymentStatus]}`
-                        : "py-2 text-ink-muted"
-                    }
-                  >
-                    {isBillable(s.status) ? PAYMENT_LABEL[s.paymentStatus] : "—"}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      ) : (
-        <p className="mt-8 text-ink-muted">
-          La base répond, mais elle est vide. Lancez <code>npm run db:seed</code>.
+        <Link
+          href="/semaine"
+          className="rounded-full border border-line-strong px-5 py-2.5 text-sm font-medium transition-colors hover:border-accent hover:text-accent"
+        >
+          Voir la semaine
+        </Link>
+      </header>
+
+      {aStatuer.length > 0 && (
+        <p className="rounded-[14px] border border-line bg-surface px-5 py-4 text-sm">
+          <span className="font-semibold">{aStatuer.length}</span> séance
+          {aStatuer.length > 1 ? "s" : ""} passée{aStatuer.length > 1 ? "s" : ""} attend
+          {aStatuer.length > 1 ? "ent" : ""} un statut.
         </p>
       )}
-    </main>
+
+      {seances.length === 0 ? (
+        <div className="rounded-[14px] border border-dashed border-line-strong bg-surface px-6 py-16 text-center">
+          <p className="font-display text-xl">Journée libre</p>
+          <p className="mx-auto mt-2 max-w-sm text-sm text-ink-muted">
+            Aucune séance n’est prévue aujourd’hui, dans aucun des deux cabinets.
+          </p>
+        </div>
+      ) : (
+        <ol className="flex flex-col gap-3">
+          {seances.map((s, i) => (
+            <li key={s.id}>
+              <Link
+                href={`/patients/${s.patientId}`}
+                className="flex flex-wrap items-center gap-x-5 gap-y-3 rounded-[14px] border border-line bg-surface px-5 py-4 transition-colors hover:border-accent"
+              >
+                <time
+                  dateTime={s.startsAt.toISOString()}
+                  className="w-14 shrink-0 text-base font-semibold"
+                >
+                  {fmtHeure.format(s.startsAt)}
+                </time>
+                <span className="w-14 shrink-0 text-base">
+                  {initiales(s.patient.firstName, s.patient.lastName)}
+                </span>
+                <span className="flex flex-1 flex-wrap items-center gap-2">
+                  <CabinetTag office={s.office} />
+                  <RegimeTag scheme={s.patient.scheme} />
+                  {conflits.has(i) && <AlerteTrajet />}
+                </span>
+                <span className="flex shrink-0 items-center gap-4">
+                  <StatutSeance status={s.status} />
+                  {isBillable(s.status) && (
+                    <span className="text-sm" data-numeric>
+                      {euros(s.amountCents)}
+                    </span>
+                  )}
+                  <EtatPaiement status={s.status} payment={s.paymentStatus} />
+                </span>
+              </Link>
+              {conflits.has(i) && (
+                <p className="mt-1.5 pl-5 text-xs text-overdue">
+                  Séance précédente à {OFFICE_LABEL[seances[i - 1].office]} : moins de trente
+                  minutes pour rejoindre {OFFICE_LABEL[s.office]}.
+                </p>
+              )}
+            </li>
+          ))}
+        </ol>
+      )}
+    </div>
   );
 }

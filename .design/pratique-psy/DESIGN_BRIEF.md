@@ -1,6 +1,8 @@
 # Design Brief : outil de gestion de pratique — Amandine Monsel, psychologue
 
-Rédigé le 5 septembre 2026. Praticienne unique, exercice en Belgique.
+Rédigé le 5 septembre 2026, révisé le même jour (voir « Révisions »).
+Praticienne unique, exercice en Belgique sous l'entité AMAPSY SRL, sur deux
+cabinets : Uccle et Auderghem.
 
 ## Problème
 
@@ -16,6 +18,11 @@ patientèle relève de la convention INAMI de psychologie de première ligne,
 l'autre du privé à tarif libre. Ces deux régimes ne se facturent pas de la même
 manière, ne se suivent pas de la même manière, et se mélangent pourtant dans la
 même semaine.
+
+S'y ajoute une seconde source d'erreur : elle reçoit dans deux cabinets, à Uccle
+et à Auderghem. Savoir où se tient la prochaine séance n'est pas un détail de
+confort, et deux rendez-vous consécutifs dans des cabinets différents sans temps
+de trajet suffisant sont une faute d'agenda qu'aucun support papier ne signale.
 
 Le temps passé là-dessus est du temps pris sur sa pratique, et l'incertitude qui
 subsiste (« ai-je oublié une facture ? ») a un coût mental propre.
@@ -56,7 +63,8 @@ module à alimenter mais la conséquence de ce qu'elle a déjà fait.
 
 - **Philosophie** : calme éditorial. Composition plate et précise, filets pleins,
   aplats sans transparence, hiérarchie portée par la graisse et la taille plutôt
-  que par la couleur. Rythme vertical plus généreux que celui d'un outil de
+  que par la couleur. Fond blanc cassé chaud, un unique accent indigo, boutons
+  et cartouches en pilule. Rythme vertical plus généreux que celui d'un outil de
   planification d'équipe : les écrans sont consultés entre deux consultations,
   pas parcourus vingt fois par heure.
 - **Tonalité** : posée, sobre, attentive. Ni froideur clinique, ni douceur
@@ -78,12 +86,17 @@ petits aplats dans une même ligne de tableau, sur fond clair :
 - **Régime** : conventionné INAMI / privé.
 - **État du rendez vous** : à venir, honoré, annulé à temps, absence non excusée.
 - **État de paiement** : dû, payé, en retard.
+- **Cabinet** : Uccle, Auderghem.
 
-C'est le problème central de la palette, pas sa décoration. Règle de résolution :
-une seule des trois familles est portée par de la couleur pleine (l'état de
-paiement, le plus scruté), les deux autres par des traitements non chromatiques
+C'est le problème central de la palette, pas sa décoration. Règle retenue : une
+seule de ces familles est portée par de la couleur pleine — l'état de paiement,
+le plus scruté. Les trois autres passent par des traitements non chromatiques
 (graisse, filet, cartouche discret) doublés de texte. Chaque valeur porteuse de
 sens est écrite en toutes lettres à côté de son signal visuel.
+
+Corollaire pour la couleur de marque : l'accent ne peut être ni vert, ni ambré,
+ni rouge, sous peine d'entrer en concurrence avec un état de paiement. D'où
+l'indigo retenu, chromatiquement à l'écart des trois.
 
 ## Patterns existants
 
@@ -110,11 +123,12 @@ des conventions techniques, pas de l'identité visuelle.
 
 | Composant | Statut | Notes |
 | --- | --- | --- |
-| Coquille applicative | Nouveau | Barre latérale permanente sur large, barre inférieure sur téléphone |
+| Coquille applicative | Nouveau | Navigation supérieure fixe, entrées en pilules ; sous 900 px elle passe sur sa propre ligne |
 | Verrouillage rapide | Nouveau | Bouton toujours visible et raccourci clavier, écran neutre immédiat |
 | Agenda semaine | Nouveau | Matrice jours × créneaux, glisser pour déplacer, écran large uniquement |
 | Agenda jour | Nouveau | Liste chronologique verticale, vue par défaut sur téléphone |
-| Carte de rendez vous | Nouveau | Porte régime, état et rappel de paiement en un coup d'œil |
+| Carte de rendez vous | Nouveau | Porte cabinet, régime, état et rappel de paiement en un coup d'œil |
+| Alerte de trajet | Nouveau | Signale deux séances consécutives dans des cabinets différents sans trajet possible |
 | Création de série | Nouveau | Séances récurrentes avec exceptions (congés, jours fériés belges) |
 | Recherche patient | Nouveau | Palette au clavier, accessible partout |
 | Fiche patient | Nouveau | Identité, régime, historique des séances, solde, documents |
@@ -164,9 +178,10 @@ n'importe quel écran, atteint une fiche en trois frappes.
 
 Bascule à 900 px, comme dans le projet de référence.
 
-- **Au dessus** : barre latérale permanente, agenda en matrice hebdomadaire,
-  tables denses à colonnes multiples, panneaux latéraux plutôt que modales.
-- **En dessous** : barre de navigation inférieure, agenda en liste chronologique
+- **Au dessus** : navigation supérieure sur une ligne, agenda en matrice
+  hebdomadaire (lundi à samedi), tables denses à colonnes multiples, panneaux
+  latéraux plutôt que modales.
+- **En dessous** : navigation reportée sur sa propre ligne et défilante, agenda en liste chronologique
   du jour avec navigation jour par jour, tables converties en cartes empilées
   hiérarchisées (jamais en tableau à défilement horizontal), panneaux devenus
   écrans pleins.
@@ -216,6 +231,20 @@ santé au sens du RGPD, et le secret professionnel du psychologue s'y ajoute.
 - **Droits des patients** : export et suppression d'un dossier sur demande,
   procédure prévue dès la conception. Registre des traitements à tenir.
 
+## Révisions
+
+Décisions arrêtées après la rédaction initiale, qui remplacent ce que ce brief
+prévoyait au départ.
+
+- **Navigation supérieure, pas de barre latérale**, sur demande explicite. La
+  version initiale prévoyait une barre latérale permanente à gauche.
+- **Deux cabinets, Uccle et Auderghem.** Le brief initial n'en supposait qu'un
+  seul. Conséquences : le lieu devient une propriété de la séance, il s'ajoute
+  aux familles de sens qui se disputent l'écran, et l'agenda doit signaler les
+  enchaînements impossibles entre les deux sites.
+- **Identité arrêtée** : AMANDINE MONSEL / AMAPSY SRL, accent indigo sur blanc
+  cassé, boutons en pilule. La palette n'est plus une question ouverte.
+
 ## Arbitrages assumés
 
 Deux décisions ont été prises contre la recommandation initiale et sont
@@ -259,6 +288,11 @@ consignées ici pour qu'elles restent des choix, et non des oublis.
 
 - Volume de patientèle et rythme hebdomadaire, qui déterminent la densité utile
   de l'agenda.
+- Jours réellement travaillés. L'agenda affiche pour l'instant lundi à samedi,
+  par hypothèse.
+- Répartition des journées entre Uccle et Auderghem, et temps de trajet réel
+  entre les deux. La valeur retenue par défaut, trente minutes, est une
+  supposition prudente qui conditionne les alertes d'agenda.
 - Tarifs pratiqués en privé, et durée standard d'une séance.
 - Fonctionnement exact du régime conventionné dans son cas : quotas de séances,
   destinataire de la facturation, pièces exigées.

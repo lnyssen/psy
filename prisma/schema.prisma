@@ -50,6 +50,14 @@ enum PaymentStatus {
   OVERDUE
 }
 
+/// Les deux cabinets bruxellois. Le lieu est porté par la séance et non par
+/// le patient : une même personne peut être reçue dans l'un ou l'autre selon
+/// le jour. Le champ du patient ne sert qu'à pré-remplir.
+enum Office {
+  UCCLE
+  AUDERGHEM
+}
+
 model Patient {
   id        String     @id @default(cuid())
   /// Prénom et nom séparés : les vues d'ensemble n'affichent que les
@@ -62,6 +70,8 @@ model Patient {
   /// Tarif propre au patient, en centimes pour éviter les flottants.
   /// Null en conventionné : le tarif ne lui appartient pas.
   feeCents  Int?       @map("fee_cents")
+  /// Cabinet habituel, simple valeur par défaut à la création d'une séance.
+  usualOffice Office?  @map("usual_office")
   notes     String?
   active    Boolean    @default(true)
   createdAt DateTime   @default(now()) @map("created_at")
@@ -78,6 +88,10 @@ model Session {
   patientId     String        @map("patient_id")
   patient       Patient       @relation(fields: [patientId], references: [id], onDelete: Cascade)
   startsAt      DateTime      @map("starts_at")
+  /// Cabinet où se tient la séance. Deux séances consécutives dans des
+  /// cabinets différents sans temps de trajet sont signalées à l'écran :
+  /// c'est le principal risque d'agenda d'une pratique sur deux sites.
+  office        Office        @default(UCCLE)
   /// Durée en minutes plutôt qu'une heure de fin : c'est ainsi qu'une
   /// praticienne raisonne, et ça simplifie les séries récurrentes à venir.
   durationMin   Int           @default(50) @map("duration_min")
