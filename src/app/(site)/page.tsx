@@ -122,7 +122,7 @@ export default async function Accueil() {
 
       <section className="bg-bande-claire px-6 py-20 md:py-28">
         <div className="mx-auto max-w-5xl">
-          <Titre>Ce qui vous amène</Titre>
+          <Titre>Ce que j’accompagne</Titre>
           <p className="mt-8 max-w-2xl text-lg leading-relaxed text-ink-muted">
             Je propose un espace de parole et d’accompagnement pour de nombreuses problématiques.
           </p>
