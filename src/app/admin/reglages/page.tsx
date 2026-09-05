@@ -7,6 +7,7 @@ import {
   supprimerTarif,
 } from "@/lib/actions";
 import { euros } from "@/lib/format";
+import { Horaires } from "@/components/Horaires";
 
 export const dynamic = "force-dynamic";
 
@@ -15,10 +16,12 @@ const champ =
 const libelleChamp = "block text-[11px] font-semibold tracking-[0.1em] text-ink-muted uppercase";
 
 export default async function Reglages() {
-  const [cabinets, tarifs, comptes] = await Promise.all([
+  const [cabinets, tarifs, comptes, disponibilites, conges] = await Promise.all([
     prisma.cabinet.findMany({ orderBy: { ordre: "asc" } }),
     prisma.tarif.findMany({ orderBy: { ordre: "asc" } }),
     prisma.session.groupBy({ by: ["cabinetId"], _count: { _all: true } }),
+    prisma.disponibilite.findMany(),
+    prisma.indisponibilite.findMany({ orderBy: { debut: "asc" } }),
   ]);
   const seancesPar = new Map(comptes.map((c) => [c.cabinetId, c._count._all]));
 
@@ -209,6 +212,12 @@ export default async function Reglages() {
           </div>
         </form>
       </section>
+
+      <Horaires
+        cabinets={cabinets.filter((c) => c.actif)}
+        disponibilites={disponibilites}
+        conges={conges}
+      />
 
       <section className="flex flex-col gap-4">
         <div>

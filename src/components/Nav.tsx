@@ -26,7 +26,13 @@ const ENTREES = [
   { href: "/admin/demandes", label: "Demandes", Icone: IconDemandes },
 ];
 
-export function Nav({ theme }: { theme: "light" | "dark" }) {
+export function Nav({
+  theme,
+  demandesEnAttente,
+}: {
+  theme: "light" | "dark";
+  demandesEnAttente: number;
+}) {
   const pathname = usePathname();
   const [ouvert, setOuvert] = useState(false);
   // Le panneau se referme dès qu'on a navigué : le laisser ouvert masquerait la
@@ -85,11 +91,26 @@ export function Nav({ theme }: { theme: "light" | "dark" }) {
                   : "text-ink-muted hover:bg-accent-soft hover:text-accent-text"
               }`}
             >
-              <Icone className="shrink-0" />
+              <span className="relative shrink-0">
+                <Icone />
+                {href === "/admin/demandes" && demandesEnAttente > 0 && (
+                  <span
+                    aria-hidden="true"
+                    className="absolute -top-1.5 -right-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-overdue px-1 text-[9px] font-bold text-white"
+                  >
+                    {demandesEnAttente}
+                  </span>
+                )}
+              </span>
               {/* Le libellé n'apparaît qu'à partir de 1280 px. En dessous, cinq
                   entrées plus la recherche et trois outils ne tiennent pas, et
                   un libellé coupé en deux vaut moins qu'une icône seule. */}
               <span className="hidden xl:inline">{label}</span>
+              {href === "/admin/demandes" && demandesEnAttente > 0 && (
+                <span className="sr-only">
+                  {demandesEnAttente} demande{demandesEnAttente > 1 ? "s" : ""} en attente
+                </span>
+              )}
             </Link>
           ))}
         </nav>
@@ -128,6 +149,11 @@ export function Nav({ theme }: { theme: "light" | "dark" }) {
               >
                 <Icone className="shrink-0" />
                 {label}
+                {href === "/admin/demandes" && demandesEnAttente > 0 && (
+                  <span className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-overdue px-1.5 text-[11px] font-bold text-white">
+                    {demandesEnAttente}
+                  </span>
+                )}
               </Link>
             ))}
           </nav>

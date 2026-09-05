@@ -340,6 +340,18 @@ prévoyait au départ.
   solliciter une psychologue en révèle une. D'où le minimum de champs, une
   mention d'information à côté du formulaire, et l'invitation explicite à
   garder le motif pour la séance plutôt que de l'écrire dans un courriel.
+- **Horaires d'ouverture et congés éditables.** Ils ne relèvent pas de
+  l'affichage : ce sont eux qui déterminent les créneaux proposés au public.
+  Les laisser en base, hors de portée, revenait à ouvrir l'agenda à des heures
+  qu'Amandine ne pouvait pas changer.
+- **Compteur de demandes en attente** dans la navigation. Aucun courriel n'étant
+  encore envoyé, c'est le seul signal qu'une demande existe — sans lui, elle
+  peut dormir des jours.
+- **Limitation du formulaire public** : trois demandes par adresse et par jour,
+  vingt par heure au total. Sans adresse IP — la stocker ferait entrer une
+  donnée personnelle de plus dans une base qui en contient déjà de sensibles,
+  pour un bénéfice mince. Ce n'est pas une protection contre un adversaire
+  déterminé, c'en est une contre le robot de passage, qui est le cas réel.
 - **Reçu PDF** avec mode de paiement (espèces ou électronique). Ce n'est pas une
   attestation de soins, et les prestations de psychologue sont exonérées de TVA
   en Belgique.
@@ -370,6 +382,9 @@ consignées ici pour qu'elles restent des choix, et non des oublis.
 ## Hors périmètre
 
 - Rappels automatiques par SMS ou courriel avant séance.
+- Envoi de courriels, quel qu'il soit : ni accusé de réception au patient, ni
+  notification à Amandine quand une demande arrive. C'est la principale pièce
+  manquante de la prise de rendez-vous, et elle suppose un prestataire d'envoi.
 - Écriture ou lecture via l'API Google Calendar. Le flux iCalendar couvre le
   besoin « voir mon agenda sur mon téléphone » sans OAuth, sans jetons à
   renouveler et sans contrat de sous-traitance avec Google. Sa limite est

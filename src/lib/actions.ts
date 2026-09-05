@@ -95,7 +95,13 @@ export async function creerSeance(patientId: string, isoDebut: string, cabinetId
 /** Toutes les vues qui affichent un lieu ou un tarif doivent être rafraîchies :
  *  un changement de nom ou de couleur se répercute partout. */
 function rafraichirTout() {
-  for (const chemin of ["/admin", "/admin/semaine", "/admin/patients", "/admin/facturation", "/admin/reglages"]) {
+  for (const chemin of [
+    "/admin",
+    "/admin/semaine",
+    "/admin/patients",
+    "/admin/facturation",
+    "/admin/reglages",
+  ]) {
     revalidatePath(chemin);
   }
 }
@@ -188,4 +194,80 @@ export async function supprimerTarif(f: FormData) {
   if (!id) return;
   await prisma.tarif.delete({ where: { id } });
   rafraichirTout();
+}
+
+// ---------------------------------------------------------------------------
+// Disponibilités : horaires d'ouverture et congés
+// ---------------------------------------------------------------------------
+
+/** « 09:30 » vers 570 minutes. Renvoie null si l'heure est illisible. */
+function minutesDepuisHeure(v: string) {
+  const m = /^(\d{1,2}):(\d{2})$/.exec(v.trim());
+  if (!m) return null;
+  const h = Number(m[1]);
+  const min = Number(m[2]);
+  if (h > 23 || min > 59) return null;
+  return h * 60 + min;
+}
+
+/**
+ * Enregistre une plage d'ouverture.
+ *
+ * Ces horaires ne servent pas qu'à l'affichage : ce sont eux qui déterminent
+ * les créneaux proposés au public. Une plage mal saisie ouvrirait l'agenda à
+ * des heures où Amandine n'est pas là — d'où le contrôle du sens et de la durée
+ * plutôt qu'une confiance aveugle dans le formulaire.
+ */
+export async function enregistrerDisponibilite(f: FormData) {
+  const cabinetId = texte(f, "cabinetId");
+  const jour = Number(texte(f, "jour"));
+  const debutMin = minutesDepuisHeure(texte(f, "debut"));
+  const finMin = minutesDepuisHeure(texte(f, "fin"));
+
+  if (!cabinetId || !Number.isInteger(jour) || jour < 0 || jour > 4) return;
+  if (debutMin === null || finMin === null) return;
+  if (finMin - debutMin < DUREE_SEANCE) return;
+
+  const id = texte(f, "id");
+  if (id) {
+    await prisma.disponibilite.update({ where: { id }, data: { jour, debutMin, finMin } });
+  } else {
+    await prisma.disponibilite.create({ data: { cabinetId, jour, debutMin, finMin } });
+  }
+  rafraichirTout();
+  revalidatePath("/rendez-vous");
+}
+
+export async function supprimerDisponibilite(f: FormData) {
+  const id = texte(f, "id");
+  if (!id) return;
+  await prisma.disponibilite.delete({ where: { id } });
+  rafraichirTout();
+  revalidatePath("/rendez-vous");
+}
+
+/** Congés et absences. Se soustraient des créneaux proposés. */
+export async function enregistrerConge(f: FormData) {
+  const debut = new Date(texte(f, "debut"));
+  const finSaisie = new Date(texte(f, "fin"));
+  if (Number.isNaN(debut.getTime()) || Number.isNaN(finSaisie.getTime())) return;
+
+  // La date de fin est inclusive à la saisie : on ferme la journée entière.
+  const fin = new Date(finSaisie);
+  fin.setDate(fin.getDate() + 1);
+  if (fin <= debut) return;
+
+  await prisma.indisponibilite.create({
+    data: { debut, fin, motif: texte(f, "motif") || null },
+  });
+  rafraichirTout();
+  revalidatePath("/rendez-vous");
+}
+
+export async function supprimerConge(f: FormData) {
+  const id = texte(f, "id");
+  if (!id) return;
+  await prisma.indisponibilite.delete({ where: { id } });
+  rafraichirTout();
+  revalidatePath("/rendez-vous");
 }

@@ -24,6 +24,41 @@ function texte(f: FormData, cle: string) {
   return String(f.get(cle) ?? "").trim();
 }
 
+/**
+ * Garde-fous contre les envois en rafale.
+ *
+ * Volontairement sans adresse IP : la stocker ferait entrer une donnée
+ * personnelle de plus dans une base qui en contient déjà de sensibles, pour un
+ * bénéfice mince. On s'en tient à ce que le formulaire donne déjà — l'adresse
+ * électronique — et à un plafond global, qui borne les dégâts d'un envoi
+ * automatisé sans jamais bloquer une personne réelle.
+ *
+ * Ce n'est pas une protection contre un adversaire déterminé. C'en est une
+ * contre le robot de passage, qui est le cas réel.
+ */
+const MAX_PAR_ADRESSE = 3;
+const MAX_PAR_HEURE = 20;
+
+async function tropDeDemandes(email: string) {
+  const uneHeure = new Date(Date.now() - 60 * 60 * 1000);
+  const unJour = new Date(Date.now() - 24 * 60 * 60 * 1000);
+
+  const [parAdresse, total] = await Promise.all([
+    prisma.demandeRdv.count({
+      where: { email: email.toLowerCase(), createdAt: { gte: unJour } },
+    }),
+    prisma.demandeRdv.count({ where: { createdAt: { gte: uneHeure } } }),
+  ]);
+
+  if (parAdresse >= MAX_PAR_ADRESSE) {
+    return "Plusieurs demandes ont déjà été déposées avec cette adresse. Amandine vous répondra ; inutile d’en envoyer d’autres.";
+  }
+  if (total >= MAX_PAR_HEURE) {
+    return "Le formulaire reçoit un nombre inhabituel de demandes. Réessayez dans un moment, ou téléphonez.";
+  }
+  return null;
+}
+
 export type ResultatRdv = { ok: boolean; message: string } | null;
 
 export async function reserverOuDemander(_etat: ResultatRdv, f: FormData): Promise<ResultatRdv> {
@@ -79,11 +114,14 @@ export async function reserverOuDemander(_etat: ResultatRdv, f: FormData): Promi
     return { ok: false, message: "Nom, prénom et adresse électronique sont nécessaires." };
   }
 
+  const trop = await tropDeDemandes(email);
+  if (trop) return { ok: false, message: trop };
+
   await prisma.demandeRdv.create({
     data: {
       firstName,
       lastName,
-      email,
+      email: email.toLowerCase(),
       phone: texte(f, "phone") || null,
       message: texte(f, "message") || null,
       souhaite: debut,
