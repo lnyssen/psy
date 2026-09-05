@@ -90,13 +90,17 @@ function Pilule({
           : (ton ? reposStyle[ton] : "border-line-strong text-ink-muted hover:border-accent hover:text-accent-text")
       }`}
     >
-      {/* Au repos, une pastille pleine rappelle déjà la couleur du cabinet :
-          sans elle, il faudrait sélectionner pour savoir de quelle teinte on
-          parle. */}
-      {ton && !actif && (
+      {/* Le point rappelle la couleur du cabinet avant même la sélection : sans
+          lui, il faudrait choisir pour découvrir de quelle teinte on parle.
+          Il est rendu dans les deux états, et passe simplement au blanc une
+          fois la pastille pleine — ne l'afficher qu'au repos faisait varier la
+          largeur du bouton d'un état à l'autre, et les boutons sautaient. */}
+      {ton && (
         <span
           aria-hidden="true"
-          className={`h-1.5 w-1.5 rounded-full ${ton === "uccle" ? "bg-uccle" : "bg-auderghem"}`}
+          className={`h-1.5 w-1.5 rounded-full ${
+            actif ? "bg-white" : ton === "uccle" ? "bg-uccle" : "bg-auderghem"
+          }`}
         />
       )}
       {children}
