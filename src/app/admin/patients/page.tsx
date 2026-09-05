@@ -3,6 +3,7 @@ import type { CareScheme } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { CabinetTag, RegimeTag } from "@/components/tags";
 import { EnTeteTri, GroupeFiltre, TriMobile, type Params } from "@/components/filtres";
+import { FiltresMobile } from "@/components/FiltresMobile";
 import { cabinetsActifs, optionsCabinet } from "@/lib/cabinets";
 import { euros, initiales, isBillable, nomComplet } from "@/lib/format";
 
@@ -57,6 +58,29 @@ export default async function Patients({ searchParams }: { searchParams: Promise
           Nouveau patient
         </button>
       </header>
+
+      <FiltresMobile
+        base="/admin/patients"
+        params={params}
+        groupes={[
+            {
+              cle: "cabinet",
+              libelle: "Cabinet",
+              tout: "Tous les lieux",
+              options: optionsCabinet(cabinets),
+            },
+            {
+              cle: "regime",
+              libelle: "Régime",
+              tout: "Tous les régimes",
+              options: [
+                { valeur: "PRIVE", label: "privé" },
+                { valeur: "CONVENTIONNE", label: "conventionné" },
+                { valeur: "INSTITUTION", label: "institution" },
+              ],
+            },
+          ]}
+      />
 
       <div className="flex flex-wrap gap-x-6 gap-y-3">
         <GroupeFiltre

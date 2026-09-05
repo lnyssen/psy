@@ -3,6 +3,7 @@ import type { CareScheme } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { GrilleSemaine, type JourGrille, type SeanceGrille } from "@/components/GrilleSemaine";
 import { GroupeFiltre, avecParam, type Params } from "@/components/filtres";
+import { FiltresMobile } from "@/components/FiltresMobile";
 import { IconChevronDroite, IconChevronGauche } from "@/components/icons";
 import { cabinetsActifs, optionsCabinet } from "@/lib/cabinets";
 import {
@@ -214,6 +215,29 @@ export default async function Semaine({ searchParams }: { searchParams: Promise<
           )}
         </form>
       </div>
+
+      <FiltresMobile
+        base="/admin/semaine"
+        params={params}
+        groupes={[
+            {
+              cle: "cabinet",
+              libelle: "Cabinet",
+              tout: "Tous les lieux",
+              options: optionsCabinet(cabinets),
+            },
+            {
+              cle: "regime",
+              libelle: "Régime",
+              tout: "Tous les régimes",
+              options: [
+                { valeur: "PRIVE", label: "privé" },
+                { valeur: "CONVENTIONNE", label: "conventionné" },
+                { valeur: "INSTITUTION", label: "institution" },
+              ],
+            },
+          ]}
+      />
 
       <div className="flex flex-wrap gap-x-6 gap-y-3">
         <GroupeFiltre

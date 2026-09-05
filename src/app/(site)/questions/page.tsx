@@ -31,22 +31,28 @@ const QUESTIONS: [string, string][] = [
 
 export default function Questions() {
   return (
-    <div className="flex flex-col gap-10">
-      <section>
-        <h1 className="font-display text-4xl font-bold tracking-tight">Questions fréquentes</h1>
-        <p className="mt-4 max-w-2xl text-lg leading-relaxed text-ink-muted">
-          Ce qu’on aimerait savoir avant d’oser appeler.
-        </p>
+    <>
+      <section className="px-6 py-14 md:py-20">
+        <div className="mx-auto max-w-5xl">
+          <h1 className="font-display text-4xl font-bold tracking-tight md:text-5xl">
+            Questions fréquentes
+          </h1>
+          <p className="mt-4 max-w-2xl text-lg leading-relaxed text-ink-muted">
+            Ce qu’on aimerait savoir avant d’oser appeler.
+          </p>
+        </div>
       </section>
 
-      <dl className="flex flex-col gap-3">
-        {QUESTIONS.map(([q, r]) => (
-          <div key={q} className="rounded-[14px] border border-line px-6 py-5">
-            <dt className="font-semibold">{q}</dt>
-            <dd className="mt-2 leading-relaxed text-ink-muted">{r}</dd>
-          </div>
-        ))}
-      </dl>
-    </div>
+      <section className="bg-bande-claire px-6 py-16 md:py-20">
+        <dl className="mx-auto grid max-w-5xl gap-px overflow-hidden rounded-[20px] bg-line">
+          {QUESTIONS.map(([q, r]) => (
+            <div key={q} className="bg-paper px-7 py-6">
+              <dt className="text-lg font-semibold">{q}</dt>
+              <dd className="mt-2 max-w-2xl leading-relaxed text-ink-muted">{r}</dd>
+            </div>
+          ))}
+        </dl>
+      </section>
+    </>
   );
 }

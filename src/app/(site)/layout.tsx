@@ -1,14 +1,7 @@
-import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { adresseCabinet } from "@/lib/format";
 import { SITE } from "@/lib/site";
-
-const PAGES = [
-  { href: "/", label: "Accueil" },
-  { href: "/praticalites", label: "Praticalités" },
-  { href: "/questions", label: "Questions fréquentes" },
-  { href: "/contact", label: "Contact" },
-];
+import { EnteteSite } from "@/components/EnteteSite";
 
 export default async function SiteLayout({ children }: { children: React.ReactNode }) {
   const cabinets = await prisma.cabinet.findMany({
@@ -18,67 +11,44 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
 
   return (
     <div className="flex min-h-screen flex-col">
-      <header className="border-b border-line">
-        <div className="mx-auto flex max-w-4xl flex-wrap items-center gap-x-8 gap-y-3 px-6 py-5">
-          <Link href="/" className="flex shrink-0 flex-col">
-            <span className="font-display text-[22px] leading-[1.15] font-bold tracking-tight">
-              Amandine Monsel
-            </span>
-            <span className="mt-0.5 text-[11px] leading-[1.4] font-semibold tracking-[0.2em] text-accent-text uppercase">
-              Psychologue clinicienne
-            </span>
-          </Link>
-          <nav aria-label="Navigation du site" className="flex flex-wrap gap-x-5 gap-y-1">
-            {PAGES.slice(1).map((p) => (
-              <Link
-                key={p.href}
-                href={p.href}
-                className="text-sm text-ink-muted transition-colors hover:text-accent-text"
-              >
-                {p.label}
-              </Link>
-            ))}
-          </nav>
-          <Link
-            href="/rendez-vous"
-            className="ml-auto shrink-0 rounded-full bg-accent px-5 py-2.5 text-sm font-medium text-accent-contrast transition-colors hover:bg-accent-hover"
-          >
-            Prendre rendez-vous
-          </Link>
-        </div>
-      </header>
+      <EnteteSite />
 
-      <main className="mx-auto w-full max-w-4xl flex-1 px-6 py-12 md:py-16">{children}</main>
+      {/*
+        Le contenu n'est plus contraint ici : chaque section porte sa propre
+        largeur et sa propre bande de couleur. C'est ce qui permet l'alternance
+        d'aplats pleine largeur, impossible dans un conteneur unique centré.
+      */}
+      <main className="flex-1">{children}</main>
 
-      <footer className="border-t border-line">
-        <div className="mx-auto flex max-w-4xl flex-col gap-6 px-6 py-10 text-sm">
-          <div className="flex flex-wrap gap-x-12 gap-y-6">
+      <footer className="bg-bande-navy text-white">
+        <div className="mx-auto flex max-w-5xl flex-col gap-8 px-6 py-14 text-sm">
+          <div className="grid gap-8 sm:grid-cols-3">
             {cabinets.map((c) => (
               <div key={c.id}>
                 <p className="font-semibold">{c.nom}</p>
-                <p className="mt-1 text-ink-muted">{adresseCabinet(c)}</p>
+                <p className="mt-1 text-white/70">{adresseCabinet(c)}</p>
               </div>
             ))}
             <div>
               <p className="font-semibold">Contact</p>
               <p className="mt-1">
-                <a href={`tel:${SITE.telephoneLien}`} className="text-ink-muted hover:text-accent-text" data-numeric>
+                <a href={`tel:${SITE.telephoneLien}`} className="text-white/70 hover:text-white" data-numeric>
                   {SITE.telephone}
                 </a>
               </p>
               <p>
-                <a href={`mailto:${SITE.email}`} className="text-ink-muted hover:text-accent-text">
+                <a href={`mailto:${SITE.email}`} className="text-white/70 hover:text-white">
                   {SITE.email}
                 </a>
               </p>
             </div>
           </div>
-          <p className="text-xs text-ink-muted">
+          <p className="border-t border-white/15 pt-6 text-xs text-white/60">
             Amandine Monsel — Amapsy SRL. Psychologue inscrite à la Commission des psychologues.
             Les échanges sont couverts par le secret professionnel.
           </p>
-          <p className="text-xs text-ink-muted">
-            Site de démonstration. Les informations qui y figurent restent à compléter.
+          <p className="text-xs text-white/40">
+            Site de démonstration. Certaines informations restent à compléter.
           </p>
         </div>
       </footer>

@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { CabinetTag, EtatPaiement, RegimeTag } from "@/components/tags";
 import { Encaisser } from "@/components/Encaisser";
 import { EnTeteTri, GroupeFiltre, TriMobile, type Params } from "@/components/filtres";
+import { FiltresMobile } from "@/components/FiltresMobile";
 import { cabinetsActifs, optionsCabinet } from "@/lib/cabinets";
 import { euros, fmtDateCourte, isBillable, nomComplet } from "@/lib/format";
 
@@ -61,6 +62,39 @@ export default async function Facturation({ searchParams }: { searchParams: Prom
           figurent pas.
         </p>
       </header>
+
+      <FiltresMobile
+        base="/admin/facturation"
+        params={params}
+        groupes={[
+            {
+              cle: "paiement",
+              libelle: "Paiement",
+              tout: "Tous les paiements",
+              options: [
+                { valeur: "DUE", label: "dû" },
+                { valeur: "OVERDUE", label: "en retard" },
+                { valeur: "PAID", label: "payé" },
+              ],
+            },
+            {
+              cle: "cabinet",
+              libelle: "Cabinet",
+              tout: "Tous les lieux",
+              options: optionsCabinet(cabinets),
+            },
+            {
+              cle: "regime",
+              libelle: "Régime",
+              tout: "Tous les régimes",
+              options: [
+                { valeur: "PRIVE", label: "privé" },
+                { valeur: "CONVENTIONNE", label: "conventionné" },
+                { valeur: "INSTITUTION", label: "institution" },
+              ],
+            },
+          ]}
+      />
 
       <div className="flex flex-wrap gap-x-6 gap-y-3">
         <GroupeFiltre

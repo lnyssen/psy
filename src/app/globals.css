@@ -94,6 +94,14 @@
   --color-overdue: #a62f1c;
   --color-overdue-soft: #fbe8e4;
 
+  /* Bandes de couleur du site public. Elles ne changent pas d'un thème à
+     l'autre : ce sont des aplats profonds, lisibles en blanc dans les deux cas
+     — 13,5:1 pour le violet, 13,9:1 pour le navy. Les faire varier aurait
+     cassé le rythme voulu par l'alternance. */
+  --color-bande-violette: #3d0a80;
+  --color-bande-navy: #272757;
+  --color-bande-claire: #f3f0ea;
+
   --radius-card: 14px;
 }
 
@@ -131,12 +139,19 @@
   --color-paid-soft: #14301f7a;
   --color-overdue: #ff8a76;
   --color-overdue-soft: #3a1a147a;
+
+  /* La bande claire s'assombrit, les deux autres restent : elles sont déjà des
+     aplats profonds. */
+  --color-bande-claire: #1f1b2a;
 }
 
 @theme inline {
   --color-paper: var(--color-paper);
   --color-surface: var(--color-surface);
   --color-sunken: var(--color-sunken);
+  --color-bande-violette: var(--color-bande-violette);
+  --color-bande-navy: var(--color-bande-navy);
+  --color-bande-claire: var(--color-bande-claire);
   --color-ink: var(--color-ink);
   --color-ink-muted: var(--color-ink-muted);
   --color-line: var(--color-line);

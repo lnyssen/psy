@@ -39,7 +39,7 @@ export function GroupeFiltre({
 }) {
   const actuel = params[cle];
   return (
-    <div className="flex flex-wrap items-center gap-1.5">
+    <div className="hidden flex-wrap items-center gap-1.5 md:flex">
       <span className="mr-1 text-[11px] font-semibold tracking-[0.1em] text-ink-muted uppercase">
         {libelle}
       </span>

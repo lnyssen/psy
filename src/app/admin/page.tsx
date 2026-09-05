@@ -3,6 +3,7 @@ import type { CareScheme } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { AlerteTrajet, CabinetTag, EtatPaiement, RegimeTag, StatutSeance } from "@/components/tags";
 import { GroupeFiltre, type Params } from "@/components/filtres";
+import { FiltresMobile } from "@/components/FiltresMobile";
 import { cabinetsActifs, optionsCabinet } from "@/lib/cabinets";
 import {
   DUREE_SEANCE,
@@ -91,6 +92,29 @@ export default async function Aujourdhui({ searchParams }: { searchParams: Promi
           Voir la semaine
         </Link>
       </header>
+
+      <FiltresMobile
+        base="/admin"
+        params={params}
+        groupes={[
+            {
+              cle: "cabinet",
+              libelle: "Cabinet",
+              tout: "Tous les lieux",
+              options: optionsCabinet(cabinets),
+            },
+            {
+              cle: "regime",
+              libelle: "Régime",
+              tout: "Tous les régimes",
+              options: [
+                { valeur: "PRIVE", label: "privé" },
+                { valeur: "CONVENTIONNE", label: "conventionné" },
+                { valeur: "INSTITUTION", label: "institution" },
+              ],
+            },
+          ]}
+      />
 
       <div className="flex flex-wrap gap-x-6 gap-y-3">
         <GroupeFiltre

@@ -12,19 +12,22 @@ export default async function Praticalites() {
   });
 
   return (
-    <div className="flex flex-col gap-14">
-      <section>
-        <h1 className="font-display text-4xl font-bold tracking-tight">Praticalités</h1>
+    <>
+      <section className="px-6 py-14 md:py-20">
+       <div className="mx-auto max-w-5xl">
+        <h1 className="font-display text-4xl font-bold tracking-tight md:text-5xl">Praticalités</h1>
         <p className="mt-4 max-w-2xl text-lg leading-relaxed text-ink-muted">
           Où me trouver, et comment se faire rembourser.
         </p>
+       </div>
       </section>
 
-      <section>
-        <h2 className="font-display text-2xl font-bold tracking-tight">Les cabinets</h2>
-        <div className="mt-5 grid gap-4 sm:grid-cols-2">
+      <section className="bg-bande-claire px-6 py-16 md:py-20">
+       <div className="mx-auto max-w-5xl">
+        <h2 className="font-display text-2xl font-bold tracking-tight md:text-3xl">Les cabinets</h2>
+        <div className="mt-6 grid gap-4 sm:grid-cols-2">
           {cabinets.map((c) => (
-            <div key={c.id} className="rounded-[14px] border border-line px-6 py-5">
+            <div key={c.id} className="rounded-[16px] bg-paper px-6 py-5">
               <p
                 style={{ "--cab": c.colorHex } as React.CSSProperties}
                 className="texte-cabinet text-lg font-bold"
@@ -39,10 +42,12 @@ export default async function Praticalites() {
             </div>
           ))}
         </div>
+       </div>
       </section>
 
-      <section>
-        <h2 className="font-display text-2xl font-bold tracking-tight">Remboursement</h2>
+      <section className="px-6 py-16 md:py-20">
+       <div className="mx-auto max-w-5xl">
+        <h2 className="font-display text-2xl font-bold tracking-tight md:text-3xl">Remboursement</h2>
         <div className="mt-4 flex max-w-2xl flex-col gap-4 leading-relaxed text-ink-muted">
           <p>
             La plupart des mutuelles belges interviennent partiellement dans le coût des séances
@@ -59,7 +64,8 @@ export default async function Praticalites() {
             d’accès à la convention dans son cas, et pièces à fournir à la mutuelle.
           </p>
         </div>
+       </div>
       </section>
-    </div>
+    </>
   );
 }
