@@ -9,6 +9,7 @@ import {
   initiales,
   lundiDe,
   memeJour,
+  heureDe,
 } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
@@ -74,7 +75,7 @@ export default async function Semaine() {
               </div>
               {jours.map((j) => {
                 const cellules = seances.filter(
-                  (s) => memeJour(s.startsAt, j) && s.startsAt.getHours() === h,
+                  (s) => memeJour(s.startsAt, j) && heureDe(s.startsAt) === h,
                 );
                 return (
                   <div
