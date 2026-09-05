@@ -82,3 +82,21 @@ export function IconChevronDroite({ className }: Props) {
     </svg>
   );
 }
+
+/** Flèches de décalage d'une séance. Dessinées plutôt que posées en caractères
+ *  « ↑ » et « ↓ », dont les métriques ne se centrent pas dans un bouton rond. */
+export function IconFlecheHaut({ className }: Props) {
+  return (
+    <svg {...base} className={className}>
+      <path d="M10 15.5V5m0 0-4.2 4.2M10 5l4.2 4.2" />
+    </svg>
+  );
+}
+
+export function IconFlecheBas({ className }: Props) {
+  return (
+    <svg {...base} className={className}>
+      <path d="M10 4.5V15m0 0 4.2-4.2M10 15l-4.2-4.2" />
+    </svg>
+  );
+}

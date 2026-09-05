@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { deplacerSeance } from "@/lib/actions";
+import { IconFlecheBas, IconFlecheHaut } from "@/components/icons";
 
 export type SeanceGrille = {
   id: string;
@@ -409,8 +410,20 @@ function Bloc({
             </span>
           )}
         </span>
-        {seance.libellePaiement && (
-          <span className="mt-auto shrink-0 truncate text-[10px] leading-[1.4] text-ink-muted">
+        {/* L'état de paiement reprend exactement le code couleur de la
+            facturation : ambre, vert, rouge. Il suit la ligne du cabinet plutôt
+            que d'être poussé en pied de carte, où un « dû » flottait loin de ce
+            à quoi il se rapporte. */}
+        {seance.paiement && seance.libellePaiement && (
+          <span
+            className={`shrink-0 self-start rounded px-1.5 py-[1px] text-[10px] leading-[1.4] font-semibold ${
+              {
+                DUE: "bg-due-soft text-due",
+                PAID: "bg-paid-soft text-paid",
+                OVERDUE: "bg-overdue-soft text-overdue",
+              }[seance.paiement]
+            }`}
+          >
             {seance.libellePaiement}
           </span>
         )}
@@ -421,17 +434,17 @@ function Bloc({
           type="button"
           onClick={() => onDecaler(-15)}
           aria-label={`Avancer la séance de ${seance.nom} d’un quart d’heure`}
-          className="rounded-full border border-line bg-surface px-1.5 text-[10px] leading-4"
+          className="flex h-[22px] w-[22px] items-center justify-center rounded-full border border-line bg-surface text-ink-muted shadow-sm transition-colors hover:border-accent hover:text-accent-text"
         >
-          ↑
+          <IconFlecheHaut className="h-3 w-3" />
         </button>
         <button
           type="button"
           onClick={() => onDecaler(15)}
           aria-label={`Retarder la séance de ${seance.nom} d’un quart d’heure`}
-          className="rounded-full border border-line bg-surface px-1.5 text-[10px] leading-4"
+          className="flex h-[22px] w-[22px] items-center justify-center rounded-full border border-line bg-surface text-ink-muted shadow-sm transition-colors hover:border-accent hover:text-accent-text"
         >
-          ↓
+          <IconFlecheBas className="h-3 w-3" />
         </button>
       </span>
     </div>
