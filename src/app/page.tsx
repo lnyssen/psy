@@ -97,8 +97,8 @@ export default async function Aujourdhui({ searchParams }: { searchParams: Promi
           cle="cabinet"
           libelle="Cabinet"
           options={[
-            { valeur: "UCCLE", label: "Uccle" },
-            { valeur: "AUDERGHEM", label: "Auderghem" },
+            { valeur: "UCCLE", label: "Uccle", ton: "uccle" as const },
+            { valeur: "AUDERGHEM", label: "Auderghem", ton: "auderghem" as const },
           ]}
         />
         <GroupeFiltre

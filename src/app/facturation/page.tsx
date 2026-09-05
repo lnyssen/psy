@@ -77,8 +77,8 @@ export default async function Facturation({ searchParams }: { searchParams: Prom
           cle="cabinet"
           libelle="Cabinet"
           options={[
-            { valeur: "UCCLE", label: "Uccle" },
-            { valeur: "AUDERGHEM", label: "Auderghem" },
+            { valeur: "UCCLE", label: "Uccle", ton: "uccle" as const },
+            { valeur: "AUDERGHEM", label: "Auderghem", ton: "auderghem" as const },
           ]}
         />
         <GroupeFiltre

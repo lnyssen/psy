@@ -54,7 +54,9 @@ export default async function Semaine({ searchParams }: { searchParams: Promise<
       iso: d.toISOString(),
       nom: fmtNomJour.format(d).replace(".", ""),
       numero: String(partiesJour(d).jour),
-      total: duJour.length ? formatDuree(heuresTotales(duJour)) : "—",
+      // Un tiret plutôt qu'un « 0 min » : une journée dont la seule séance est
+      // annulée à temps n'a pas zéro heure de travail, elle n'en a pas.
+      total: heuresTotales(duJour) > 0 ? formatDuree(heuresTotales(duJour)) : "—",
       aujourdhui: memeJour(d, maintenant),
     };
   });
@@ -217,8 +219,8 @@ export default async function Semaine({ searchParams }: { searchParams: Promise<
           cle="cabinet"
           libelle="Cabinet"
           options={[
-            { valeur: "UCCLE", label: "Uccle" },
-            { valeur: "AUDERGHEM", label: "Auderghem" },
+            { valeur: "UCCLE", label: "Uccle", ton: "uccle" as const },
+            { valeur: "AUDERGHEM", label: "Auderghem", ton: "auderghem" as const },
           ]}
         />
         <GroupeFiltre

@@ -15,6 +15,15 @@ export function avecParam(base: string, params: Params, cle: string, valeur?: st
   return q ? `${base}?${q}` : base;
 }
 
+/**
+ * Une option peut porter sa propre couleur active. Les cabinets s'en servent :
+ * sélectionner « Uccle » allume la pastille en teal et « Auderghem » en
+ * pourpre, aux teintes exactes qu'ils ont dans l'agenda. Le violet générique
+ * les aurait rendus indistincts au moment précis où l'on choisit entre eux.
+ * Blanc sur teal : 5,59:1. Blanc sur pourpre : 6,82:1.
+ */
+export type TonOption = "uccle" | "auderghem";
+
 export function GroupeFiltre({
   base,
   params,
@@ -26,7 +35,7 @@ export function GroupeFiltre({
   params: Params;
   cle: string;
   libelle: string;
-  options: { valeur: string; label: string }[];
+  options: { valeur: string; label: string; ton?: TonOption }[];
 }) {
   const actuel = params[cle];
   return (
@@ -42,6 +51,7 @@ export function GroupeFiltre({
           key={o.valeur}
           href={avecParam(base, params, cle, o.valeur)}
           actif={actuel === o.valeur}
+          ton={o.ton}
         >
           {o.label}
         </Pilule>
@@ -53,22 +63,42 @@ export function GroupeFiltre({
 function Pilule({
   href,
   actif,
+  ton,
   children,
 }: {
   href: string;
   actif: boolean;
+  ton?: TonOption;
   children: React.ReactNode;
 }) {
+  const actifStyle = {
+    uccle: "border-uccle bg-uccle text-white",
+    auderghem: "border-auderghem bg-auderghem text-white",
+  };
+  const reposStyle = {
+    uccle: "border-line-strong text-ink-muted hover:border-uccle hover:text-uccle",
+    auderghem: "border-line-strong text-ink-muted hover:border-auderghem hover:text-auderghem",
+  };
+
   return (
     <Link
       href={href}
       aria-current={actif ? "true" : undefined}
-      className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
+      className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
         actif
-          ? "border-accent bg-accent text-accent-contrast"
-          : "border-line-strong text-ink-muted hover:border-accent hover:text-accent-text"
+          ? (ton ? actifStyle[ton] : "border-accent bg-accent text-accent-contrast")
+          : (ton ? reposStyle[ton] : "border-line-strong text-ink-muted hover:border-accent hover:text-accent-text")
       }`}
     >
+      {/* Au repos, une pastille pleine rappelle déjà la couleur du cabinet :
+          sans elle, il faudrait sélectionner pour savoir de quelle teinte on
+          parle. */}
+      {ton && !actif && (
+        <span
+          aria-hidden="true"
+          className={`h-1.5 w-1.5 rounded-full ${ton === "uccle" ? "bg-uccle" : "bg-auderghem"}`}
+        />
+      )}
       {children}
     </Link>
   );
