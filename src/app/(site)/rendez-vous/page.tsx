@@ -31,7 +31,8 @@ export default async function RendezVous({
     : null;
 
   return (
-    <div className="mx-auto max-w-5xl px-6 py-14 md:py-20">
+    <div className="px-6 py-14 md:py-20">
+      <div className="mx-auto max-w-5xl">
       <PriseRdv
       cabinets={cabinets.map((c) => ({
         id: c.id,
@@ -46,6 +47,7 @@ export default async function RendezVous({
       nomConnu={patient ? `${patient.firstName} ${patient.lastName}` : null}
         lienInvalide={Boolean(p) && !patient}
       />
+      </div>
     </div>
   );
 }

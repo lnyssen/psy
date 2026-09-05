@@ -20,8 +20,8 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
       */}
       <main className="flex-1">{children}</main>
 
-      <footer className="bg-bande-navy text-white">
-        <div className="mx-auto flex max-w-5xl flex-col gap-8 px-6 py-14 text-sm">
+      <footer className="bg-bande-navy px-6 py-14 text-white">
+        <div className="mx-auto flex max-w-5xl flex-col gap-8 text-sm">
           <div className="grid gap-8 sm:grid-cols-3">
             {cabinets.map((c) => (
               <div key={c.id}>

@@ -22,15 +22,20 @@ export const dynamic = "force-dynamic";
  * varier aurait cassé l'alternance, qui est le sujet.
  */
 
-function Chapeau({ children, clair }: { children: React.ReactNode; clair?: boolean }) {
+/** Titre de section. En grand : ce sont les repères qui permettent de parcourir
+ *  la page sans la lire, et une capitale de onze points ne remplit pas ce rôle. */
+function Titre({ children }: { children: React.ReactNode }) {
   return (
-    <p
-      className={`text-[11px] font-bold tracking-[0.2em] uppercase ${
-        clair ? "text-white/50" : "text-accent-text"
-      }`}
-    >
+    <h2 className="font-display text-[2rem] leading-[1.05] font-bold tracking-tight md:text-[3rem]">
       {children}
-    </p>
+    </h2>
+  );
+}
+
+/** Surtitre, réservé à la ligne de qualification sous le nom. */
+function Surtitre({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="text-[11px] font-bold tracking-[0.2em] text-accent-text uppercase">{children}</p>
   );
 }
 
@@ -45,7 +50,7 @@ export default async function Accueil() {
       <section className="px-6 pt-12 pb-16 md:pt-20 md:pb-24">
         <div className="mx-auto grid max-w-5xl items-end gap-10 md:grid-cols-[1.15fr_0.85fr] md:gap-16">
           <div className="order-2 md:order-1">
-            <Chapeau>{SITE.titre}</Chapeau>
+            <Surtitre>{SITE.titre}</Surtitre>
             <h1 className="mt-5 font-display text-[3.25rem] leading-[0.95] font-bold tracking-[-0.03em] md:text-[5.5rem]">
               Amandine
               <br />
@@ -104,8 +109,8 @@ export default async function Accueil() {
 
       <section className="px-6 py-20 md:py-28">
         <div className="mx-auto max-w-5xl">
-          <Chapeau>Mon parcours et mon approche</Chapeau>
-          <div className="mt-8 grid gap-6 md:grid-cols-2 md:gap-14">
+          <Titre>Mon parcours et mon approche</Titre>
+          <div className="mt-10 grid gap-6 md:grid-cols-2 md:gap-14">
             {SITE.parcours.map((p) => (
               <p key={p.slice(0, 24)} className="text-lg leading-relaxed text-ink-muted">
                 {p}
@@ -117,7 +122,7 @@ export default async function Accueil() {
 
       <section className="bg-bande-claire px-6 py-20 md:py-28">
         <div className="mx-auto max-w-5xl">
-          <Chapeau>Ce pour quoi l’on vient</Chapeau>
+          <Titre>Ce pour quoi l’on vient</Titre>
           <p className="mt-8 max-w-2xl text-lg leading-relaxed text-ink-muted">
             Je propose un espace de parole et d’accompagnement pour de nombreuses problématiques.
           </p>
@@ -137,8 +142,8 @@ export default async function Accueil() {
 
       <section className="bg-bande-navy px-6 py-20 text-white md:py-28">
         <div className="mx-auto max-w-5xl">
-          <Chapeau clair>La première séance</Chapeau>
-          <div className="mt-8 grid gap-8 md:grid-cols-2 md:gap-14">
+          <Titre>La première séance</Titre>
+          <div className="mt-10 grid gap-8 md:grid-cols-2 md:gap-14">
             <p className="text-lg leading-relaxed text-white/80">
               On prend le temps de faire connaissance. Vous racontez ce qui vous amène, à votre
               rythme, sans avoir à tout dire d’emblée.
@@ -161,8 +166,8 @@ export default async function Accueil() {
 
       <section className="px-6 py-20 md:py-28">
         <div className="mx-auto max-w-5xl">
-          <Chapeau>Où me trouver</Chapeau>
-          <div className="mt-8 grid gap-4 sm:grid-cols-2">
+          <Titre>Où me trouver</Titre>
+          <div className="mt-10 grid gap-4 sm:grid-cols-2">
             {cabinets.map((c) => (
               <div
                 key={c.id}

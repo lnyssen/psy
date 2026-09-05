@@ -38,8 +38,8 @@ export function EnteteSite() {
   }, []);
 
   return (
-    <header className="sticky top-0 z-40 border-b border-line bg-paper/90 backdrop-blur-md">
-      <div className="mx-auto flex max-w-5xl items-center gap-3 px-5 py-3 md:gap-4 md:px-6 md:py-4">
+    <header className="sticky top-0 z-40 border-b border-line bg-paper/90 px-6 backdrop-blur-md">
+      <div className="mx-auto flex max-w-5xl items-center gap-3 py-3 md:gap-4 md:py-4">
         <Link href="/" className="flex shrink-0 flex-col">
           <span className="font-display text-[17px] leading-[1.15] font-bold tracking-tight md:text-[20px]">
             Amandine Monsel
@@ -88,7 +88,7 @@ export function EnteteSite() {
         <nav
           id="menu-site"
           aria-label="Navigation du site"
-          className="flex flex-col border-t border-line bg-paper px-6 py-3 md:hidden"
+          className="-mx-6 flex flex-col border-t border-line bg-paper px-6 py-3 md:hidden"
         >
           {PAGES.map((p) => (
             <Link

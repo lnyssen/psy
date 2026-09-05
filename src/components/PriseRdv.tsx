@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useActionState, useState } from "react";
 import { reserverOuDemander, type ResultatRdv } from "@/lib/rdv-actions";
+import { CalendrierRdv } from "@/components/CalendrierRdv";
 
 type CabinetChoix = {
   id: string;
@@ -12,17 +13,7 @@ type CabinetChoix = {
   fillHex: string;
 };
 
-type Jour = { iso: string; creneaux: { iso: string; minutes: number }[] };
-
-const fmtJour = new Intl.DateTimeFormat("fr-BE", {
-  weekday: "long",
-  day: "numeric",
-  month: "long",
-  timeZone: "Europe/Brussels",
-});
-
-const hhmm = (m: number) =>
-  `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
+import type { Jour } from "@/components/CalendrierRdv";
 
 export function PriseRdv({
   cabinets,
@@ -113,42 +104,11 @@ export function PriseRdv({
 
         <section>
           <h2 className="text-[11px] font-semibold tracking-[0.12em] text-ink-muted uppercase">
-            Créneaux libres
+            Choisir un créneau
           </h2>
-          {jours.length === 0 ? (
-            <p className="mt-3 rounded-[14px] border border-dashed border-line-strong px-6 py-10 text-center text-sm text-ink-muted">
-              Aucun créneau libre dans ce lieu pour les prochaines semaines. Essayez l’autre
-              cabinet, ou écrivez-nous depuis la page contact.
-            </p>
-          ) : (
-            <div className="mt-3 flex flex-col gap-5">
-              {jours.slice(0, 12).map((j) => (
-                <div key={j.iso}>
-                  <p className="text-sm font-semibold first-letter:uppercase">
-                    {fmtJour.format(new Date(j.iso))}
-                  </p>
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {j.creneaux.map((c) => (
-                      <button
-                        key={c.iso}
-                        type="button"
-                        onClick={() => setCreneau(c.iso)}
-                        aria-pressed={creneau === c.iso}
-                        className={`rounded-full border px-3.5 py-1.5 text-sm transition-colors ${
-                          creneau === c.iso
-                            ? "border-accent bg-accent font-semibold text-accent-contrast"
-                            : "border-line-strong hover:border-accent hover:text-accent-text"
-                        }`}
-                        data-numeric
-                      >
-                        {hhmm(c.minutes)}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+          <div className="mt-5">
+            <CalendrierRdv jours={jours} creneau={creneau} onChoisir={setCreneau} />
+          </div>
         </section>
 
         {!jeton && (
