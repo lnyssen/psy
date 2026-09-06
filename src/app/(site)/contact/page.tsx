@@ -58,7 +58,7 @@ export default async function Contact() {
           className="rounded-[16px] border border-line px-6 py-5 transition-colors hover:border-accent"
         >
           <p className="text-[11px] font-semibold tracking-[0.12em] text-ink-muted uppercase">
-            Courriel
+            E-mail
           </p>
           <p className="mt-1 text-lg font-semibold">{SITE.email}</p>
         </a>

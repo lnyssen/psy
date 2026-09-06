@@ -46,7 +46,7 @@ export default async function FichePatient({ params }: { params: Promise<{ id: s
 
   const coordonnees = [
     { t: "Téléphone", v: patient.phone, mono: true },
-    { t: "Courriel", v: patient.email },
+    { t: "E-mail", v: patient.email },
     {
       t: "Adresse",
       v: patient.addressLine

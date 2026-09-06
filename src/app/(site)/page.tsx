@@ -18,7 +18,7 @@ export const dynamic = "force-dynamic";
  * lui donner de l'air.
  *
  * Les deux aplats sombres ne suivent pas le thème : ce sont des couleurs
- * pleines, lisibles en blanc dans les deux cas (13,5:1 et 13,9:1). Les faire
+ * pleines, lisibles en blanc dans les deux cas (9,4:1 et 13,9:1). Les faire
  * varier aurait cassé l'alternance, qui est le sujet.
  */
 
@@ -41,37 +41,62 @@ export default async function Accueil() {
   return (
     <>
       {/*
-        Portrait pleine image.
-        
-        La photo occupe toute la largeur, le texte se pose dessus. Un voile
-        dégradé, du navy profond en bas à gauche vers presque rien en haut à
-        droite, garantit la lisibilité du blanc sans noyer le phare : le point
-        lumineux reste dans la partie claire du dégradé, là où il fait son
-        effet.
+        Photo pleine largeur.
+
+        Le texte se pose dessus, calé sur la même marge que le logo — la
+        section porte la gouttière, le bloc intérieur n'en ajoute pas. C'est
+        ce doublon qui décalait le titre de vingt-quatre pixels vers la droite.
       */}
-      <section className="relative isolate flex min-h-[36rem] items-end overflow-hidden md:min-h-[44rem]">
+      <section className="relative isolate flex min-h-[36rem] items-end overflow-hidden px-6 md:min-h-[44rem]">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src="/images/phare.jpg"
-          srcSet="/images/phare-petit.jpg 602w, /images/phare.jpg 1338w"
+          srcSet="/images/phare-petit.jpg 800w, /images/phare.jpg 1600w"
           sizes="100vw"
-          width={1338}
-          height={2000}
+          width={1600}
+          height={1263}
           alt=""
           aria-hidden="true"
-          className="absolute inset-0 -z-20 h-full w-full object-cover object-[62%_38%]"
+          className="absolute inset-0 -z-20 h-full w-full object-cover object-[78%_88%] md:object-[65%_85%]"
+        />
+        {/*
+          Le voile n'est pas le même selon la largeur, et il ne pouvait pas
+          l'être. Sur un écran large, le texte occupe la gauche et la photo la
+          droite : un dégradé diagonal assombrit l'un sans toucher l'autre, et
+          le phare reste dans la partie faible. Sur un téléphone, la colonne
+          fait toute la largeur et cette diagonale ne couvre plus rien — le
+          sur-titre tombait à 2,3:1 et l'accroche à 3,1:1 sur le ciel clair.
+          D'où un second voile, vertical, qui remonte du bas.
+
+          Mesuré sur le rendu réel (photo composée puis dégradés appliqués, pire
+          pixel sous chaque ligne de texte), pas estimé.
+        */}
+        <div
+          aria-hidden="true"
+          className="absolute inset-0 -z-10 md:hidden"
+          style={{
+            background:
+              "linear-gradient(to top, rgba(24,18,50,0.95) 0%, rgba(24,18,50,0.88) 42%, rgba(24,18,50,0.70) 72%, rgba(24,18,50,0.52) 100%)",
+          }}
         />
         <div
           aria-hidden="true"
-          className="absolute inset-0 -z-10"
+          className="absolute inset-0 -z-10 hidden md:block"
           style={{
             background:
-              "linear-gradient(105deg, rgba(28,22,56,0.92) 0%, rgba(28,22,56,0.78) 38%, rgba(28,22,56,0.30) 68%, rgba(28,22,56,0.12) 100%)",
+              "linear-gradient(72deg, rgba(24,18,50,0.86) 0%, rgba(24,18,50,0.66) 34%, rgba(24,18,50,0.24) 66%, rgba(24,18,50,0.04) 100%)",
+          }}
+        />
+        <div
+          aria-hidden="true"
+          className="absolute inset-x-0 bottom-0 -z-10 hidden h-2/3 md:block"
+          style={{
+            background: "linear-gradient(to top, rgba(24,18,50,0.5) 0%, rgba(24,18,50,0) 100%)",
           }}
         />
 
-        <div className="mx-auto w-full max-w-5xl px-6 py-16 text-white md:py-24">
-          <p className="text-[11px] font-bold tracking-[0.2em] text-white/70 uppercase">
+        <div className="mx-auto w-full max-w-5xl py-16 text-white md:py-24">
+          <p className="text-[11px] font-bold tracking-[0.2em] text-white/85 uppercase">
             {SITE.titre}
           </p>
           <h1 className="mt-5 max-w-3xl font-display text-[3.25rem] leading-[0.95] tracking-[-0.03em] md:text-[5.5rem]">
@@ -87,7 +112,7 @@ export default async function Accueil() {
               </span>
             ))}
           </p>
-          <p className="mt-5 max-w-lg text-lg leading-relaxed text-white/80">{SITE.accroche}</p>
+          <p className="mt-5 max-w-lg text-lg leading-relaxed text-white/90">{SITE.accroche}</p>
           <div className="mt-9 flex flex-wrap items-center gap-3">
             <Link
               href="/rendez-vous"
@@ -194,8 +219,8 @@ export default async function Accueil() {
               <p className="font-display text-2xl leading-tight md:text-3xl">
                 Les créneaux libres sont en ligne.
               </p>
-              <p className="mt-2 text-sm text-white/75">
-                Un premier rendez-vous se confirme par retour de courriel.
+              <p className="mt-2 text-sm text-white/90">
+                Un premier rendez-vous se confirme par retour d’e-mail.
               </p>
             </div>
             <Link

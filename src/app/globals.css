@@ -68,6 +68,7 @@
  * Contrastes mesurés (WCAG 2.1), sur le fond papier #FAF8F5 :
  *   navy #272757          13,08:1      blanc sur navy        13,87:1
  *   violet #7F00FF         5,92:1      blanc sur violet       6,28:1
+ *   bande violette #5F00BF              blanc                  9,38:1
  *   violet texte #6002BE   8,81:1      sur aplat violet doux  7,77:1
  *   dû                     5,59:1      payé  6,10:1   en retard  6,51:1
  */
@@ -110,9 +111,14 @@
 
   /* Bandes de couleur du site public. Elles ne changent pas d'un thème à
      l'autre : ce sont des aplats profonds, lisibles en blanc dans les deux cas
-     — 13,5:1 pour le violet, 13,9:1 pour le navy. Les faire varier aurait
-     cassé le rythme voulu par l'alternance. */
-  --color-bande-violette: #3d0a80;
+     — 9,4:1 pour le violet, 13,9:1 pour le navy. Les faire varier aurait cassé
+     le rythme voulu par l'alternance.
+
+     La bande violette est exactement l'accent #7F00FF assombri : même teinte
+     (270°), même saturation pleine, luminosité descendue de 50 % à 37,5 %.
+     L'ancien #3D0A80 était un violet à part, plus terne et plus bleu ; la page
+     portait donc deux pourpres qui ne se reconnaissaient pas. */
+  --color-bande-violette: #5f00bf;
   --color-bande-navy: #272757;
   --color-bande-claire: #f3f0ea;
 
@@ -210,13 +216,18 @@ html {
 /*
  * Grain.
  *
- * Une turbulence SVG en fond fixe, à quatre pour cent d'opacité. Posée en
- * surimpression plutôt qu'en fond de page : les bandes de couleur ont leur
- * propre aplat, qui masquerait un grain resté derrière elles — or c'est
+ * Deux turbulences SVG superposées, en fond fixe. La fine (fréquence 0,85)
+ * donne le grain proprement dit ; la grossière (0,035, sur une tuile de 480 px)
+ * ajoute une moire très lente qui empêche le grain de se lire comme une trame
+ * régulière — c'est elle qui fait la différence entre « du bruit » et « du
+ * papier ». Sans elle, l'œil finit par voir le motif se répéter.
+ *
+ * Posée en surimpression plutôt qu'en fond de page : les bandes de couleur ont
+ * leur propre aplat, qui masquerait un grain resté derrière elles — or c'est
  * précisément sur ces grands aplats qu'il évite l'effet plastique.
  *
- * Elle ne capte aucun clic et ne coûte aucune requête : l'image est un data-URI
- * de quelques centaines d'octets, et le motif se répète.
+ * Elle ne capte aucun clic et ne coûte aucune requête : les images sont des
+ * data-URI de quelques centaines d'octets, et les motifs se répètent.
  */
 body::after {
   content: "";
@@ -224,14 +235,18 @@ body::after {
   inset: 0;
   z-index: 100;
   pointer-events: none;
-  opacity: 0.04;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+  opacity: 0.09;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E"),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='480' height='480'%3E%3Cfilter id='m'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.035' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='480' height='480' filter='url(%23m)' opacity='0.55'/%3E%3C/svg%3E");
+  background-size:
+    140px 140px,
+    480px 480px;
 }
 
 /* En thème sombre, le grain doit éclaircir et non assombrir, sans quoi il
    disparaît dans le noir. */
 :root[data-theme="dark"] body::after {
-  opacity: 0.055;
+  opacity: 0.07;
   mix-blend-mode: screen;
 }
 

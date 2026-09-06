@@ -49,14 +49,25 @@ export function EnteteSite() {
           </span>
         </Link>
 
-        <nav aria-label="Navigation du site" className="ml-8 hidden gap-6 md:flex">
+        {/*
+          Les liens vivent dans une pastille au fond transparent : seul un filet
+          la dessine, le papier de l'en-tête reste visible au travers. La page
+          courante est la seule à recevoir un fond — c'est ce qui la désigne,
+          sans que la pastille elle-même pèse.
+        */}
+        <nav
+          aria-label="Navigation du site"
+          className="ml-8 hidden items-center gap-1 rounded-full border border-line-strong/70 p-1 md:flex"
+        >
           {PAGES.map((p) => (
             <Link
               key={p.href}
               href={p.href}
               aria-current={pathname === p.href ? "page" : undefined}
-              className={`text-sm transition-colors hover:text-accent-text ${
-                pathname === p.href ? "font-semibold text-accent-text" : "text-ink-muted"
+              className={`rounded-full px-4 py-1.5 text-[15px] transition-colors ${
+                pathname === p.href
+                  ? "bg-accent-soft font-semibold text-accent-text"
+                  : "text-ink-muted hover:bg-accent-soft/60 hover:text-accent-text"
               }`}
             >
               {p.label}

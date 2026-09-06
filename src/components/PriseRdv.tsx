@@ -60,7 +60,7 @@ export function PriseRdv({
         <p className="mt-4 max-w-2xl text-lg leading-relaxed text-ink-muted">
           {nomConnu
             ? `Bonjour ${nomConnu}. Choisissez le créneau qui vous convient : il sera réservé immédiatement.`
-            : "Choisissez un lieu puis un créneau. Votre demande sera confirmée par retour de courriel."}
+            : "Choisissez un lieu puis un créneau. Votre demande sera confirmée par retour d’e-mail."}
         </p>
         {lienInvalide && (
           <p className="mt-4 rounded-[14px] bg-due-soft px-5 py-3 text-sm text-due">
@@ -136,7 +136,7 @@ export function PriseRdv({
             <p className="text-xs leading-relaxed text-ink-muted">
               Ces informations servent uniquement à traiter votre demande. Elles sont conservées en
               Europe, ne sont transmises à personne, et sont effacées si la demande n’aboutit pas.
-              N’écrivez rien ici que vous ne souhaiteriez pas voir passer par courriel : ce qui
+              N’écrivez rien ici que vous ne souhaiteriez pas voir passer par e-mail : ce qui
               relève du motif se dira en séance.
             </p>
           </section>

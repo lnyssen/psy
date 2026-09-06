@@ -57,7 +57,7 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
             Amandine Monsel — Amapsy SRL. Psychologue inscrite à la Commission des psychologues.
             Les échanges sont couverts par le secret professionnel.
           </p>
-          <p className="text-xs text-white/40">
+          <p className="text-xs text-white/60">
             Site de démonstration. Certaines informations restent à compléter.
           </p>
         </div>
