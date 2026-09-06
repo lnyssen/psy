@@ -89,6 +89,11 @@
      14,89:1 sur le papier ; blanc dessus, 15,78:1. */
   --color-nuit: #1b1464;
   --color-titre: #1b1464;
+  /* Contour des commandes de navigation — bouton de menu, repli de la barre,
+     réglages, thème, verrou. Le bleu nuit plutôt que le gris chaud des filets
+     ordinaires : ces boutons appartiennent au châssis de l'outil, pas au
+     contenu, et le gris les fondait dedans. */
+  --color-contour-nav: #1b1464;
 
   /* Filets */
   --color-line: #e5e1da;
@@ -162,6 +167,13 @@
      l'encre courante pour garder la hiérarchie. */
   --color-nuit: #1b1464;
   --color-titre: #f4f1fa;
+  /* En thème sombre le bleu nuit disparaîtrait dans le fond : le contour
+     s'éclaircit vers le violet de marque, sans monter jusqu'au blanc qui
+     ferait crier un état de repos. Il porte aussi les pictogrammes, d'où
+     5,41:1 sur le fond et 5,02:1 sur les surfaces — bien au-delà du 3:1 exigé
+     pour un élément d'interface, parce qu'une icône seule doit se lire aussi
+     vite qu'un mot. En clair, le bleu nuit donne 14,89:1. */
+  --color-contour-nav: #8b80dd;
 
   --color-line: #322d3e;
   --color-line-strong: #463f56;
@@ -195,6 +207,7 @@
   --color-ink-muted: var(--color-ink-muted);
   --color-nuit: var(--color-nuit);
   --color-titre: var(--color-titre);
+  --color-contour-nav: var(--color-contour-nav);
   --color-line: var(--color-line);
   --color-line-strong: var(--color-line-strong);
   --color-accent: var(--color-accent);

@@ -90,7 +90,7 @@ export function BarreLaterale({
           onClick={basculer}
           aria-pressed={repliee}
           title={repliee ? "Déplier la navigation" : "Replier la navigation"}
-          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-line-strong text-ink-muted transition-colors hover:border-accent hover:text-accent-text ${
+          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-contour-nav text-contour-nav transition-colors hover:border-accent hover:text-accent-text ${
             repliee ? "" : "ml-auto"
           }`}
         >
@@ -111,7 +111,7 @@ export function BarreLaterale({
             type="button"
             onClick={basculer}
             title="Rechercher (⌘K)"
-            className="flex h-10 w-full items-center justify-center rounded-full border border-line bg-surface text-ink-muted transition-colors hover:border-accent hover:text-accent-text"
+            className="flex h-10 w-full items-center justify-center rounded-full border border-contour-nav bg-surface text-contour-nav transition-colors hover:border-accent hover:text-accent-text"
           >
             <span className="sr-only">Rechercher</span>
             <IconRecherche className="h-4 w-4" />
@@ -187,7 +187,7 @@ export function BarreLaterale({
           className={`flex h-9 w-9 items-center justify-center rounded-full border transition-colors ${
             pathname.startsWith("/admin/reglages")
               ? "border-accent bg-accent text-accent-contrast"
-              : "border-line-strong text-ink-muted hover:border-accent hover:text-accent-text"
+              : "border-contour-nav text-contour-nav hover:border-accent hover:text-accent-text"
           }`}
         >
           <span className="sr-only">Réglages</span>
@@ -201,7 +201,7 @@ export function BarreLaterale({
             ref={boutonVerrou}
             type="submit"
             title="Verrouiller l’écran (⌘⇧L)"
-            className="flex h-9 w-9 items-center justify-center rounded-full border border-line-strong text-ink-muted transition-colors hover:border-accent hover:text-accent-text"
+            className="flex h-9 w-9 items-center justify-center rounded-full border border-contour-nav text-contour-nav transition-colors hover:border-accent hover:text-accent-text"
           >
             <span className="sr-only">Verrouiller l’écran</span>
             <IconCadenas />

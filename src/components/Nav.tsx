@@ -12,6 +12,13 @@ import { IconCadenas, IconFermer, IconMenu, IconReglages } from "@/components/ic
 /**
  * Barre de l'outil sur téléphone, en dessous de 900 px.
  *
+ * Fond opaque et sans flou d'arrière-plan, contrairement au site public. Ici on
+ * fait défiler des tables longues sous une barre collante : un fond translucide
+ * laissait lire le texte de la page au travers, et le flou d'arrière-plan sur
+ * un élément collant est en prime ce qui fait décrocher la barre pendant
+ * l'inertie du défilement sur iOS. L'effet de verre a sa place sur une bannière
+ * qu'on regarde ; pas sur un outil qu'on parcourt.
+ *
  * Au-dessus, c'est la barre latérale qui prend le relais : une colonne fixe n'a
  * pas sa place sur la largeur d'un téléphone, où elle mangerait le tiers de
  * l'écran ou se réduirait à un rail qu'on viserait mal au pouce. Tout passe donc
@@ -44,7 +51,7 @@ export function Nav({
   }, []);
 
   return (
-    <header className="sans-impression sticky top-0 z-40 border-b border-line bg-paper/90 backdrop-blur-md md:hidden">
+    <header className="sans-impression sticky top-0 z-40 border-b border-line bg-paper md:hidden">
       <div className="flex items-center gap-x-4 px-5 py-2.5">
         <Link href="/admin" className="flex shrink-0 flex-col">
           <span className="font-display text-[20px] leading-[1.15] tracking-tight">
@@ -60,7 +67,7 @@ export function Nav({
           onClick={() => setOuvert((o) => !o)}
           aria-expanded={ouvert}
           aria-controls="menu-mobile"
-          className="relative ml-auto flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-line-strong text-ink-muted transition-colors hover:border-accent hover:text-accent-text"
+          className="relative ml-auto flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-contour-nav text-contour-nav transition-colors hover:border-accent hover:text-accent-text"
         >
           <span className="sr-only">{ouvert ? "Fermer le menu" : "Ouvrir le menu"}</span>
           {ouvert ? <IconFermer /> : <IconMenu />}
@@ -123,7 +130,7 @@ export function Nav({
               className={`flex h-11 w-11 items-center justify-center rounded-full border transition-colors ${
                 pathname.startsWith("/admin/reglages")
                   ? "border-accent bg-accent text-accent-contrast"
-                  : "border-line-strong text-ink-muted hover:border-accent hover:text-accent-text"
+                  : "border-contour-nav text-contour-nav hover:border-accent hover:text-accent-text"
               }`}
             >
               <span className="sr-only">Réglages</span>
@@ -136,7 +143,7 @@ export function Nav({
               <button
                 type="submit"
                 title="Verrouiller l’écran"
-                className="flex h-11 w-11 items-center justify-center rounded-full border border-line-strong text-ink-muted transition-colors hover:border-accent hover:text-accent-text"
+                className="flex h-11 w-11 items-center justify-center rounded-full border border-contour-nav text-contour-nav transition-colors hover:border-accent hover:text-accent-text"
               >
                 <span className="sr-only">Verrouiller l’écran</span>
                 <IconCadenas />
