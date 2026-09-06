@@ -43,12 +43,15 @@ export function EnteteSite() {
       côtés, et rien qui touche le bord de l'écran.
 
       Sa largeur n'est pas celle de la colonne de texte mais celle-ci plus ses
-      propres marges intérieures (64rem + 2 × 28 px). C'est ce qui remet le logo
+      propres marges intérieures (64rem + 2 × 40 px). C'est ce qui remet le logo
       exactement sur la gouttière du contenu — 128 px — au lieu de l'en décaler
       de la valeur du rembourrage. Sur téléphone le compte ne tombe plus juste :
       il fallait choisir entre un nom collé au bord arrondi et un alignement au
       pixel avec le texte du dessous, et c'est l'air dans la pastille qui l'a
-      emporté.
+      emporté. Les vingt-huit pixels de retrait n'y tiennent d'ailleurs qu'une
+      fois l'appel à l'action resserré : à 375 px, le nom, le bouton et le
+      bouton de menu occupent déjà toute la largeur disponible, et chaque pixel
+      donné au retrait est un pixel repris à l'un des trois.
 
       Pas d'ombre portée : la pastille se détache par sa transparence et le flou
       de ce qui passe dessous, pas par une ombre. Un filet d'un pixel suffit à
@@ -59,7 +62,7 @@ export function EnteteSite() {
       et une hauteur variable aurait laissé un liseré.
     */
     <header className="sticky top-0 z-40 h-[var(--entete)] px-3 pt-4 md:px-6">
-      <div className="mx-auto flex h-full max-w-[67.5rem] items-center gap-3 rounded-full bg-paper/72 px-5 ring-1 ring-line/70 ring-inset backdrop-blur-2xl md:gap-4 md:px-7">
+      <div className="mx-auto flex h-full max-w-[69rem] items-center gap-2 rounded-full bg-paper/72 px-7 ring-1 ring-line/70 ring-inset backdrop-blur-2xl md:gap-4 md:px-10">
         <Link href="/" className="flex shrink-0 flex-col">
           <span className="font-display text-[17px] leading-[1.15] tracking-tight md:text-[20px]">
             Amandine Monsel
@@ -98,7 +101,7 @@ export function EnteteSite() {
 
         <Link
           href="/rendez-vous"
-          className="ml-auto shrink-0 rounded-full bg-accent px-3.5 py-2 text-[12px] font-semibold whitespace-nowrap text-accent-contrast transition-colors hover:bg-accent-hover md:px-5 md:py-2.5 md:text-sm"
+          className="ml-auto shrink-0 rounded-full bg-accent px-3 py-1.5 text-[11px] font-semibold whitespace-nowrap text-accent-contrast transition-colors hover:bg-accent-hover md:px-5 md:py-2.5 md:text-sm"
         >
           <span className="md:hidden">Rendez-vous</span>
           <span className="hidden md:inline">Prendre rendez-vous</span>
@@ -109,7 +112,7 @@ export function EnteteSite() {
           onClick={() => setOuvert((o) => !o)}
           aria-expanded={ouvert}
           aria-controls="menu-site"
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-line-strong text-ink-muted md:hidden"
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-line-strong text-ink md:hidden"
         >
           <span className="sr-only">{ouvert ? "Fermer le menu" : "Ouvrir le menu"}</span>
           {ouvert ? <IconFermer /> : <IconMenu />}
