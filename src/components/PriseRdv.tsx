@@ -44,7 +44,7 @@ export function PriseRdv({
   if (resultat?.ok) {
     return (
       <div className="flex flex-col items-start gap-5">
-        <h1 className="font-display text-3xl tracking-tight">C’est noté</h1>
+        <h1 className="font-display text-3xl tracking-tight text-titre">C’est noté</h1>
         <p className="max-w-xl text-lg leading-relaxed text-ink-muted">{resultat.message}</p>
         <Link href="/" className="text-sm font-medium text-accent-text hover:underline">
           Retour à l’accueil
@@ -56,7 +56,7 @@ export function PriseRdv({
   return (
     <div className="flex flex-col gap-10">
       <section>
-        <h1 className="font-display text-4xl tracking-tight">Prendre rendez-vous</h1>
+        <h1 className="font-display text-4xl tracking-tight text-titre">Prendre rendez-vous</h1>
         <p className="mt-4 max-w-2xl text-lg leading-relaxed text-ink-muted">
           {nomConnu
             ? `Bonjour ${nomConnu}. Choisissez le créneau qui vous convient : il sera réservé immédiatement.`
@@ -71,7 +71,7 @@ export function PriseRdv({
       </section>
 
       <section>
-        <h2 className="text-[11px] font-semibold tracking-[0.12em] text-ink-muted uppercase">
+        <h2 className="text-[11px] font-semibold tracking-[0.12em] text-titre uppercase">
           Lieu
         </h2>
         <div className="mt-3 flex flex-wrap gap-2">
@@ -102,7 +102,7 @@ export function PriseRdv({
         <input type="hidden" name="creneau" value={creneau ?? ""} />
 
         <section>
-          <h2 className="text-[11px] font-semibold tracking-[0.12em] text-ink-muted uppercase">
+          <h2 className="text-[11px] font-semibold tracking-[0.12em] text-titre uppercase">
             Choisir un créneau
           </h2>
           <div className="mt-5">
@@ -118,7 +118,7 @@ export function PriseRdv({
 
         {!jeton && (
           <section className="flex flex-col gap-3">
-            <h2 className="text-[11px] font-semibold tracking-[0.12em] text-ink-muted uppercase">
+            <h2 className="text-[11px] font-semibold tracking-[0.12em] text-titre uppercase">
               Vos coordonnées
             </h2>
             <div className="grid gap-3 sm:grid-cols-2">

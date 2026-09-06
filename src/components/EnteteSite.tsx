@@ -38,8 +38,21 @@ export function EnteteSite() {
   }, []);
 
   return (
-    <header className="sticky top-0 z-40 border-b border-line bg-paper/90 px-6 backdrop-blur-md">
-      <div className="mx-auto flex max-w-5xl items-center gap-3 py-3 md:gap-4 md:py-4">
+    /*
+      L'en-tête est une pastille détachée : du jeu au-dessus, du jeu sur les
+      côtés, et rien qui touche le bord de l'écran.
+
+      Sa largeur n'est pas celle de la colonne de texte mais celle-ci plus ses
+      propres marges intérieures. C'est ce qui remet le logo exactement sur la
+      gouttière du contenu — 128 px sur grand écran, 24 px sur téléphone — au
+      lieu de l'en décaler de la valeur du rembourrage.
+
+      La hauteur est fixée par --entete plutôt que déduite du contenu :
+      l'accueil s'en sert en marge négative pour faire passer la photo derrière,
+      et une hauteur variable aurait laissé un liseré.
+    */
+    <header className="sticky top-0 z-40 h-[var(--entete)] px-3 pt-4 md:px-6">
+      <div className="mx-auto flex h-full max-w-[66.5rem] items-center gap-3 rounded-full bg-paper/92 px-3 shadow-[0_10px_30px_-14px_rgba(19,28,68,0.45)] ring-1 ring-line ring-inset backdrop-blur-xl md:gap-4 md:px-5">
         <Link href="/" className="flex shrink-0 flex-col">
           <span className="font-display text-[17px] leading-[1.15] tracking-tight md:text-[20px]">
             Amandine Monsel
@@ -96,10 +109,15 @@ export function EnteteSite() {
       </div>
 
       {ouvert && (
+        /*
+          L'en-tête ayant une hauteur fixe, le menu déplié ne peut plus pousser
+          quoi que ce soit : il devient un panneau qui flotte sous la pastille,
+          au même retrait qu'elle.
+        */
         <nav
           id="menu-site"
           aria-label="Navigation du site"
-          className="-mx-6 flex flex-col border-t border-line bg-paper px-6 py-3 md:hidden"
+          className="mt-2 flex flex-col rounded-[24px] border border-line bg-paper/97 px-5 py-2 shadow-[0_16px_40px_-16px_rgba(19,28,68,0.5)] backdrop-blur-xl md:hidden"
         >
           {PAGES.map((p) => (
             <Link

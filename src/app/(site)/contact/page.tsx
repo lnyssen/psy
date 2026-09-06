@@ -15,7 +15,7 @@ export default async function Contact() {
     <>
       <section className="px-6 py-14 md:py-20">
        <div className="mx-auto max-w-5xl">
-        <h1 className="font-display text-4xl tracking-tight">Contact</h1>
+        <h1 className="font-display text-4xl tracking-tight text-titre">Contact</h1>
         <p className="mt-4 max-w-2xl text-lg leading-relaxed text-ink-muted">
           Pour une demande de rendez-vous, la{" "}
           <Link href="/rendez-vous" className="text-accent-text hover:underline">

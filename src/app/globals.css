@@ -82,6 +82,14 @@
   --color-ink: #272757;
   --color-ink-muted: #5f5f80;
 
+  /* Bleu nuit. Plus profond et franchement plus bleu que l'encre (229° contre
+     240°, et deux fois moins clair). Il porte les titres et le pied de page :
+     ce sont les deux endroits où la page a besoin d'un point d'ancrage sombre,
+     et leur donner la même couleur les fait se répondre.
+     15,51:1 sur le papier ; blanc dessus, 16,44:1. */
+  --color-nuit: #131c44;
+  --color-titre: #131c44;
+
   /* Filets */
   --color-line: #e5e1da;
   --color-line-strong: #cfc9c0;
@@ -119,10 +127,15 @@
      L'ancien #3D0A80 était un violet à part, plus terne et plus bleu ; la page
      portait donc deux pourpres qui ne se reconnaissaient pas. */
   --color-bande-violette: #5f00bf;
-  --color-bande-navy: #272757;
+  --color-bande-navy: #131c44;
   --color-bande-claire: #f3f0ea;
 
   --radius-card: 14px;
+
+  /* Hauteur réservée à l'en-tête flottant : la pastille elle-même plus le jeu
+     qui la détache du haut. L'accueil s'en sert en marge négative pour passer
+     la photo derrière — d'où une valeur unique plutôt qu'un nombre recopié. */
+  --entete: 5.25rem;
 }
 
 /*
@@ -143,6 +156,12 @@
 
   --color-ink: #ece9f2;
   --color-ink-muted: #a29cb4;
+
+  /* En thème sombre le bleu nuit ne peut plus porter les titres — il devient
+     le fond. Ils passent au blanc légèrement bleuté, un cran au-dessus de
+     l'encre courante pour garder la hiérarchie. */
+  --color-nuit: #131c44;
+  --color-titre: #f4f1fa;
 
   --color-line: #322d3e;
   --color-line-strong: #463f56;
@@ -174,6 +193,8 @@
   --color-bande-claire: var(--color-bande-claire);
   --color-ink: var(--color-ink);
   --color-ink-muted: var(--color-ink-muted);
+  --color-nuit: var(--color-nuit);
+  --color-titre: var(--color-titre);
   --color-line: var(--color-line);
   --color-line-strong: var(--color-line-strong);
   --color-accent: var(--color-accent);

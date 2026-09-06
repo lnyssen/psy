@@ -23,10 +23,17 @@ export const dynamic = "force-dynamic";
  */
 
 /** Titre de section. En grand : ce sont les repères qui permettent de parcourir
- *  la page sans la lire, et une capitale de onze points ne remplit pas ce rôle. */
-function Titre({ children }: { children: React.ReactNode }) {
+ *  la page sans la lire, et une capitale de onze points ne remplit pas ce rôle.
+ *
+ *  Une seule couleur pour tous les titres du site, le bleu nuit — sauf sur les
+ *  aplats sombres, où elle serait illisible et où le blanc prend le relais. */
+function Titre({ children, surAplat }: { children: React.ReactNode; surAplat?: boolean }) {
   return (
-    <h2 className="font-display text-[2rem] leading-[1.05] tracking-tight md:text-[3rem]">
+    <h2
+      className={`font-display text-[2rem] leading-[1.05] tracking-tight md:text-[3rem] ${
+        surAplat ? "text-white" : "text-titre"
+      }`}
+    >
       {children}
     </h2>
   );
@@ -41,13 +48,15 @@ export default async function Accueil() {
   return (
     <>
       {/*
-        Photo pleine largeur.
+        Photo pleine largeur, remontée sous l'en-tête.
 
-        Le texte se pose dessus, calé sur la même marge que le logo — la
-        section porte la gouttière, le bloc intérieur n'en ajoute pas. C'est
-        ce doublon qui décalait le titre de vingt-quatre pixels vers la droite.
+        La marge négative annule la hauteur réservée à la pastille : la photo
+        part du haut de la fenêtre et la pastille flotte dessus. Le texte, lui,
+        reste calé en bas et sur la même gouttière que le logo — la section
+        porte la gouttière, le bloc intérieur n'en ajoute pas. C'est ce doublon
+        qui décalait le titre de vingt-quatre pixels vers la droite.
       */}
-      <section className="relative isolate flex min-h-[36rem] items-end overflow-hidden px-6 md:min-h-[44rem]">
+      <section className="relative isolate -mt-[var(--entete)] flex min-h-[36rem] items-end overflow-hidden px-6 md:min-h-[44rem]">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src="/images/phare.jpg"
@@ -95,7 +104,10 @@ export default async function Accueil() {
           }}
         />
 
-        <div className="mx-auto w-full max-w-5xl py-16 text-white md:py-24">
+        {/* Le haut du bloc réserve la hauteur de la pastille : sur téléphone le
+            texte dépasse la hauteur minimale de la section et remontait sinon
+            sous l'en-tête, qui coupait le sur-titre. */}
+        <div className="mx-auto w-full max-w-5xl pt-[calc(var(--entete)+2rem)] pb-16 text-white md:pt-[calc(var(--entete)+3rem)] md:pb-24">
           <p className="text-[11px] font-bold tracking-[0.2em] text-white/85 uppercase">
             {SITE.titre}
           </p>
@@ -176,7 +188,7 @@ export default async function Accueil() {
 
       <section className="bg-bande-violette px-6 py-20 text-white md:py-28">
         <div className="mx-auto max-w-5xl">
-          <Titre>La première séance</Titre>
+          <Titre surAplat>La première séance</Titre>
           <div className="mt-10 grid gap-8 md:grid-cols-2 md:gap-14">
             <p className="text-lg leading-relaxed text-white/80">
               On prend le temps de faire connaissance. Vous racontez ce qui vous amène, à votre
