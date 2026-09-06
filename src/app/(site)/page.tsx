@@ -172,7 +172,7 @@ export default async function Accueil() {
               width={500}
               height={500}
               alt="Portrait d’Amandine Monsel"
-              className="w-40 rounded-full object-cover shadow-[0_18px_44px_-20px_rgba(27,20,100,0.55)] sm:w-52 md:w-full md:max-w-[16rem] md:rounded-[28px]"
+              className="w-40 rounded-full object-cover sm:w-52 md:w-full md:max-w-[16rem] md:rounded-[28px]"
             />
           </div>
 
