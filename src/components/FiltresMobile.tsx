@@ -52,8 +52,14 @@ export function FiltresMobile({
         {groupes.map((g) => {
           const valeur = params[g.cle] ?? "";
           const choisi = g.options.find((o) => o.valeur === valeur);
+          // Largeur minimale à 12 rem et non 9,5 : les champs sont passés à
+          // 16 px pour empêcher iOS d'agrandir la page au toucher, et « Tous
+          // les paiements » ne tenait plus dans une demi-largeur de téléphone —
+          // le libellé se coupait en « Tous les paieme… ». Ils se rangent
+          // désormais l'un sous l'autre plutôt que de mentir sur ce qu'ils
+          // filtrent.
           return (
-            <span key={g.cle} className="relative min-w-[9.5rem] flex-1">
+            <span key={g.cle} className="relative min-w-[12rem] flex-1">
               <label htmlFor={`f-${g.cle}`} className="sr-only">
                 {g.libelle}
               </label>

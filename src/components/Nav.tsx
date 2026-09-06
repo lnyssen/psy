@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { verrouiller } from "@/lib/auth-actions";
 import { ENTREES, estActif } from "@/components/entrees";
 import { Recherche } from "@/components/Recherche";
@@ -33,8 +33,6 @@ export function Nav({
 }) {
   const pathname = usePathname();
   const [ouvert, setOuvert] = useState(false);
-  const positionAvant = useRef(0);
-  const aRestaurer = useRef<number | null>(null);
 
   // Le panneau se referme dès qu'on a navigué : le laisser ouvert masquerait la
   // page qu'on vient d'atteindre. L'ajustement se fait pendant le rendu et non
@@ -47,54 +45,16 @@ export function Nav({
     setOuvert(false);
   }
 
-  /**
-   * Ouvrir remonte d'abord la page.
-   *
-   * Sans ça, le panneau ne fait pas descendre le contenu : une barre collante
-   * garde sa place dans le flux tout en haut du document, si bien qu'une fois
-   * la page défilée elle est peinte ailleurs qu'elle n'occupe, et les quatre
-   * cent cinquante pixels du panneau se posent par-dessus ce qui passe dessous.
-   * Mesuré : en haut de page, « main » descendait de 65 à 513 ; défilée, il ne
-   * bougeait pas d'un pixel.
-   *
-   * Remonter d'abord remet la barre à sa place réelle, et le panneau pousse
-   * alors le contenu pour de bon. La position est mémorisée et rendue à la
-   * fermeture : ouvrir un menu puis se raviser ne doit pas coûter l'endroit où
-   * l'on était.
-   */
-  function ouvrir() {
-    positionAvant.current = window.scrollY;
-    window.scrollTo({ top: 0, behavior: "instant" });
-    setOuvert(true);
-  }
-
-  function fermer() {
-    aRestaurer.current = positionAvant.current;
-    setOuvert(false);
-  }
-
-  // La position se rend après le commit, pas dans le gestionnaire de clic.
-  // Restaurée trop tôt, elle est écrasée par l'ancrage de défilement du
-  // navigateur, qui corrige le défilement au moment où le panneau quitte le
-  // document et le raccourcit de quatre cent cinquante pixels. Mesuré : on
-  // revenait à 53 au lieu de 500.
-  useEffect(() => {
-    if (!ouvert && aRestaurer.current !== null) {
-      window.scrollTo({ top: aRestaurer.current, behavior: "instant" });
-      aRestaurer.current = null;
-    }
-  }, [ouvert]);
-
-  // L'écoute n'existe que pendant que le panneau est ouvert : hors de là,
-  // Échap n'a rien à fermer et ferait sauter la page à une position mémorisée
-  // qui ne veut plus rien dire.
+  // Le défilement de la page est retenu par le voile lui-même — touch-action —
+  // et non par un overflow:hidden posé sur body. Celui-ci fait du corps de page
+  // un conteneur de défilement, ce qui décroche les éléments collants : la
+  // barre quittait le haut de l'écran et se retrouvait au milieu, menu ouvert.
+  // Le voile couvre tout ce qui n'est pas la barre, et le panneau gère son
+  // propre débordement : rien d'autre ne peut être tiré.
   useEffect(() => {
     if (!ouvert) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        aRestaurer.current = positionAvant.current;
-        setOuvert(false);
-      }
+      if (e.key === "Escape") setOuvert(false);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -102,7 +62,7 @@ export function Nav({
 
   return (
     <header className="sans-impression sticky top-0 z-40 border-b border-line bg-paper md:hidden">
-      <div className="flex items-center gap-x-4 px-5 py-2.5">
+      <div className="relative z-20 flex items-center gap-x-4 bg-paper px-5 py-2.5">
         <Link href="/admin" className="flex shrink-0 flex-col">
           <span className="font-display text-[20px] leading-[1.15] tracking-tight">
             Amandine Monsel
@@ -114,7 +74,7 @@ export function Nav({
 
         <button
           type="button"
-          onClick={() => (ouvert ? fermer() : ouvrir())}
+          onClick={() => setOuvert((o) => !o)}
           aria-expanded={ouvert}
           aria-controls="menu-mobile"
           className="relative ml-auto flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-contour-nav text-contour-nav transition-colors hover:border-accent hover:text-accent-text"
@@ -139,8 +99,24 @@ export function Nav({
         </button>
       </div>
 
+      {/*
+        Le panneau est posé en absolu sous la barre, et non ajouté à sa
+        hauteur : autrement il allongeait l'en-tête et repoussait la page vers
+        le bas. Le voile sombre en dessous ferme le menu au toucher et sépare
+        nettement ce qui est actif de ce qui ne l'est plus.
+      */}
       {ouvert && (
-        <div id="menu-mobile" className="border-t border-line bg-paper px-5 py-4">
+        <>
+          <button
+            type="button"
+            aria-label="Fermer le menu"
+            onClick={() => setOuvert(false)}
+            className="fixed inset-0 z-0 touch-none bg-nuit/35"
+          />
+          <div
+            id="menu-mobile"
+            className="absolute inset-x-0 top-full z-10 max-h-[80svh] overflow-y-auto overscroll-contain border-t border-line bg-paper px-5 py-4 shadow-[0_24px_48px_-24px_rgba(27,20,100,0.45)]"
+          >
           <Recherche />
           <nav aria-label="Navigation principale" className="mt-4 flex flex-col gap-1">
             {ENTREES.map(({ href, label, Icone }) => {
@@ -199,8 +175,9 @@ export function Nav({
                 <IconCadenas />
               </button>
             </form>
+            </div>
           </div>
-        </div>
+        </>
       )}
     </header>
   );

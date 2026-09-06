@@ -17,7 +17,7 @@ const QUESTIONS: [string, string][] = [
   ],
   [
     "Et si je dois annuler ?",
-    "Prévenez-moi au moins vingt-quatre heures à l’avance et la séance n’est pas due. En deçà, elle reste facturée : le créneau vous était réservé et ne peut plus être proposé à quelqu’un d’autre.",
+    "Prévenez-moi au moins quarante-huit heures à l’avance et la séance n’est pas due. En deçà, elle reste facturée : le créneau vous était réservé et ne peut plus être proposé à quelqu’un d’autre.",
   ],
   [
     "Recevez-vous les adolescents ?",

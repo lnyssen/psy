@@ -33,10 +33,31 @@ export default async function Praticalites() {
                 {c.nom}
               </p>
               <p className="mt-1 text-sm text-ink-muted">{adresseCabinet(c)}</p>
-              <p className="mt-3 text-xs text-ink-muted">
-                <span className="font-semibold text-ink">À compléter</span> — accès en transports,
-                stationnement, étage, accessibilité.
-              </p>
+              {/* Une ligne du champ « accès » par ligne affichée : c'est du
+                  texte libre saisi dans les réglages, et le retour à la ligne
+                  y a un sens — un moyen de transport par ligne. */}
+              {c.acces.trim() ? (
+                <ul className="mt-4 flex flex-col gap-1.5 border-t border-line pt-4">
+                  {c.acces
+                    .split("\n")
+                    .map((l) => l.trim())
+                    .filter(Boolean)
+                    .map((l) => (
+                      <li key={l} className="flex gap-2.5 text-sm leading-snug text-ink-muted">
+                        <span
+                          aria-hidden="true"
+                          className="mt-[0.45rem] h-1 w-1 shrink-0 rounded-full bg-accent"
+                        />
+                        <span>{l}</span>
+                      </li>
+                    ))}
+                </ul>
+              ) : (
+                <p className="mt-3 text-xs text-ink-muted">
+                  <span className="font-semibold text-ink">À compléter</span> — accès en
+                  transports, stationnement, étage, accessibilité.
+                </p>
+              )}
             </div>
           ))}
         </div>

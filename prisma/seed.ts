@@ -51,6 +51,11 @@ const CABINETS = [
     colorHex: "#056A73",
     fillHex: "#C6F4F8",
     vividHex: "#00C8D4",
+    // Lignes relevées sur les données cartographiques puis recoupées : l'arrêt
+    // Victor Allard est à cinquante mètres, l'arrêt Wagon à quatre cent trente.
+    // Le tram 97 dessert aussi Wagon mais il est suspendu — l'annoncer
+    // enverrait quelqu'un attendre un tram qui ne vient pas.
+    acces: "Bus 48 et 74 — arrêt Victor Allard, devant la porte.\nTram 4 — arrêt Wagon, à cinq minutes à pied.\nGare d’Uccle-Stalle à cinq minutes.",
     ordre: 0,
   },
   {
@@ -61,6 +66,7 @@ const CABINETS = [
     colorHex: "#A8005A",
     fillHex: "#FFD6EA",
     vividHex: "#FF2D8F",
+    acces: "Tram 8 et bus 34 — arrêt Rond-point du Souverain, à trois minutes à pied.\nTram 8 — arrêt Empain, à cinq minutes.\nMétro 5 — Herrmann-Debroux ou Demey, à un quart d’heure à pied.",
     ordre: 1,
   },
   {

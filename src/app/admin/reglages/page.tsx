@@ -192,6 +192,17 @@ export default async function Reglages() {
                     </div>
                   </div>
 
+                  <label>
+                    <span className={libelleChamp}>Accès — une ligne par moyen de transport</span>
+                    <textarea
+                      name="acces"
+                      defaultValue={c.acces}
+                      rows={3}
+                      placeholder={"Tram 4 — arrêt Wagon, à cinq minutes à pied."}
+                      className={`mt-1 ${champ} resize-y leading-snug`}
+                    />
+                  </label>
+
                   <fieldset className="flex flex-wrap items-center gap-3">
                     <legend className={`${libelleChamp} mb-1`}>Couleur</legend>
                     {PALETTE_CABINETS.map((t) => (
@@ -280,6 +291,15 @@ export default async function Reglages() {
               </label>
             </div>
           </div>
+          <label className="mt-3 block">
+            <span className={libelleChamp}>Accès — une ligne par moyen de transport</span>
+            <textarea
+              name="acces"
+              rows={3}
+              placeholder="Tram 4 — arrêt Wagon, à cinq minutes à pied."
+              className={`mt-1 ${champ} resize-y leading-snug`}
+            />
+          </label>
           <fieldset className="mt-3 flex flex-wrap items-center gap-3">
             <legend className={`${libelleChamp} mb-1`}>Couleur</legend>
             {PALETTE_CABINETS.map((t, i) => (

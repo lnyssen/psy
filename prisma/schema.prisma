@@ -91,6 +91,11 @@ model Cabinet {
   /// intervient pour l'établissement et non pour une patientèle qui la
   /// solliciterait directement.
   publie      Boolean @default(true)
+  /// Comment on vient : lignes de tram, bus et métro, et tout ce qui aide à
+  /// trouver la porte. Texte libre et non liste structurée : le réseau change,
+  /// une ligne est déviée pour travaux, un étage se précise — Amandine doit
+  /// pouvoir corriger sans qu'on touche au code. Une ligne par idée.
+  acces       String  @default("") @db.Text
   ordre       Int     @default(0)
 
   sessions       Session[]

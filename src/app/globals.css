@@ -297,6 +297,27 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/*
+ * Champs de saisie sur téléphone.
+ *
+ * iOS agrandit la page dès qu'on touche un champ dont le texte fait moins de
+ * seize pixels — et n'en revient jamais seul : on reste zoomé, décalé sur le
+ * côté, jusqu'à ce qu'on pense à pincer l'écran. Les champs de recherche et les
+ * listes de filtres étaient dessinés à treize.
+ *
+ * La règle n'est pas dans une couche, contrairement aux utilitaires de
+ * Tailwind : c'est ce qui lui permet de l'emporter sur une classe de taille
+ * sans recourir à !important. Au-delà de 900 px, où le zoom au toucher n'existe
+ * pas, les champs gardent la taille qu'on leur a dessinée.
+ */
+@media (max-width: 56.24rem) {
+  input:not([type="checkbox"]):not([type="radio"]),
+  select,
+  textarea {
+    font-size: 16px;
+  }
+}
+
 /* Chiffres en chasse tabulaire : exigence du brief partout où des heures, des
    durées et des montants s'alignent en colonne. */
 .tabular,
