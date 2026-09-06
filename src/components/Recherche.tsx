@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useRef } from "react";
+import { useEffect, useId, useRef } from "react";
 import { IconRecherche } from "@/components/icons";
 
 /**
@@ -15,13 +15,21 @@ import { IconRecherche } from "@/components/icons";
 export function Recherche({ defaut }: { defaut?: string }) {
   const champ = useRef<HTMLInputElement>(null);
   const router = useRouter();
+  // Le champ existe en deux exemplaires — barre latérale et panneau du
+  // téléphone — dont un seul est visible à la fois. Un identifiant écrit en dur
+  // les aurait rendus homonymes, et l'étiquette de l'un aurait désigné l'autre.
+  const id = useId();
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key.toLowerCase() === "k" && (e.metaKey || e.ctrlKey)) {
+        // Les deux exemplaires écoutent le raccourci ; seul celui qui est
+        // effectivement affiché doit le prendre. offsetParent vaut null pour un
+        // élément masqué, c'est le test le moins coûteux.
+        if (!champ.current || champ.current.offsetParent === null) return;
         e.preventDefault();
-        champ.current?.focus();
-        champ.current?.select();
+        champ.current.focus();
+        champ.current.select();
       }
     };
     window.addEventListener("keydown", onKey);
@@ -38,7 +46,7 @@ export function Recherche({ defaut }: { defaut?: string }) {
       }}
       className="relative min-w-0 flex-1 md:max-w-56"
     >
-      <label htmlFor="recherche" className="sr-only">
+      <label htmlFor={id} className="sr-only">
         Rechercher un patient, une note, un lieu
       </label>
       <span className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-ink-muted">
@@ -46,7 +54,7 @@ export function Recherche({ defaut }: { defaut?: string }) {
       </span>
       <input
         ref={champ}
-        id="recherche"
+        id={id}
         name="q"
         type="search"
         defaultValue={defaut}
