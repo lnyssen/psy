@@ -110,20 +110,33 @@ export function BarreLaterale({
           <button
             type="button"
             onClick={basculer}
-            title="Rechercher (⌘K)"
-            className="flex h-10 w-full items-center justify-center rounded-full border border-contour-nav bg-surface text-contour-nav transition-colors hover:border-accent hover:text-accent-text"
+            className="group relative mx-auto flex h-10 w-10 items-center justify-center rounded-full border border-contour-nav bg-surface text-contour-nav transition-colors hover:border-accent hover:text-accent-text"
           >
             <span className="sr-only">Rechercher</span>
             <IconRecherche className="h-4 w-4" />
+            <span
+              aria-hidden="true"
+              className="pointer-events-none absolute top-1/2 left-full z-50 ml-3 -translate-y-1/2 rounded-full bg-nuit px-3 py-1.5 text-[12px] font-medium whitespace-nowrap text-white opacity-0 ring-1 ring-white/15 transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100"
+            >
+              Rechercher ⌘K
+            </span>
           </button>
         ) : (
           <Recherche />
         )}
       </div>
 
+      {/*
+        Repliée, la colonne ne défile pas : un conteneur qui gère son
+        débordement sur un axe le clippe aussi sur l'autre, et l'infobulle qui
+        sort à droite serait coupée au bord du rail. À six entrées, et même à
+        huit quand la comptabilité arrivera, rien ne déborde d'un écran.
+      */}
       <nav
         aria-label="Navigation principale"
-        className="mt-3 flex flex-1 flex-col gap-1 overflow-y-auto px-3"
+        className={`mt-3 flex flex-1 flex-col gap-1 px-3 ${
+          repliee ? "items-center" : "overflow-y-auto"
+        }`}
       >
         {ENTREES.map(({ href, label, Icone }) => {
           const actif = estActif(href, pathname);
@@ -132,9 +145,8 @@ export function BarreLaterale({
               key={href}
               href={href}
               aria-current={actif ? "page" : undefined}
-              title={label}
-              className={`flex items-center gap-3 rounded-full py-2.5 text-[14px] font-medium whitespace-nowrap transition-colors ${
-                repliee ? "justify-center px-0" : "px-3.5"
+              className={`group relative flex items-center rounded-full text-[14px] font-medium whitespace-nowrap transition-colors ${
+                repliee ? "h-10 w-10 justify-center" : "gap-3 px-3.5 py-2.5"
               } ${
                 actif
                   ? "bg-accent text-accent-contrast"
@@ -153,7 +165,26 @@ export function BarreLaterale({
                 )}
               </span>
 
-              {!repliee && <span className="truncate">{label}</span>}
+              {/* Le libellé existe toujours, visible quand la barre est
+                  dépliée et pour les seuls lecteurs d'écran quand elle ne l'est
+                  pas : un lien qui n'affiche qu'un pictogramme n'a sans lui
+                  aucun nom accessible. */}
+              <span className={repliee ? "sr-only" : "truncate"}>{label}</span>
+
+              {/* Infobulle du rail. Dessinée plutôt que confiée à l'attribut
+                  title : celui-ci met une seconde à paraître, s'affiche là où
+                  est le curseur et non en regard de l'icône, et ne suit pas le
+                  thème. Elle double le libellé pour l'œil seulement — d'où
+                  aria-hidden, sans quoi le nom du lien serait annoncé deux
+                  fois. */}
+              {repliee && (
+                <span
+                  aria-hidden="true"
+                  className="pointer-events-none absolute top-1/2 left-full z-50 ml-3 -translate-y-1/2 rounded-full bg-nuit px-3 py-1.5 text-[12px] font-medium text-white opacity-0 ring-1 ring-white/15 transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100"
+                >
+                  {label}
+                </span>
+              )}
 
               {href === "/admin/demandes" && demandesEnAttente > 0 && !repliee && (
                 <span
