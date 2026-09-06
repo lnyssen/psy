@@ -43,16 +43,23 @@ export function EnteteSite() {
       côtés, et rien qui touche le bord de l'écran.
 
       Sa largeur n'est pas celle de la colonne de texte mais celle-ci plus ses
-      propres marges intérieures. C'est ce qui remet le logo exactement sur la
-      gouttière du contenu — 128 px sur grand écran, 24 px sur téléphone — au
-      lieu de l'en décaler de la valeur du rembourrage.
+      propres marges intérieures (64rem + 2 × 28 px). C'est ce qui remet le logo
+      exactement sur la gouttière du contenu — 128 px — au lieu de l'en décaler
+      de la valeur du rembourrage. Sur téléphone le compte ne tombe plus juste :
+      il fallait choisir entre un nom collé au bord arrondi et un alignement au
+      pixel avec le texte du dessous, et c'est l'air dans la pastille qui l'a
+      emporté.
+
+      Pas d'ombre portée : la pastille se détache par sa transparence et le flou
+      de ce qui passe dessous, pas par une ombre. Un filet d'un pixel suffit à
+      en tenir le bord.
 
       La hauteur est fixée par --entete plutôt que déduite du contenu :
       l'accueil s'en sert en marge négative pour faire passer la photo derrière,
       et une hauteur variable aurait laissé un liseré.
     */
     <header className="sticky top-0 z-40 h-[var(--entete)] px-3 pt-4 md:px-6">
-      <div className="mx-auto flex h-full max-w-[66.5rem] items-center gap-3 rounded-full bg-paper/92 px-3 shadow-[0_10px_30px_-14px_rgba(19,28,68,0.45)] ring-1 ring-line ring-inset backdrop-blur-xl md:gap-4 md:px-5">
+      <div className="mx-auto flex h-full max-w-[67.5rem] items-center gap-3 rounded-full bg-paper/72 px-5 ring-1 ring-line/70 ring-inset backdrop-blur-2xl md:gap-4 md:px-7">
         <Link href="/" className="flex shrink-0 flex-col">
           <span className="font-display text-[17px] leading-[1.15] tracking-tight md:text-[20px]">
             Amandine Monsel
@@ -63,15 +70,16 @@ export function EnteteSite() {
         </Link>
 
         {/*
-          Les liens vivent dans une pastille au fond transparent : seul un filet
-          la dessine, le papier de l'en-tête reste visible au travers. La page
-          courante est la seule à recevoir un fond — c'est ce qui la désigne,
-          sans que la pastille elle-même pèse.
+          Les liens ne sont pas encadrés : une pastille dans la pastille faisait
+          deux contours pour une seule barre. Seule la page courante reçoit un
+          fond, et c'est ce qui la désigne.
+
+          Ils sont à l'encre pleine et non en gris atténué. Mesuré sur le rendu
+          réel — photo, voile, puis papier à 72 % —, le gris tombait à 3,46:1
+          au-dessus du ciel clair, sous le seuil. La transparence voulue se paie
+          quelque part : ici, sur la couleur du texte plutôt que sur le verre.
         */}
-        <nav
-          aria-label="Navigation du site"
-          className="ml-8 hidden items-center gap-1 rounded-full border border-line-strong/70 p-1 md:flex"
-        >
+        <nav aria-label="Navigation du site" className="ml-8 hidden items-center gap-1 md:flex">
           {PAGES.map((p) => (
             <Link
               key={p.href}
@@ -80,7 +88,7 @@ export function EnteteSite() {
               className={`rounded-full px-4 py-1.5 text-[15px] transition-colors ${
                 pathname === p.href
                   ? "bg-accent-soft font-semibold text-accent-text"
-                  : "text-ink-muted hover:bg-accent-soft/60 hover:text-accent-text"
+                  : "text-ink hover:bg-accent-soft/60 hover:text-accent-text"
               }`}
             >
               {p.label}
@@ -117,7 +125,7 @@ export function EnteteSite() {
         <nav
           id="menu-site"
           aria-label="Navigation du site"
-          className="mt-2 flex flex-col rounded-[24px] border border-line bg-paper/97 px-5 py-2 shadow-[0_16px_40px_-16px_rgba(19,28,68,0.5)] backdrop-blur-xl md:hidden"
+          className="mt-2 flex flex-col rounded-[24px] bg-paper/88 px-5 py-2 ring-1 ring-line/70 ring-inset backdrop-blur-2xl md:hidden"
         >
           {PAGES.map((p) => (
             <Link

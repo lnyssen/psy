@@ -10,6 +10,7 @@ import {
   IconCadenas,
   IconDemandes,
   IconFacturation,
+  IconFinance,
   IconFermer,
   IconJour,
   IconMenu,
@@ -23,6 +24,7 @@ const ENTREES = [
   { href: "/admin/semaine", label: "Semaine", Icone: IconSemaine },
   { href: "/admin/patients", label: "Patients", Icone: IconPatients },
   { href: "/admin/facturation", label: "Facturation", Icone: IconFacturation },
+  { href: "/admin/finance", label: "Finance", Icone: IconFinance },
   { href: "/admin/demandes", label: "Demandes", Icone: IconDemandes },
 ];
 
@@ -102,7 +104,7 @@ export function Nav({
                   </span>
                 )}
               </span>
-              {/* Le libellé n'apparaît qu'à partir de 1280 px. En dessous, cinq
+              {/* Le libellé n'apparaît qu'à partir de 1280 px. En dessous, six
                   entrées plus la recherche et trois outils ne tiennent pas, et
                   un libellé coupé en deux vaut moins qu'une icône seule. */}
               <span className="hidden xl:inline">{label}</span>

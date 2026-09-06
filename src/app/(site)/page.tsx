@@ -153,15 +153,38 @@ export default async function Accueil() {
         </div>
       </section>
 
+      {/*
+        Le portrait entre ici et pas dans la bannière : au-dessus, il aurait
+        disputé la place au nom et au phare ; ici il arrive au moment où le
+        texte dit « je », et c'est le seul endroit de la page où l'on parle
+        d'elle à la première personne.
+
+        Il est servi à 500 px pour un affichage qui ne dépasse pas 260 : le
+        fichier d'origine ne fait pas plus, et l'agrandir l'aurait rendu mou
+        sur un écran à haute densité.
+      */}
       <section className="px-6 py-20 md:py-28">
-        <div className="mx-auto max-w-5xl">
-          <Titre>Mon approche</Titre>
-          <div className="mt-10 grid gap-6 md:grid-cols-2 md:gap-14">
-            {SITE.parcours.map((p) => (
-              <p key={p.slice(0, 24)} className="text-lg leading-relaxed text-ink-muted">
-                {p}
-              </p>
-            ))}
+        <div className="mx-auto grid max-w-5xl gap-10 md:grid-cols-[16rem_1fr] md:gap-14">
+          <div className="order-1 md:order-none">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/images/amandine.jpg"
+              width={500}
+              height={500}
+              alt="Portrait d’Amandine Monsel"
+              className="w-40 rounded-full object-cover shadow-[0_18px_44px_-20px_rgba(27,20,100,0.55)] sm:w-52 md:w-full md:max-w-[16rem] md:rounded-[28px]"
+            />
+          </div>
+
+          <div>
+            <Titre>Mon approche</Titre>
+            <div className="mt-8 flex flex-col gap-6">
+              {SITE.parcours.map((p) => (
+                <p key={p.slice(0, 24)} className="text-lg leading-relaxed text-ink-muted">
+                  {p}
+                </p>
+              ))}
+            </div>
           </div>
         </div>
       </section>

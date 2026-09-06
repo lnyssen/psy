@@ -72,6 +72,54 @@ export async function marquerPaye(id: string, methode: "CASH" | "ELECTRONIC") {
   return { ok: true as const };
 }
 
+/**
+ * Encaissement en lot, depuis la sélection de la table de facturation.
+ *
+ * Le filtre sur le statut n'est pas une redondance de l'interface : la table
+ * n'affiche que des actes facturables et que des lignes impayées, mais une
+ * sélection peut avoir vieilli entre l'affichage et le clic — un autre onglet,
+ * un retour arrière. Réécrire un paiement déjà enregistré changerait sa date et
+ * son mode, et donc le reçu déjà remis.
+ *
+ * Une transaction, pour que le lot passe entier ou pas du tout.
+ */
+export async function marquerPayeLot(ids: string[], methode: "CASH" | "ELECTRONIC") {
+  if (ids.length === 0) return { ok: false as const, message: "Aucune séance sélectionnée." };
+
+  const seances = await prisma.session.findMany({
+    where: {
+      id: { in: ids },
+      paymentStatus: { not: "PAID" },
+      status: { in: ["ATTENDED", "NO_SHOW"] },
+    },
+    include: { patient: true },
+  });
+
+  if (seances.length === 0) {
+    return { ok: false as const, message: "Ces séances sont déjà encaissées." };
+  }
+
+  const maintenant = new Date();
+  await prisma.$transaction(
+    seances.map((s) =>
+      prisma.session.update({
+        where: { id: s.id },
+        data: {
+          paymentStatus: "PAID",
+          paidAt: maintenant,
+          paymentMethod: methode,
+          amountCents: s.amountCents ?? s.patient.feeCents,
+        },
+      }),
+    ),
+  );
+
+  revalidatePath("/admin/facturation");
+  revalidatePath("/admin/finance");
+  for (const s of seances) revalidatePath(`/admin/patients/${s.patientId}`);
+  return { ok: true as const, n: seances.length, ignorees: ids.length - seances.length };
+}
+
 export async function creerSeance(patientId: string, isoDebut: string, cabinetId: string) {
   const patient = await prisma.patient.findUnique({ where: { id: patientId } });
   if (!patient) return { ok: false as const, message: "Patient introuvable." };

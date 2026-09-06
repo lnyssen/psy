@@ -1,12 +1,10 @@
-import Link from "next/link";
 import type { CareScheme } from "@prisma/client";
 import { prisma } from "@/lib/db";
-import { CabinetTag, EtatPaiement, RegimeTag } from "@/components/tags";
-import { Encaisser } from "@/components/Encaisser";
-import { EnTeteTri, GroupeFiltre, TriMobile, type Params } from "@/components/filtres";
+import { GroupeFiltre, TriMobile, type Params } from "@/components/filtres";
 import { FiltresMobile } from "@/components/FiltresMobile";
+import { TableFacturation, type LigneFacture } from "@/components/TableFacturation";
 import { cabinetsActifs, optionsCabinet } from "@/lib/cabinets";
-import { euros, fmtDateCourte, isBillable, nomComplet } from "@/lib/format";
+import { euros, isBillable } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
 
@@ -52,6 +50,29 @@ export default async function Facturation({ searchParams }: { searchParams: Prom
     },
     { t: "Actes", v: String(seances.length) },
   ];
+
+  // Ce que la table reçoit : le strict nécessaire, à plat. Le montant prévu est
+  // celui que figerait un encaissement — montant déjà posé, sinon tarif du
+  // patient — pour que le total de la sélection dise la vérité avant le clic.
+  const lignes: LigneFacture[] = seances.map((s) => ({
+    id: s.id,
+    patientId: s.patientId,
+    patient: {
+      firstName: s.patient.firstName,
+      lastName: s.patient.lastName,
+      scheme: s.patient.scheme,
+    },
+    cabinet: s.cabinet,
+    startsAt: s.startsAt,
+    status: s.status,
+    paymentStatus: s.paymentStatus,
+    paymentMethod: s.paymentMethod,
+    amountCents: s.amountCents,
+    montantPrevuCents: s.amountCents ?? s.patient.feeCents ?? 0,
+    // Une séance conventionnée n'a pas de tarif : l'encaisser ne pose aucun
+    // montant. Le signaler plutôt que de la compter pour zéro en silence.
+    montantConnu: (s.amountCents ?? s.patient.feeCents) !== null,
+  }));
 
   return (
     <div className="flex flex-col gap-7">
@@ -152,102 +173,7 @@ export default async function Facturation({ searchParams }: { searchParams: Prom
         ]}
       />
 
-      {/* Sous 900 px, la table cède la place à des cartes empilées. Six colonnes
-          ne tiennent pas dans la largeur d'un téléphone, et un tableau qui
-          défile de côté fait défiler la page entière. */}
-      <ul className="flex flex-col gap-2 md:hidden">
-        {seances.map((s) => (
-          <li key={s.id} className="rounded-[14px] border border-line bg-surface px-4 py-3.5">
-            <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-              <Link href={`/admin/patients/${s.patientId}`} className="font-medium">
-                {nomComplet(s.patient)}
-              </Link>
-              <span className="text-sm font-semibold whitespace-nowrap" data-numeric>
-                {euros(s.amountCents)}
-              </span>
-            </div>
-            <div className="mt-2 flex flex-wrap items-center gap-2">
-              <span className="text-xs text-ink-muted" data-numeric>
-                {fmtDateCourte.format(s.startsAt)}
-              </span>
-              <CabinetTag cabinet={s.cabinet} />
-              <RegimeTag scheme={s.patient.scheme} />
-            </div>
-            <div className="mt-3 flex flex-wrap items-center gap-2">
-              <EtatPaiement status={s.status} payment={s.paymentStatus} methode={s.paymentMethod} />
-              {s.paymentStatus === "PAID" ? (
-                <a
-                  href={`/api/recu/${s.id}`}
-                  className="rounded-full border border-line-strong px-3 py-1 text-[11px] font-medium"
-                >
-                  reçu PDF
-                </a>
-              ) : (
-                <Encaisser id={s.id} />
-              )}
-            </div>
-          </li>
-        ))}
-      </ul>
-
-      <div className="hidden rounded-[14px] border border-line bg-surface md:block">
-        <table className="w-full border-collapse text-sm">
-          <caption className="sr-only">Séances facturables</caption>
-          <thead>
-            <tr className="border-b border-line bg-sunken text-[11px] tracking-[0.1em] text-ink-muted uppercase">
-              <EnTeteTri base="/admin/facturation" params={params} champ="date">Date</EnTeteTri>
-              <EnTeteTri base="/admin/facturation" params={params} champ="patient">Patient</EnTeteTri>
-              <EnTeteTri base="/admin/facturation" params={params} champ="cabinet">Cabinet</EnTeteTri>
-              <EnTeteTri base="/admin/facturation" params={params} champ="regime">Régime</EnTeteTri>
-              <EnTeteTri base="/admin/facturation" params={params} champ="montant" aDroite>Montant</EnTeteTri>
-              <EnTeteTri base="/admin/facturation" params={params} champ="paiement" aDroite>Paiement</EnTeteTri>
-            </tr>
-          </thead>
-          <tbody>
-            {seances.map((s) => (
-              <tr key={s.id} className="border-b border-line last:border-b-0 hover:bg-sunken/60">
-                <td className="px-5 py-3 font-mono text-xs whitespace-nowrap" data-numeric>
-                  {fmtDateCourte.format(s.startsAt)}
-                </td>
-                <td className="px-3 py-3">
-                  <Link href={`/admin/patients/${s.patientId}`} className="font-medium hover:text-accent-text">
-                    {nomComplet(s.patient)}
-                  </Link>
-                </td>
-                <td className="px-3 py-3"><CabinetTag cabinet={s.cabinet} /></td>
-                <td className="px-3 py-3"><RegimeTag scheme={s.patient.scheme} /></td>
-                <td className="px-3 py-3 text-right font-mono whitespace-nowrap" data-numeric>
-                  {euros(s.amountCents)}
-                </td>
-                <td className="px-5 py-3">
-                  <span className="flex flex-wrap items-center justify-end gap-2">
-                    <EtatPaiement
-                      status={s.status}
-                      payment={s.paymentStatus}
-                      methode={s.paymentMethod}
-                    />
-                    {s.paymentStatus === "PAID" ? (
-                      <a
-                        href={`/api/recu/${s.id}`}
-                        className="rounded-full border border-line-strong px-2.5 py-0.5 text-[11px] font-medium transition-colors hover:border-accent hover:text-accent-text"
-                      >
-                        reçu PDF
-                      </a>
-                    ) : (
-                      <Encaisser id={s.id} />
-                    )}
-                  </span>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        {seances.length === 0 && (
-          <p className="px-6 py-12 text-center text-sm text-ink-muted">
-            Aucun acte ne correspond à ces filtres.
-          </p>
-        )}
-      </div>
+      <TableFacturation lignes={lignes} params={params} />
 
       <p className="text-xs text-ink-muted">
         Les séances conventionnées n’affichent pas de montant : le circuit de facturation au

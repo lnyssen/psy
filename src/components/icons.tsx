@@ -55,6 +55,15 @@ export function IconFacturation({ className }: Props) {
   );
 }
 
+export function IconFinance({ className }: Props) {
+  return (
+    <svg {...base} className={className}>
+      <path d="M2.5 17h15" />
+      <path d="M5 17V9.5M9.2 17V5.5M13.4 17v-4.5M17.5 17V8" />
+    </svg>
+  );
+}
+
 export function IconCadenas({ className }: Props) {
   return (
     <svg {...base} className={className}>

@@ -82,13 +82,13 @@
   --color-ink: #272757;
   --color-ink-muted: #5f5f80;
 
-  /* Bleu nuit. Plus profond et franchement plus bleu que l'encre (229° contre
-     240°, et deux fois moins clair). Il porte les titres et le pied de page :
-     ce sont les deux endroits où la page a besoin d'un point d'ancrage sombre,
-     et leur donner la même couleur les fait se répondre.
-     15,51:1 sur le papier ; blanc dessus, 16,44:1. */
-  --color-nuit: #131c44;
-  --color-titre: #131c44;
+  /* Bleu nuit #1B1464, couleur de marque donnée. Deux fois moins clair que
+     l'encre et nettement plus saturé (67 % contre 38 %). Il porte les titres et
+     le pied de page : ce sont les deux endroits où la page a besoin d'un point
+     d'ancrage sombre, et leur donner la même couleur les fait se répondre.
+     14,89:1 sur le papier ; blanc dessus, 15,78:1. */
+  --color-nuit: #1b1464;
+  --color-titre: #1b1464;
 
   /* Filets */
   --color-line: #e5e1da;
@@ -127,7 +127,7 @@
      L'ancien #3D0A80 était un violet à part, plus terne et plus bleu ; la page
      portait donc deux pourpres qui ne se reconnaissaient pas. */
   --color-bande-violette: #5f00bf;
-  --color-bande-navy: #131c44;
+  --color-bande-navy: #1b1464;
   --color-bande-claire: #f3f0ea;
 
   --radius-card: 14px;
@@ -160,7 +160,7 @@
   /* En thème sombre le bleu nuit ne peut plus porter les titres — il devient
      le fond. Ils passent au blanc légèrement bleuté, un cran au-dessus de
      l'encre courante pour garder la hiérarchie. */
-  --color-nuit: #131c44;
+  --color-nuit: #1b1464;
   --color-titre: #f4f1fa;
 
   --color-line: #322d3e;
