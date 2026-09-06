@@ -18,7 +18,7 @@ export const SITE = {
   telephoneLien: "+32485831119",
   email: "amandine.monsel@gmail.com",
   parcours: [
-    "Je suis psychologue clinicienne, diplômée de l’ULB, et psychothérapeute formée à l’IFISAM. Depuis plus de dix ans, je travaille et continue de me former pour offrir un accompagnement fondé sur les orientations analytique et systémique.",
+    "Je suis psychologue clinicienne, diplômée de l’ULB, et psychothérapeute formée à l’IFISAM. Depuis plus de vingt ans, je travaille et continue de me former pour offrir un accompagnement fondé sur les orientations analytique et systémique.",
     "Parallèlement à ma pratique privée, j’exerce depuis une dizaine d’années comme psychologue en milieu scolaire. Cette expérience m’a permis d’intervenir à tous les niveaux d’enseignement et auprès de publics issus de différents milieux socio-économiques.",
   ],
   pourQui:

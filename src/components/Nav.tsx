@@ -67,7 +67,7 @@ export function Nav({
 
   return (
     <header className="sans-impression sticky top-0 z-40 border-b border-line bg-paper/90 backdrop-blur-md">
-      <div className="mx-auto flex max-w-6xl items-center gap-x-4 px-5 py-2.5 md:px-8">
+      <div className="mx-auto flex max-w-7xl items-center gap-x-4 px-5 py-2.5 md:px-8">
         <Link href="/admin" className="flex shrink-0 flex-col">
           <span className="font-display text-[20px] leading-[1.15] tracking-tight md:text-[22px]">
             Amandine Monsel
@@ -79,7 +79,13 @@ export function Nav({
 
         {/* Au-dessus de 900 px : tout tient sur une ligne. En dessous, tout se
             replie derrière un bouton — la version précédente entassait sept
-            cibles sur la largeur d'un téléphone et les débordait à droite. */}
+            cibles sur la largeur d'un téléphone et les débordait à droite.
+
+            La colonne d'admin fait 1280 px et non 1152 : à six entrées
+            libellées, le logo, les liens et les trois outils réclament 1195 px
+            et débordaient de 107 sur l'ancienne largeur. Avec cinq entrées le
+            compte tombait à un pixel près — c'est dire si la marge était
+            fictive. L'outil est dense, ces 128 px profitent aussi aux tables. */}
         <nav aria-label="Navigation principale" className="hidden flex-1 gap-1 md:flex">
           {ENTREES.map(({ href, label, Icone }) => (
             <Link
