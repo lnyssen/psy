@@ -37,7 +37,14 @@ export default async function Praticalites() {
                   texte libre saisi dans les réglages, et le retour à la ligne
                   y a un sens — un moyen de transport par ligne. */}
               {c.acces.trim() ? (
-                <ul className="mt-4 flex flex-col gap-1.5 border-t border-line pt-4">
+                <>
+                  {/* Un intitulé, sinon la liste de noms sous l'adresse ne dit
+                      pas ce qu'elle est. Volontairement neutre : le champ
+                      accueille aussi le stationnement ou l'étage. */}
+                  <p className="mt-4 border-t border-line pt-4 text-[11px] font-semibold tracking-[0.12em] text-titre uppercase">
+                    Accès
+                  </p>
+                  <ul className="mt-2.5 flex flex-col gap-1.5">
                   {c.acces
                     .split("\n")
                     .map((l) => l.trim())
@@ -50,8 +57,9 @@ export default async function Praticalites() {
                         />
                         <span>{l}</span>
                       </li>
-                    ))}
-                </ul>
+                      ))}
+                  </ul>
+                </>
               ) : (
                 <p className="mt-3 text-xs text-ink-muted">
                   <span className="font-semibold text-ink">À compléter</span> — accès en

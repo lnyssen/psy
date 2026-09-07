@@ -51,11 +51,25 @@ const CABINETS = [
     colorHex: "#056A73",
     fillHex: "#C6F4F8",
     vividHex: "#00C8D4",
-    // Lignes relevées sur les données cartographiques puis recoupées : l'arrêt
-    // Victor Allard est à cinquante mètres, l'arrêt Wagon à quatre cent trente.
-    // Le tram 97 dessert aussi Wagon mais il est suspendu — l'annoncer
-    // enverrait quelqu'un attendre un tram qui ne vient pas.
-    acces: "Bus 48 et 74 — arrêt Victor Allard, devant la porte.\nTram 4 — arrêt Wagon, à cinq minutes à pied.\nGare d’Uccle-Stalle à cinq minutes.",
+    // Arrêts STIB relevés sur les données cartographiques ouvertes : géocodage
+    // de l'adresse, puis relations d'itinéraire desservant chaque arrêt dans un
+    // rayon de sept cents mètres, distances calculées et converties en minutes
+    // de marche. Trois exclusions volontaires : le tram 97, qui dessert Wagon
+    // mais reste suspendu pour travaux ; les Noctis N11, qui ne roulent que les
+    // nuits de week-end ; et les lignes De Lijn et TEC, qui ne sont pas STIB.
+    acces: [
+      "Victor Allard · 1 min — bus 48, 74",
+      "Aulne · 4 min — bus 48, 74",
+      "Uccle-Stalle · 5 min — bus 74, et la gare",
+      "Decroly · 6 min — bus 48, 74",
+      "Wagon · 6 min — tram 4",
+      "Égide Van Ophem · 8 min — tram 4",
+      "Globe · 8 min — tram 4, 18",
+      "Xavier de Bue · 8 min — tram 18",
+      "Rittweger · 8 min — tram 18",
+      "Merlo · 9 min — tram 82",
+      "Carrefour Stalle · 9 min — tram 82",
+    ].join("\n"),
     ordre: 0,
   },
   {
@@ -66,7 +80,16 @@ const CABINETS = [
     colorHex: "#A8005A",
     fillHex: "#FFD6EA",
     vividHex: "#FF2D8F",
-    acces: "Tram 8 et bus 34 — arrêt Rond-point du Souverain, à trois minutes à pied.\nTram 8 — arrêt Empain, à cinq minutes.\nMétro 5 — Herrmann-Debroux ou Demey, à un quart d’heure à pied.",
+    acces: [
+      "Rond-point du Souverain · 3 min — tram 8, bus 34",
+      "Empain · 5 min — tram 8",
+      "Auderghem-Shopping · 7 min — tram 8, bus 34",
+      "Bergoje · 7 min — bus 34",
+      "Valduc · 9 min — bus 34",
+      "Sainte-Anne · 9 min — bus 34",
+      "Deux Chaussées · 9 min — bus 34",
+      "Herrmann-Debroux ou Demey · 13 min — métro 5",
+    ].join("\n"),
     ordre: 1,
   },
   {
