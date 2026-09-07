@@ -8,6 +8,8 @@ import { FiltresMobile } from "@/components/FiltresMobile";
 import { IconChevronDroite, IconChevronGauche } from "@/components/icons";
 import { cabinetsActifs, optionsCabinet } from "@/lib/cabinets";
 import {
+  ajouterJours,
+  isoJour,
   JOURS_OUVRES,
   PAYMENT_LABEL,
   conflitsDeTrajet,
@@ -34,8 +36,7 @@ export default async function Semaine({ searchParams }: { searchParams: Promise<
   const ancre = params.semaine ? new Date(params.semaine) : new Date();
   const lundi = lundiDe(Number.isNaN(ancre.getTime()) ? new Date() : ancre);
 
-  const finSemaine = new Date(lundi);
-  finSemaine.setDate(finSemaine.getDate() + JOURS_OUVRES);
+  const finSemaine = ajouterJours(lundi, JOURS_OUVRES);
 
   const seances = await prisma.session.findMany({
     where: {
@@ -53,8 +54,7 @@ export default async function Semaine({ searchParams }: { searchParams: Promise<
   const maintenant = new Date();
 
   const jours: JourGrille[] = Array.from({ length: JOURS_OUVRES }, (_, i) => {
-    const d = new Date(lundi);
-    d.setDate(d.getDate() + i);
+    const d = ajouterJours(lundi, i);
     const duJour = seances.filter((s) => memeJour(s.startsAt, d));
     return {
       iso: d.toISOString(),
@@ -84,14 +84,15 @@ export default async function Semaine({ searchParams }: { searchParams: Promise<
     conflit: conflits.has(i),
   }));
 
-  const decalage = (semaines: number) => {
-    const d = new Date(lundi);
-    d.setDate(d.getDate() + semaines * 7);
-    return avecParam("/admin/semaine", params, "semaine", d.toISOString().slice(0, 10));
-  };
+  // Le lien porte la date lue à Bruxelles, pas la découpe d'un horodatage UTC.
+  // Minuit à Bruxelles vaut 22 h UTC la veille : toISOString() rendait donc le
+  // dimanche de la semaine affichée, que lundiDe ramenait aussitôt au lundi
+  // qu'on regardait déjà. Le bouton « suivant » ne pouvait rien faire, et le
+  // bouton « précédent » reculait de deux semaines au lieu d'une.
+  const decalage = (semaines: number) =>
+    avecParam("/admin/semaine", params, "semaine", isoJour(ajouterJours(lundi, semaines * 7)));
 
-  const vendredi = new Date(lundi);
-  vendredi.setDate(vendredi.getDate() + JOURS_OUVRES - 1);
+  const vendredi = ajouterJours(lundi, JOURS_OUVRES - 1);
   const totalSemaine = heuresTotales(seances);
 
   // Période libre : deux dates au choix, pour un décompte de séances et
@@ -101,8 +102,8 @@ export default async function Semaine({ searchParams }: { searchParams: Promise<
   const auBrut = params.au ? new Date(params.au) : null;
   const periodeValide =
     duBrut && auBrut && !Number.isNaN(duBrut.getTime()) && !Number.isNaN(auBrut.getTime());
-  const finPeriode = periodeValide ? new Date(auBrut!) : null;
-  if (finPeriode) finPeriode.setDate(finPeriode.getDate() + 1);
+  let finPeriode = periodeValide ? new Date(auBrut!) : null;
+  if (finPeriode) finPeriode = ajouterJours(finPeriode, 1);
 
   const seancesPeriode = periodeValide
     ? await prisma.session.findMany({

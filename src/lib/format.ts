@@ -274,6 +274,33 @@ function minuit(annee: number, mois: number, jour: number) {
   return new Date(t);
 }
 
+/**
+ * La date telle qu'on la lit à Bruxelles, au format AAAA-MM-JJ.
+ *
+ * À ne jamais remplacer par toISOString().slice(0, 10) : minuit à Bruxelles
+ * vaut 22 h ou 23 h UTC la veille, et cette découpe rendrait donc le jour
+ * précédent. C'est exactement ce qui rendait le bouton « semaine suivante »
+ * inerte — le lien portait le dimanche de la semaine affichée, et lundiDe
+ * ramenait au lundi qu'on regardait déjà.
+ */
+export function isoJour(d: Date) {
+  const { annee, mois, jour } = partiesJour(d);
+  return `${annee}-${String(mois).padStart(2, "0")}-${String(jour).padStart(2, "0")}`;
+}
+
+/**
+ * Décale de n jours sur le calendrier bruxellois, et non de n × 24 heures.
+ *
+ * La nuance compte deux fois l'an : au passage à l'heure d'été, ajouter
+ * vingt-quatre heures à minuit donne une heure du matin. Ici le calcul se fait
+ * sur les composantes de la date — Date.UTC normalise les débordements de mois
+ * et d'année — puis minuit() replace l'instant sur le bon décalage.
+ */
+export function ajouterJours(d: Date, n: number) {
+  const { annee, mois, jour } = partiesJour(d);
+  return minuit(annee, mois, jour + n);
+}
+
 export function memeJour(a: Date, b: Date) {
   const x = partiesJour(a);
   const y = partiesJour(b);
