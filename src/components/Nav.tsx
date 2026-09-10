@@ -27,9 +27,12 @@ import { IconCadenas, IconFermer, IconMenu, IconReglages } from "@/components/ic
 export function Nav({
   theme,
   demandesEnAttente,
+  ouverte,
 }: {
   theme: "light" | "dark";
   demandesEnAttente: number;
+  /** Démonstration sans mot de passe : il n'y a plus rien à verrouiller. */
+  ouverte: boolean;
 }) {
   const pathname = usePathname();
   const [ouvert, setOuvert] = useState(false);
@@ -165,16 +168,18 @@ export function Nav({
 
             <Theme initial={theme} />
 
-            <form action={verrouiller}>
-              <button
-                type="submit"
-                title="Verrouiller l’écran"
-                className="flex h-11 w-11 items-center justify-center rounded-full border border-contour-nav text-contour-nav transition-colors hover:border-accent hover:text-accent-text"
-              >
-                <span className="sr-only">Verrouiller l’écran</span>
-                <IconCadenas />
-              </button>
-            </form>
+            {!ouverte && (
+              <form action={verrouiller}>
+                <button
+                  type="submit"
+                  title="Verrouiller l’écran"
+                  className="flex h-11 w-11 items-center justify-center rounded-full border border-contour-nav text-contour-nav transition-colors hover:border-accent hover:text-accent-text"
+                >
+                  <span className="sr-only">Verrouiller l’écran</span>
+                  <IconCadenas />
+                </button>
+              </form>
+            )}
             </div>
           </div>
         </>

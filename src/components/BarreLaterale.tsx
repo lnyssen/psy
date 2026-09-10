@@ -34,10 +34,13 @@ export function BarreLaterale({
   theme,
   demandesEnAttente,
   replieeInitial,
+  ouverte,
 }: {
   theme: "light" | "dark";
   demandesEnAttente: number;
   replieeInitial: boolean;
+  /** Démonstration sans mot de passe : il n'y a plus rien à verrouiller. */
+  ouverte: boolean;
 }) {
   const pathname = usePathname();
   const [repliee, setRepliee] = useState(replieeInitial);
@@ -48,6 +51,7 @@ export function BarreLaterale({
   // ne saurait faire. La référence évite d'aller chercher le bouton par un
   // identifiant — il en existerait deux, celui-ci et celui du panneau mobile.
   useEffect(() => {
+    if (ouverte) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key.toLowerCase() === "l" && (e.metaKey || e.ctrlKey) && e.shiftKey) {
         e.preventDefault();
@@ -56,7 +60,7 @@ export function BarreLaterale({
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, []);
+  }, [ouverte]);
 
   function basculer() {
     const suivant = !repliee;
@@ -227,17 +231,22 @@ export function BarreLaterale({
 
         <Theme initial={theme} />
 
-        <form action={verrouiller} className={repliee ? "" : "ml-auto"}>
-          <button
-            ref={boutonVerrou}
-            type="submit"
-            title="Verrouiller l’écran (⌘⇧L)"
-            className="flex h-9 w-9 items-center justify-center rounded-full border border-contour-nav text-contour-nav transition-colors hover:border-accent hover:text-accent-text"
-          >
-            <span className="sr-only">Verrouiller l’écran</span>
-            <IconCadenas />
-          </button>
-        </form>
+        {/* Pas de cadenas pendant la démonstration : le bouton renverrait vers
+            un écran de connexion que l'intergiciel laisse aussitôt passer, ce
+            qui laisserait croire à une protection qui n'existe plus. */}
+        {!ouverte && (
+          <form action={verrouiller} className={repliee ? "" : "ml-auto"}>
+            <button
+              ref={boutonVerrou}
+              type="submit"
+              title="Verrouiller l’écran (⌘⇧L)"
+              className="flex h-9 w-9 items-center justify-center rounded-full border border-contour-nav text-contour-nav transition-colors hover:border-accent hover:text-accent-text"
+            >
+              <span className="sr-only">Verrouiller l’écran</span>
+              <IconCadenas />
+            </button>
+          </form>
+        )}
       </div>
     </aside>
   );

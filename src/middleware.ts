@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { COOKIE_SESSION, jetonValide } from "@/lib/session";
+import { demoOuverte } from "@/lib/demo";
 
 /**
  * Deux domaines, une seule application.
@@ -30,6 +31,9 @@ export async function middleware(req: NextRequest) {
 
   const protege = chemin.startsWith("/admin");
   if (!protege) return NextResponse.next();
+
+  // Démonstration ouverte : la garde est levée, pas retirée. Voir lib/demo.ts.
+  if (demoOuverte()) return NextResponse.next();
 
   if (await jetonValide(req.cookies.get(COOKIE_SESSION)?.value)) return NextResponse.next();
 
