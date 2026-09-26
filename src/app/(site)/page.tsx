@@ -143,13 +143,13 @@ export default async function Accueil() {
         </div>
       </section>
 
-      <section className="bg-bande-violette px-6 py-16 text-white md:py-20">
+      <section className="bg-bande-violette px-6 py-16 text-nuit md:py-20">
         <div className="mx-auto max-w-5xl">
           <p className="max-w-3xl font-display text-[1.6rem] leading-snug tracking-tight md:text-[2.25rem]">
             Je reçois les enfants dès quatre ans, les adolescents et leurs parents, ainsi que les
             jeunes adultes.
           </p>
-          <p className="mt-6 text-lg font-semibold text-white">{SITE.langues}</p>
+          <p className="mt-6 text-lg font-semibold text-nuit">{SITE.langues}</p>
         </div>
       </section>
 
@@ -209,22 +209,22 @@ export default async function Accueil() {
         </div>
       </section>
 
-      <section className="bg-bande-violette px-6 py-20 text-white md:py-28">
+      <section className="bg-bande-violette px-6 py-20 text-nuit md:py-28">
         <div className="mx-auto max-w-5xl">
-          <Titre surAplat>La première séance</Titre>
+          <Titre>La première séance</Titre>
           <div className="mt-10 grid gap-8 md:grid-cols-2 md:gap-14">
-            <p className="text-lg leading-relaxed text-white/80">
+            <p className="text-lg leading-relaxed text-nuit/80">
               On prend le temps de faire connaissance. Vous racontez ce qui vous amène, à votre
               rythme, sans avoir à tout dire d’emblée.
             </p>
             <div className="flex flex-col items-start gap-6">
-              <p className="text-lg leading-relaxed text-white/80">
+              <p className="text-lg leading-relaxed text-nuit/80">
                 À la fin, nous décidons ensemble s’il y a lieu de continuer, et à quel rythme. Rien
                 ne vous engage au-delà.
               </p>
               <Link
                 href="/questions"
-                className="rounded-full border border-white/30 px-6 py-3 text-sm font-semibold transition-colors hover:border-white"
+                className="rounded-full border border-nuit/30 px-6 py-3 text-sm font-semibold transition-colors hover:border-nuit"
               >
                 Toutes les questions
               </Link>
