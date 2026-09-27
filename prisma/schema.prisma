@@ -394,18 +394,19 @@ model FactureEtablissement {
   @@map("factures_etablissement")
 }
 
-/// Catégories d'une dépense professionnelle. Suffisant pour trier un export
-/// comptable ; une nomenclature plus fine reste celle de la comptable, pas de
-/// l'outil.
-enum CategorieDepense {
-  LOYER
-  ASSURANCE
-  FORMATION
-  MATERIEL
-  COMPTABLE
-  DEPLACEMENT
-  COTISATIONS
-  AUTRE
+/// Catégories d'une dépense professionnelle. Des données, pas une énumération
+/// figée dans le code — comme les cabinets et les tarifs : la praticienne
+/// doit pouvoir en ajouter une (Horeca, par exemple) sans migration ni
+/// déploiement, depuis Réglages.
+model CategorieDepense {
+  id       String  @id @default(cuid())
+  libelle  String  @unique
+  actif    Boolean @default(true)
+  ordre    Int     @default(0)
+
+  depenses Depense[]
+
+  @@map("categories_depense")
 }
 
 /// Une dépense professionnelle, avec la photo de son reçu.
@@ -420,10 +421,11 @@ enum CategorieDepense {
 /// plus, ça ne pèse rien, et ça évite une dépendance externe pour un premier
 /// jet. À revoir si le volume change.
 model Depense {
-  id          String           @id @default(cuid())
+  id          String   @id @default(cuid())
   date        DateTime
   libelle     String
-  categorie   CategorieDepense
+  categorieId String   @map("categorie_id")
+  categorie   CategorieDepense @relation(fields: [categorieId], references: [id], onDelete: Restrict)
   fournisseur String?
   /// TTC : la praticienne n'étant pas assujettie à la TVA sur ses
   /// prestations, elle ne la récupère pas davantage sur ses achats.

@@ -395,20 +395,10 @@ export async function enregistrerDepense(f: FormData) {
   const libelle = texte(f, "libelle");
   const dateSaisie = new Date(texte(f, "date"));
   const montant = Number(texte(f, "montant").replace(",", "."));
-  const categorie = texte(f, "categorie");
-  const CATEGORIES = [
-    "LOYER",
-    "ASSURANCE",
-    "FORMATION",
-    "MATERIEL",
-    "COMPTABLE",
-    "DEPLACEMENT",
-    "COTISATIONS",
-    "AUTRE",
-  ] as const;
+  const categorieId = texte(f, "categorieId");
   if (!libelle || Number.isNaN(dateSaisie.getTime())) return;
   if (!Number.isFinite(montant) || montant < 0) return;
-  if (!CATEGORIES.includes(categorie as (typeof CATEGORIES)[number])) return;
+  if (!categorieId) return;
 
   const fichier = f.get("photo");
   // Le typage DOM de arrayBuffer() admet un SharedArrayBuffer que Prisma
@@ -427,7 +417,7 @@ export async function enregistrerDepense(f: FormData) {
       libelle,
       date: dateSaisie,
       amountCents: Math.round(montant * 100),
-      categorie: categorie as (typeof CATEGORIES)[number],
+      categorieId,
       fournisseur: texte(f, "fournisseur") || null,
       cabinetId: cabinetId || null,
       ...(photo ? { photo, photoMime } : {}),
@@ -441,6 +431,44 @@ export async function supprimerDepense(f: FormData) {
   if (!id) return;
   await prisma.depense.delete({ where: { id } });
   revalidatePath("/admin/depenses");
+}
+
+/**
+ * Catégories de dépenses, réglables depuis Réglages — comme les cabinets et
+ * les tarifs, ce ne sont pas des valeurs figées dans le code.
+ */
+export async function enregistrerCategorieDepense(f: FormData) {
+  const id = texte(f, "id");
+  const libelle = texte(f, "libelle");
+  if (!libelle) return;
+
+  const donnees = { libelle, actif: f.get("actif") === "on" };
+  if (id) {
+    await prisma.categorieDepense.update({ where: { id }, data: donnees });
+  } else {
+    const dernier = await prisma.categorieDepense.findFirst({ orderBy: { ordre: "desc" } });
+    await prisma.categorieDepense.create({
+      data: { ...donnees, ordre: (dernier?.ordre ?? -1) + 1 },
+    });
+  }
+  revalidatePath("/admin/depenses");
+  revalidatePath("/admin/reglages");
+}
+
+/** Une catégorie qui porte des dépenses n'est pas supprimée mais désactivée :
+ *  effacer la catégorie d'une dépense passée réécrirait l'histoire de
+ *  l'export comptable déjà remis. */
+export async function supprimerCategorieDepense(f: FormData) {
+  const id = texte(f, "id");
+  if (!id) return;
+  const nb = await prisma.depense.count({ where: { categorieId: id } });
+  if (nb > 0) {
+    await prisma.categorieDepense.update({ where: { id }, data: { actif: false } });
+  } else {
+    await prisma.categorieDepense.delete({ where: { id } });
+  }
+  revalidatePath("/admin/depenses");
+  revalidatePath("/admin/reglages");
 }
 
 // ---------------------------------------------------------------------------

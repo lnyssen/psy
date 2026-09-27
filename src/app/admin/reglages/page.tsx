@@ -2,8 +2,10 @@ import { prisma } from "@/lib/db";
 import { PALETTE_CABINETS } from "@/lib/palette";
 import {
   enregistrerCabinet,
+  enregistrerCategorieDepense,
   enregistrerTarif,
   supprimerCabinet,
+  supprimerCategorieDepense,
   supprimerTarif,
 } from "@/lib/actions";
 import { euros } from "@/lib/format";
@@ -18,15 +20,19 @@ const champ =
 const libelleChamp = "block text-[11px] font-semibold tracking-[0.1em] text-ink-muted uppercase";
 
 export default async function Reglages() {
-  const [cabinets, tarifs, comptes, disponibilites, conges] = await Promise.all([
-    prisma.cabinet.findMany({ orderBy: { ordre: "asc" } }),
-    prisma.tarif.findMany({ orderBy: { ordre: "asc" } }),
-    prisma.session.groupBy({ by: ["cabinetId"], _count: { _all: true } }),
-    prisma.disponibilite.findMany(),
-    prisma.indisponibilite.findMany({ orderBy: { debut: "asc" } }),
-  ]);
+  const [cabinets, tarifs, categoriesDepense, comptes, comptesCategorie, disponibilites, conges] =
+    await Promise.all([
+      prisma.cabinet.findMany({ orderBy: { ordre: "asc" } }),
+      prisma.tarif.findMany({ orderBy: { ordre: "asc" } }),
+      prisma.categorieDepense.findMany({ orderBy: { ordre: "asc" } }),
+      prisma.session.groupBy({ by: ["cabinetId"], _count: { _all: true } }),
+      prisma.depense.groupBy({ by: ["categorieId"], _count: { _all: true } }),
+      prisma.disponibilite.findMany(),
+      prisma.indisponibilite.findMany({ orderBy: { debut: "asc" } }),
+    ]);
   const valeurs = await parametres();
   const seancesPar = new Map(comptes.map((c) => [c.cabinetId, c._count._all]));
+  const depensesPar = new Map(comptesCategorie.map((c) => [c.categorieId, c._count._all]));
 
   return (
     <div className="flex flex-col gap-10">
@@ -139,6 +145,78 @@ export default async function Reglages() {
             {euros(tarifs.find((t) => t.parDefaut)?.amountCents ?? null)}
           </span>
         </p>
+      </section>
+
+      <section className="flex flex-col gap-4">
+        <div>
+          <h2 className="font-display text-xl">Catégories de dépenses</h2>
+          <p className="mt-1 text-sm text-ink-muted">
+            Sert à trier l’export comptable. Une catégorie qui porte déjà des dépenses se
+            désactive plutôt que de disparaître — l’export d’un mois passé garde son libellé.
+          </p>
+        </div>
+
+        <ul className="overflow-hidden rounded-[14px] border border-line bg-surface">
+          {categoriesDepense.map((c) => {
+            const nb = depensesPar.get(c.id) ?? 0;
+            return (
+              <li key={c.id} className="border-b border-line px-5 py-3 last:border-b-0">
+                <form action={enregistrerCategorieDepense} className="flex flex-wrap items-end gap-3">
+                  <input type="hidden" name="id" value={c.id} />
+                  <label className="min-w-52 flex-1">
+                    <span className={libelleChamp}>Libellé</span>
+                    <input
+                      name="libelle"
+                      defaultValue={c.libelle}
+                      required
+                      className={`mt-1 ${champ}`}
+                    />
+                  </label>
+                  <label className="flex items-center gap-2 pb-2 text-sm">
+                    <input type="checkbox" name="actif" defaultChecked={c.actif} />
+                    Active
+                  </label>
+                  <span className="pb-2 text-xs text-ink-muted" data-numeric>
+                    {nb} dépense{nb > 1 ? "s" : ""}
+                  </span>
+                  <button
+                    type="submit"
+                    className="rounded-full bg-accent px-4 py-1.5 text-sm font-medium text-accent-contrast transition-colors hover:bg-accent-hover"
+                  >
+                    Enregistrer
+                  </button>
+                  <button
+                    type="submit"
+                    formAction={supprimerCategorieDepense}
+                    className="rounded-full border border-line-strong px-4 py-1.5 text-sm font-medium text-ink-muted transition-colors hover:border-overdue hover:text-overdue"
+                  >
+                    {nb > 0 ? "Désactiver" : "Supprimer"}
+                  </button>
+                </form>
+              </li>
+            );
+          })}
+        </ul>
+
+        <form
+          action={enregistrerCategorieDepense}
+          className="flex flex-wrap items-end gap-3 rounded-[14px] border border-dashed border-line-strong bg-surface px-5 py-4"
+        >
+          <label className="min-w-52 flex-1">
+            <span className={libelleChamp}>Nouvelle catégorie</span>
+            <input name="libelle" required placeholder="Horeca" className={`mt-1 ${champ}`} />
+          </label>
+          <label className="flex items-center gap-2 pb-2 text-sm">
+            <input type="checkbox" name="actif" defaultChecked />
+            Active
+          </label>
+          <button
+            type="submit"
+            className="rounded-full bg-accent px-4 py-1.5 text-sm font-medium text-accent-contrast transition-colors hover:bg-accent-hover"
+          >
+            Ajouter
+          </button>
+        </form>
       </section>
       <section className="flex flex-col gap-4">
         <div>

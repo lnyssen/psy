@@ -3,7 +3,7 @@ import { prisma } from "@/lib/db";
 import { CabinetTag } from "@/components/tags";
 import { cabinetsActifs } from "@/lib/cabinets";
 import { enregistrerDepense, supprimerDepense } from "@/lib/actions";
-import { CATEGORIE_LABEL, euros, fmtDateCourte, partiesJour } from "@/lib/format";
+import { euros, fmtDateCourte, partiesJour } from "@/lib/format";
 import { IconChevronDroite, IconChevronGauche } from "@/components/icons";
 import { DepensePhotoOCR } from "@/components/DepensePhotoOCR";
 
@@ -12,8 +12,6 @@ export const dynamic = "force-dynamic";
 const champ =
   "w-full rounded-full border border-line bg-surface px-3.5 py-2 text-sm placeholder:text-ink-muted/60";
 const libelleChamp = "block text-[11px] font-semibold tracking-[0.1em] text-ink-muted uppercase";
-
-const CATEGORIES = Object.entries(CATEGORIE_LABEL) as [keyof typeof CATEGORIE_LABEL, string][];
 
 /** Le mois affiché, au format AAAA-MM. Par défaut, le mois en cours. */
 function moisDeParam(v: string | undefined) {
@@ -53,13 +51,14 @@ export default async function Depenses({
   const debut = new Date(Date.UTC(annee, m - 1, 1));
   const fin = new Date(Date.UTC(annee, m, 1));
 
-  const [depenses, cabinets] = await Promise.all([
+  const [depenses, cabinets, categories] = await Promise.all([
     prisma.depense.findMany({
       where: { date: { gte: debut, lt: fin } },
-      include: { cabinet: true },
+      include: { cabinet: true, categorie: true },
       orderBy: { date: "desc" },
     }),
     cabinetsActifs(),
+    prisma.categorieDepense.findMany({ where: { actif: true }, orderBy: { ordre: "asc" } }),
   ]);
 
   const total = depenses.reduce((n, d) => n + d.amountCents, 0);
@@ -100,10 +99,13 @@ export default async function Depenses({
           </label>
           <label>
             <span className={libelleChamp}>Catégorie</span>
-            <select name="categorie" required defaultValue="AUTRE" className={`mt-1 ${champ}`}>
-              {CATEGORIES.map(([valeur, label]) => (
-                <option key={valeur} value={valeur}>
-                  {label}
+            <select name="categorieId" required defaultValue="" className={`mt-1 ${champ}`}>
+              <option value="" disabled>
+                Choisir…
+              </option>
+              {categories.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.libelle}
                 </option>
               ))}
             </select>
@@ -123,19 +125,7 @@ export default async function Depenses({
               ))}
             </select>
           </label>
-          <label>
-            <span className={libelleChamp}>Photo du reçu</span>
-            {/* capture="environment" ouvre directement l'appareil photo arrière
-                sur téléphone plutôt que la pellicule : c'est le geste voulu —
-                photographier au comptoir, pas retrouver une image plus tard. */}
-            <input
-              name="photo"
-              type="file"
-              accept="image/*,application/pdf"
-              capture="environment"
-              className={`mt-1 ${champ} file:mr-3 file:rounded-full file:border-0 file:bg-accent-soft file:px-3 file:py-1 file:text-xs file:font-medium file:text-accent-text`}
-            />
-          </label>
+          <DepensePhotoOCR />
         </div>
         <button
           type="submit"
@@ -186,7 +176,7 @@ export default async function Depenses({
               </time>
               <span className="min-w-40 flex-1 text-sm">{d.libelle}</span>
               <span className="rounded-full bg-sunken px-2.5 py-0.5 text-[11px] font-medium text-ink-muted">
-                {CATEGORIE_LABEL[d.categorie]}
+                {d.categorie.libelle}
               </span>
               {d.cabinet && <CabinetTag cabinet={d.cabinet} />}
               {d.fournisseur && (

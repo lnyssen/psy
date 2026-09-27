@@ -12,7 +12,6 @@ import {
   SessionStatus,
   PaymentStatus,
   PaymentMethod,
-  CategorieDepense,
 } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { config as loadEnv } from "dotenv";
@@ -316,11 +315,14 @@ async function main() {
 
   // Deux dépenses de démonstration, sans reçu joint : la photo est un geste de
   // l'utilisatrice, pas quelque chose qu'un jeu de données peut simuler.
+  // Les catégories elles-mêmes ne sont pas semées ici : posées une fois par la
+  // migration, elles vivent comme un réglage, pas comme une donnée de
+  // démonstration à réinitialiser à chaque semis.
   const DEPENSES: {
-    libelle: string; categorie: CategorieDepense; montant: number; jour: number; cabinet?: string; fournisseur?: string;
+    libelle: string; categorieId: string; montant: number; jour: number; cabinet?: string; fournisseur?: string;
   }[] = [
-    { libelle: "Assurance RC professionnelle", categorie: CategorieDepense.ASSURANCE, montant: 42000, jour: 3, fournisseur: "AG Assurances" },
-    { libelle: "Loyer du mois — Uccle", categorie: CategorieDepense.LOYER, montant: 85000, jour: 1, cabinet: "Uccle" },
+    { libelle: "Assurance RC professionnelle", categorieId: "cat-assurance", montant: 42000, jour: 3, fournisseur: "AG Assurances" },
+    { libelle: "Loyer du mois — Uccle", categorieId: "cat-loyer", montant: 85000, jour: 1, cabinet: "Uccle" },
   ];
   const ceMois = new Date();
   ceMois.setDate(1);
@@ -330,7 +332,7 @@ async function main() {
     await prisma.depense.create({
       data: {
         libelle: d.libelle,
-        categorie: d.categorie,
+        categorieId: d.categorieId,
         amountCents: d.montant,
         date,
         fournisseur: d.fournisseur ?? null,
