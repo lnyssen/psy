@@ -48,9 +48,10 @@ const CABINETS = [
     addressLine: "Rue Victor Allard 191",
     postalCode: "1180",
     city: "Uccle",
-    colorHex: "#056A73",
-    fillHex: "#C6F4F8",
-    vividHex: "#00C8D4",
+    // Turquoise : le teal que demande le brief, pas le cyan plus bleu.
+    colorHex: "#00695C",
+    fillHex: "#C7F7EE",
+    vividHex: "#00D9B0",
     // Arrêts STIB relevés sur les données cartographiques ouvertes : géocodage
     // de l'adresse, puis relations d'itinéraire desservant chaque arrêt dans un
     // rayon de sept cents mètres, distances calculées et converties en minutes
@@ -77,9 +78,10 @@ const CABINETS = [
     addressLine: "Place Félix Govaert 4",
     postalCode: "1160",
     city: "Auderghem",
-    colorHex: "#A8005A",
-    fillHex: "#FFD6EA",
-    vividHex: "#FF2D8F",
+    // Rose, comme le demande le brief — pas le magenta, plus froid.
+    colorHex: "#B01372",
+    fillHex: "#FFDCF0",
+    vividHex: "#FF5FB8",
     acces: [
       "Rond-point du Souverain · 3 min — tram 8, bus 34",
       "Empain · 5 min — tram 8",
@@ -121,7 +123,8 @@ const TARIFS = [
 ];
 
 type Semee = {
-  who: string; jour: number; h: number; m?: number; lieu: string;
+  // Null : un bloc facturé à l'école, sans élève nommé (voir Session.patientId).
+  who: string | null; jour: number; h: number; m?: number; lieu: string;
   status: SessionStatus; paymentStatus: PaymentStatus; amountCents: number | null;
   paymentMethod?: PaymentMethod;
 };
@@ -173,10 +176,11 @@ async function main() {
     { firstName: "Jonas", lastName: "Vermeulen", scheme: CareScheme.CONVENTIONNE, feeCents: null, cabinetId: c["Auderghem"].id, phone: "0486 33 21 07", email: "jonas.vermeulen@example.be", addressLine: "40 rue Valduc", postalCode: "1160", city: "Auderghem", birthDate: new Date("2001-01-30") },
     { firstName: "Élise", lastName: "Moreau", scheme: CareScheme.PRIVE, feeCents: 7000, cabinetId: c["Uccle"].id, phone: "0491 88 14 25", email: "elise.moreau@example.be", addressLine: "27 rue Vanderkindere", postalCode: "1180", city: "Uccle", birthDate: new Date("1992-09-08") },
     { firstName: "Malik", lastName: "Haddad", scheme: CareScheme.PRIVE, feeCents: 6500, cabinetId: c["Auderghem"].id, phone: "0479 62 40 18", email: "malik.haddad@example.be", addressLine: "3 square des Archiducs", postalCode: "1170", city: "Watermael-Boitsfort", birthDate: new Date("1984-02-14") },
-    // Élèves suivis à l'école : facturés à l'établissement, pas au patient.
-    { firstName: "Lina", lastName: "Peeters", scheme: CareScheme.INSTITUTION, feeCents: null, cabinetId: c["École"].id, phone: null, email: null, addressLine: null, postalCode: null, city: null, birthDate: new Date("2012-03-05") },
-    { firstName: "Ibrahim", lastName: "Sow", scheme: CareScheme.INSTITUTION, feeCents: null, cabinetId: c["École"].id, phone: null, email: null, addressLine: null, postalCode: null, city: null, birthDate: new Date("2011-10-19") },
   ];
+  // L'école n'a pas de patientèle propre : ses créneaux sont des blocs
+  // facturés au forfait horaire (voir Cabinet.factureInstitution), sans
+  // élève nommé — contrairement à Uccle et Auderghem, où chaque séance
+  // appartient à quelqu'un.
 
   const p: Record<string, { id: string; jetonRdv: string | null }> = {};
   for (const data of PATIENTS) {
@@ -195,16 +199,16 @@ async function main() {
   // Les matinées scolaires occupent le début de journée en milieu de semaine :
   // c'est le rythme décrit par la praticienne.
   const base: Semee[] = [
-    { who: "Lina", jour: 0, h: 9, lieu: E, status: SessionStatus.ATTENDED, paymentStatus: PaymentStatus.DUE, amountCents: null },
-    { who: "Ibrahim", jour: 0, h: 10, lieu: E, status: SessionStatus.ATTENDED, paymentStatus: PaymentStatus.DUE, amountCents: null },
+    { who: null, jour: 0, h: 9, lieu: E, status: SessionStatus.ATTENDED, paymentStatus: PaymentStatus.DUE, amountCents: null },
+    { who: null, jour: 0, h: 10, lieu: E, status: SessionStatus.ATTENDED, paymentStatus: PaymentStatus.DUE, amountCents: null },
     { who: "Malik", jour: 0, h: 14, lieu: A, status: SessionStatus.NO_SHOW, paymentStatus: PaymentStatus.OVERDUE, amountCents: 6500 },
     { who: "Thomas", jour: 1, h: 9, lieu: A, status: SessionStatus.ATTENDED, paymentStatus: PaymentStatus.DUE, amountCents: null },
     { who: "Malik", jour: 1, h: 10, m: 30, lieu: A, status: SessionStatus.ATTENDED, paymentStatus: PaymentStatus.PAID, amountCents: 6500, paymentMethod: PaymentMethod.CASH },
     { who: "Camille", jour: 1, h: 10, m: 30, lieu: U, status: SessionStatus.ATTENDED, paymentStatus: PaymentStatus.PAID, amountCents: 6500, paymentMethod: PaymentMethod.ELECTRONIC },
-    { who: "Lina", jour: 2, h: 9, lieu: E, status: SessionStatus.ATTENDED, paymentStatus: PaymentStatus.DUE, amountCents: null },
+    { who: null, jour: 2, h: 9, lieu: E, status: SessionStatus.ATTENDED, paymentStatus: PaymentStatus.DUE, amountCents: null },
     { who: "Jonas", jour: 2, h: 10, lieu: A, status: SessionStatus.CANCELLED_IN_TIME, paymentStatus: PaymentStatus.DUE, amountCents: null },
     { who: "Camille", jour: 2, h: 15, lieu: U, status: SessionStatus.ATTENDED, paymentStatus: PaymentStatus.PAID, amountCents: 6500, paymentMethod: PaymentMethod.ELECTRONIC },
-    { who: "Ibrahim", jour: 3, h: 9, lieu: E, status: SessionStatus.ATTENDED, paymentStatus: PaymentStatus.DUE, amountCents: null },
+    { who: null, jour: 3, h: 9, lieu: E, status: SessionStatus.ATTENDED, paymentStatus: PaymentStatus.DUE, amountCents: null },
     { who: "Élise", jour: 3, h: 10, m: 30, lieu: U, status: SessionStatus.ATTENDED, paymentStatus: PaymentStatus.DUE, amountCents: 7000 },
     { who: "Naïma", jour: 3, h: 14, lieu: U, status: SessionStatus.ATTENDED, paymentStatus: PaymentStatus.DUE, amountCents: 6500 },
     { who: "Élise", jour: 4, h: 9, lieu: U, status: SessionStatus.SCHEDULED, paymentStatus: PaymentStatus.DUE, amountCents: null },
@@ -232,7 +236,7 @@ async function main() {
         durationMin: DUREE,
         startsAt: debut,
         paidAt: rest.paymentStatus === PaymentStatus.PAID ? debut : null,
-        patientId: p[who].id,
+        patientId: who ? p[who].id : null,
         cabinetId: c[lieu].id,
       },
     });
@@ -244,7 +248,7 @@ async function main() {
   for (const { who, jour, h, m, lieu } of base) {
     await prisma.session.create({
       data: {
-        patientId: p[who].id,
+        patientId: who ? p[who].id : null,
         cabinetId: c[lieu].id,
         startsAt: at(jour + 7, h, m ?? 0),
         durationMin: DUREE,
@@ -307,7 +311,6 @@ async function main() {
     ["Thomas", "Renouvellement de la prescription à vérifier avant la sixième séance."],
     ["Naïma", "Joignable de préférence par SMS."],
     ["Malik", "Deux absences non excusées cette année. Rappeler la veille."],
-    ["Lina", "Suivi demandé par la direction. Facturation à l’établissement."],
   ];
   for (const [who, body] of notes) {
     await prisma.note.create({ data: { patientId: p[who].id, body } });

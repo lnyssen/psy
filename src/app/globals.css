@@ -78,15 +78,13 @@
   --color-surface: #ffffff;
   --color-sunken: #f3f1ec;
 
-  /* Encres — le navy de marque tient lieu d'encre */
-  --color-ink: #272757;
+  /* Encres — même bleu nuit que les titres et le pied de page (#1B1464,
+     couleur de marque donnée), plutôt qu'un navy plus clair et moins saturé
+     qui les faisait diverger l'un de l'autre. Un seul bleu porte tout le
+     texte de la page, du corps au titre : 14,89:1 sur le papier. */
+  --color-ink: #1b1464;
   --color-ink-muted: #5f5f80;
 
-  /* Bleu nuit #1B1464, couleur de marque donnée. Deux fois moins clair que
-     l'encre et nettement plus saturé (67 % contre 38 %). Il porte les titres et
-     le pied de page : ce sont les deux endroits où la page a besoin d'un point
-     d'ancrage sombre, et leur donner la même couleur les fait se répondre.
-     14,89:1 sur le papier ; blanc dessus, 15,78:1. */
   --color-nuit: #1b1464;
   --color-titre: #1b1464;
   /* Contour des commandes de navigation — bouton de menu, repli de la barre,

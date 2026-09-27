@@ -10,6 +10,24 @@ import {
 } from "@/lib/format";
 
 /**
+ * Titre d'une section de réglages ou d'un long écran de gestion, sur la même
+ * bande mauve que le site public plutôt qu'un simple texte gras.
+ *
+ * Une page comme Réglages a grossi au point de mériter une hiérarchie plus
+ * marquée — la couleur du site sert ici à faire sauter le début de chaque
+ * section au regard, pas à en dire le sens : elle reste réservée à ce rôle
+ * unique, distinct des trois familles chromatiques du reste de l'outil
+ * (paiement, cabinet, accent).
+ */
+export function TitreSection({ children }: { children: React.ReactNode }) {
+  return (
+    <h2 className="rounded-[14px] bg-bande-violette px-5 py-3 font-display text-xl text-nuit">
+      {children}
+    </h2>
+  );
+}
+
+/**
  * Contrainte chromatique : plusieurs familles de sens se disputent une même
  * ligne. L'état de paiement garde la couleur pleine — ambre, vert, rouge. Les
  * cabinets portent chacun la leur, choisie dans une palette vérifiée. Restent

@@ -6,6 +6,7 @@ import { EnTeteTri, GroupeFiltre, TriMobile, type Params } from "@/components/fi
 import { FiltresMobile } from "@/components/FiltresMobile";
 import { cabinetsActifs, optionsCabinet } from "@/lib/cabinets";
 import { euros, initiales, isBillable, nomComplet } from "@/lib/format";
+import { Pagination, pageDe, tailleDePage } from "@/components/Pagination";
 
 export const dynamic = "force-dynamic";
 
@@ -19,7 +20,10 @@ export default async function Patients({ searchParams }: { searchParams: Promise
     },
     include: { sessions: true, patientNotes: true, cabinet: true },
   });
-  const cabinets = await cabinetsActifs();
+  // Un lieu facturé à un établissement (l'école) n'a pas de patientèle propre
+  // depuis que ses séances ne tiennent plus à un patient : le filtrer ici
+  // plutôt que proposer un cabinet qui ne ramènera jamais un dossier.
+  const cabinets = (await cabinetsActifs()).filter((c) => !c.factureInstitution);
 
   // Le tri se fait ici plutôt qu'en base : deux des colonnes triables (nombre
   // de séances, solde dû) sont calculées et n'existent pas comme champs.
@@ -41,6 +45,10 @@ export default async function Patients({ searchParams }: { searchParams: Promise
   };
   const tri = comparateurs[params.tri ?? "nom"] ?? comparateurs.nom;
   enrichis.sort((a, b) => tri(a, b) * sens);
+
+  const taille = tailleDePage(params);
+  const page = Math.min(pageDe(params), Math.max(1, Math.ceil(enrichis.length / taille)));
+  const pageActuelle = enrichis.slice((page - 1) * taille, page * taille);
 
   return (
     <div className="flex flex-col gap-7">
@@ -115,7 +123,7 @@ export default async function Patients({ searchParams }: { searchParams: Promise
 
       {/* Cartes empilées sous 900 px, pour la même raison que la facturation. */}
       <ul className="flex flex-col gap-2 md:hidden">
-        {enrichis.map(({ p, seances, du }) => (
+        {pageActuelle.map(({ p, seances, du }) => (
           <li key={p.id}>
             <Link
               href={`/admin/patients/${p.id}`}
@@ -175,7 +183,7 @@ export default async function Patients({ searchParams }: { searchParams: Promise
             </tr>
           </thead>
           <tbody>
-            {enrichis.map(({ p, seances, du }) => (
+            {pageActuelle.map(({ p, seances, du }) => (
               <tr key={p.id} className="border-b border-line last:border-b-0 hover:bg-sunken/60">
                 <td className="px-5 py-3">
                   <Link href={`/admin/patients/${p.id}`} className="flex items-center gap-3">

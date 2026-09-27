@@ -104,16 +104,6 @@ export default async function Aujourdhui({ searchParams }: { searchParams: Promi
               tout: "Tous les lieux",
               options: optionsCabinet(cabinets),
             },
-            {
-              cle: "regime",
-              libelle: "Régime",
-              tout: "Tous les régimes",
-              options: [
-                { valeur: "PRIVE", label: "privé" },
-                { valeur: "CONVENTIONNE", label: "conventionné" },
-                { valeur: "INSTITUTION", label: "institution" },
-              ],
-            },
           ]}
       />
 
@@ -124,17 +114,6 @@ export default async function Aujourdhui({ searchParams }: { searchParams: Promi
           cle="cabinet"
           libelle="Cabinet"
           options={optionsCabinet(cabinets)}
-        />
-        <GroupeFiltre
-          base="/admin"
-          params={params}
-          cle="regime"
-          libelle="Régime"
-          options={[
-            { valeur: "PRIVE", label: "privé" },
-            { valeur: "CONVENTIONNE", label: "conventionné" },
-            { valeur: "INSTITUTION", label: "institution" },
-          ]}
         />
       </div>
 

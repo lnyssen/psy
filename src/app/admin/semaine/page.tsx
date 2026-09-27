@@ -30,7 +30,7 @@ import {
 export const dynamic = "force-dynamic";
 
 const HEURE_DEBUT = 8;
-const HEURE_FIN = 19;
+const HEURE_FIN = 20;
 
 export default async function Semaine({ searchParams }: { searchParams: Promise<Params> }) {
   const params = await searchParams;

@@ -1,4 +1,5 @@
 import { enregistrerParametres } from "@/lib/actions";
+import { TitreSection } from "@/components/tags";
 import type { Parametres as ParametresType } from "@/lib/parametres";
 
 const champ = "w-24 rounded-full border border-line bg-surface px-3 py-1.5 text-sm";
@@ -13,9 +14,9 @@ const libelleChamp = "block text-[11px] font-semibold tracking-[0.1em] text-ink-
  */
 export function Parametres({ valeurs }: { valeurs: ParametresType }) {
   return (
-    <section className="flex flex-col gap-4">
+    <section id="rythme" className="flex flex-col gap-4 scroll-mt-6">
       <div>
-        <h2 className="font-display text-xl">Rythme des séances</h2>
+        <TitreSection>Rythme des séances</TitreSection>
         <p className="mt-1 text-sm text-ink-muted">
           Ces valeurs décident de ce que le site propose. Elles se combinent aux horaires
           d’ouverture et à l’agenda déjà rempli.

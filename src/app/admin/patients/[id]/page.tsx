@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { CabinetTag, EtatPaiement, RegimeTag, StatutSeance } from "@/components/tags";
 import { Notes } from "@/components/Notes";
 import { Encaisser } from "@/components/Encaisser";
+import { AnnulerAbsence } from "@/components/AnnulerAbsence";
 import { plafondConventionne, seancesConventionneAnnee } from "@/lib/quotas";
 import {
   euros,
@@ -168,6 +169,7 @@ export default async function FichePatient({ params }: { params: Promise<{ id: s
                 )}
                 <EtatPaiement status={s.status} payment={s.paymentStatus} methode={s.paymentMethod} />
                 {isBillable(s.status) && s.paymentStatus !== "PAID" && <Encaisser id={s.id} />}
+                {s.status === "NO_SHOW" && <AnnulerAbsence id={s.id} />}
                 {s.paymentStatus === "PAID" && (
                   <a
                     href={`/api/recu/${s.id}`}

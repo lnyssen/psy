@@ -6,6 +6,7 @@ import { useMemo, useState, useTransition } from "react";
 import type { CareScheme, PaymentMethod, PaymentStatus, SessionStatus } from "@prisma/client";
 import { CabinetTag, EtatPaiement, RegimeTag } from "@/components/tags";
 import { Encaisser } from "@/components/Encaisser";
+import { AnnulerAbsence } from "@/components/AnnulerAbsence";
 import { EnTeteTri, type Params } from "@/components/filtres";
 import { euros, fmtDateCourte, nomComplet, type CabinetVue } from "@/lib/format";
 import { marquerPayeLot } from "@/lib/actions";
@@ -150,7 +151,10 @@ export function TableFacturation({
                       reçu PDF
                     </a>
                   ) : (
-                    <Encaisser id={l.id} />
+                    <>
+                      <Encaisser id={l.id} />
+                      {l.status === "NO_SHOW" && <AnnulerAbsence id={l.id} />}
+                    </>
                   )}
                 </div>
               </div>
@@ -236,7 +240,10 @@ export function TableFacturation({
                         reçu PDF
                       </a>
                     ) : (
-                      <Encaisser id={l.id} />
+                      <>
+                        <Encaisser id={l.id} />
+                        {l.status === "NO_SHOW" && <AnnulerAbsence id={l.id} />}
+                      </>
                     )}
                   </span>
                 </td>

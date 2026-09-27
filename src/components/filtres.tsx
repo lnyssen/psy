@@ -151,9 +151,6 @@ export function EnTeteTri({
         }`}
       >
         {children}
-        <span aria-hidden="true" className={actif ? "" : "opacity-25"}>
-          {actif && sens === "desc" ? "↓" : "↑"}
-        </span>
       </Link>
     </th>
   );

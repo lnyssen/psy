@@ -6,6 +6,7 @@ import { TableFacturation, type LigneFacture } from "@/components/TableFacturati
 import { OngletsFacturation } from "@/components/OngletsFacturation";
 import { cabinetsActifs, optionsCabinet } from "@/lib/cabinets";
 import { euros, isBillable } from "@/lib/format";
+import { Pagination, pageDe, tailleDePage } from "@/components/Pagination";
 
 export const dynamic = "force-dynamic";
 

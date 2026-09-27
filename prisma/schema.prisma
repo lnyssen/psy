@@ -372,6 +372,9 @@ model FactureEtablissement {
   /// Description libre, affichée sur le PDF à la place du décompte d'heures.
   /// Attendue si manuelle est vrai ; sinon dérivée automatiquement.
   libelle     String?
+  /// Note interne, jamais imprimée sur le PDF — le contexte d'une
+  /// régularisation, à l'usage de la praticienne seule.
+  commentaire String?   @db.Text
   /// Vrai si créée à la main plutôt que calculée depuis les séances de
   /// l'établissement — un supplément ponctuel, par exemple.
   manuelle    Boolean   @default(false)

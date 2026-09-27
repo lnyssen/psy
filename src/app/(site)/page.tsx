@@ -180,7 +180,7 @@ export default async function Accueil() {
             <Titre>Mon approche</Titre>
             <div className="mt-8 flex flex-col gap-6">
               {SITE.parcours.map((p) => (
-                <p key={p.slice(0, 24)} className="text-lg leading-relaxed text-ink-muted">
+                <p key={p.slice(0, 24)} className="text-lg leading-relaxed text-ink">
                   {p}
                 </p>
               ))}
@@ -192,7 +192,7 @@ export default async function Accueil() {
       <section className="bg-bande-claire px-6 py-20 md:py-28">
         <div className="mx-auto max-w-5xl">
           <Titre>Ce que j’accompagne</Titre>
-          <p className="mt-8 max-w-2xl text-lg leading-relaxed text-ink-muted">
+          <p className="mt-8 max-w-2xl text-lg leading-relaxed text-ink">
             Je propose un espace de parole et d’accompagnement pour de nombreuses problématiques.
           </p>
           <ul className="mt-10 grid gap-px overflow-hidden rounded-[24px] bg-line-strong/50 sm:grid-cols-2">

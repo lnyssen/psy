@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db";
+import { TitreSection } from "@/components/tags";
 import { PALETTE_CABINETS } from "@/lib/palette";
 import {
   enregistrerCabinet,
@@ -39,9 +40,32 @@ export default async function Reglages() {
       <header>
         <h1 className="font-display text-3xl tracking-tight">Réglages</h1>
         <p className="mt-2 text-sm text-ink-muted">
-          Le rythme des séances et les horaires d’ouverture décident de ce que le site propose.
-          Viennent ensuite les tarifs, puis les lieux, qu’on touche plus rarement.
+          Six réglages, du plus consulté au plus rare : le rythme des séances, les horaires
+          d’ouverture, les congés, les tarifs, les catégories de dépenses, puis les lieux.
         </p>
+
+        {/* Un sommaire d'ancres plutôt qu'un onglet par section : la page reste
+            une seule vue imprimable et cherchable au clavier (Ctrl-F), mais on
+            atteint « Lieux » en un clic plutôt qu'en déroulant tout le reste —
+            devenu nécessaire depuis que la page a grossi de deux sections. */}
+        <nav aria-label="Sections de réglages" className="mt-5 flex flex-wrap gap-1.5">
+          {[
+            ["rythme", "Rythme des séances"],
+            ["horaires", "Horaires d’ouverture"],
+            ["conges", "Congés"],
+            ["tarifs", "Tarifs"],
+            ["categories-depense", "Catégories de dépenses"],
+            ["lieux", "Lieux"],
+          ].map(([id, label]) => (
+            <a
+              key={id}
+              href={`#${id}`}
+              className="rounded-full border border-line-strong px-3.5 py-1 text-xs font-medium text-ink-muted transition-colors hover:border-accent hover:text-accent-text"
+            >
+              {label}
+            </a>
+          ))}
+        </nav>
       </header>
 
       <Parametres valeurs={valeurs} />
@@ -52,9 +76,9 @@ export default async function Reglages() {
         conges={conges}
       />
 
-      <section className="flex flex-col gap-4">
+      <section id="tarifs" className="flex flex-col gap-4 scroll-mt-6">
         <div>
-          <h2 className="font-display text-xl">Tarifs</h2>
+          <TitreSection>Tarifs</TitreSection>
           <p className="mt-1 text-sm text-ink-muted">
             Grille de référence. Le tarif propre à un patient, s’il en a un, prime toujours sur
             celle-ci.
@@ -147,9 +171,9 @@ export default async function Reglages() {
         </p>
       </section>
 
-      <section className="flex flex-col gap-4">
+      <section id="categories-depense" className="flex flex-col gap-4 scroll-mt-6">
         <div>
-          <h2 className="font-display text-xl">Catégories de dépenses</h2>
+          <TitreSection>Catégories de dépenses</TitreSection>
           <p className="mt-1 text-sm text-ink-muted">
             Sert à trier l’export comptable. Une catégorie qui porte déjà des dépenses se
             désactive plutôt que de disparaître — l’export d’un mois passé garde son libellé.
@@ -218,9 +242,9 @@ export default async function Reglages() {
           </button>
         </form>
       </section>
-      <section className="flex flex-col gap-4">
+      <section id="lieux" className="flex flex-col gap-4 scroll-mt-6">
         <div>
-          <h2 className="font-display text-xl">Lieux</h2>
+          <TitreSection>Lieux</TitreSection>
           <p className="mt-1 text-sm text-ink-muted">
             Cabinets et institutions. La couleur se choisit dans une palette dont chaque teinte a
             été vérifiée lisible et distincte des couleurs qui signalent déjà un état de paiement.

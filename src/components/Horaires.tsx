@@ -1,3 +1,4 @@
+import { TitreSection } from "@/components/tags";
 import {
   enregistrerConge,
   enregistrerDisponibilite,
@@ -12,6 +13,9 @@ const hhmm = (m: number) =>
   `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
 
 const champ = "rounded-full border border-line bg-surface px-3 py-1.5 text-sm";
+/** Même pilule, teintée du lieu : sans elle, jour et heures restaient gris
+ *  neutre alors que tout le reste du bloc porte la couleur du cabinet. */
+const champCabinet = "rounded-full border border-[var(--cab)]/35 bg-surface px-3 py-1.5 text-sm";
 const libelleChamp = "block text-[11px] font-semibold tracking-[0.1em] text-ink-muted uppercase";
 
 /**
@@ -33,9 +37,9 @@ export function Horaires({
 }) {
   return (
     <>
-      <section className="flex flex-col gap-4">
+      <section id="horaires" className="flex flex-col gap-4 scroll-mt-6">
         <div>
-          <h2 className="font-display text-xl">Horaires d’ouverture</h2>
+          <TitreSection>Horaires d’ouverture</TitreSection>
           <p className="mt-1 text-sm text-ink-muted">
             Ces plages déterminent les créneaux proposés sur le site. En dehors, aucun rendez-vous
             n’est offert. Le week-end n’est jamais proposé.
@@ -47,11 +51,12 @@ export function Horaires({
             .filter((d) => d.cabinetId === c.id)
             .sort((a, b) => a.jour - b.jour || a.debutMin - b.debutMin);
           return (
-            <div key={c.id} className="rounded-[14px] border border-line bg-surface px-5 py-4">
-              <p
-                style={{ "--cab": c.colorHex } as React.CSSProperties}
-                className="texte-cabinet font-bold"
-              >
+            <div
+              key={c.id}
+              style={{ "--cab": c.colorHex } as React.CSSProperties}
+              className="rounded-[14px] border-2 border-[var(--cab)]/25 bg-surface px-5 py-4"
+            >
+              <p className="texte-cabinet font-bold">
                 {c.nom}
                 {!c.publie && (
                   <span className="ml-2 text-xs font-normal text-ink-muted">
@@ -74,7 +79,7 @@ export function Horaires({
                         <label className="sr-only" htmlFor={`j-${d.id}`}>
                           Jour
                         </label>
-                        <select id={`j-${d.id}`} name="jour" defaultValue={d.jour} className={`${champ} w-32`}>
+                        <select id={`j-${d.id}`} name="jour" defaultValue={d.jour} className={`${champCabinet} w-32`}>
                           {JOURS.map((j, i) => (
                             <option key={j} value={i}>
                               {j}
@@ -89,7 +94,7 @@ export function Horaires({
                           name="debut"
                           type="time"
                           defaultValue={hhmm(d.debutMin)}
-                          className={`${champ} w-28`}
+                          className={`${champCabinet} w-28`}
                         />
                         <span className="text-sm text-ink-muted">→</span>
                         <label className="sr-only" htmlFor={`f-${d.id}`}>
@@ -100,7 +105,7 @@ export function Horaires({
                           name="fin"
                           type="time"
                           defaultValue={hhmm(d.finMin)}
-                          className={`${champ} w-28`}
+                          className={`${champCabinet} w-28`}
                         />
                         <button
                           type="submit"
@@ -126,16 +131,16 @@ export function Horaires({
                 className="mt-3 flex flex-wrap items-center gap-2 border-t border-line pt-3"
               >
                 <input type="hidden" name="cabinetId" value={c.id} />
-                <select name="jour" defaultValue="0" className={`${champ} w-32`} aria-label="Jour">
+                <select name="jour" defaultValue="0" className={`${champCabinet} w-32`} aria-label="Jour">
                   {JOURS.map((j, i) => (
                     <option key={j} value={i}>
                       {j}
                     </option>
                   ))}
                 </select>
-                <input name="debut" type="time" defaultValue="09:00" className={`${champ} w-28`} aria-label="Début" />
+                <input name="debut" type="time" defaultValue="09:00" className={`${champCabinet} w-28`} aria-label="Début" />
                 <span className="text-sm text-ink-muted">→</span>
-                <input name="fin" type="time" defaultValue="18:00" className={`${champ} w-28`} aria-label="Fin" />
+                <input name="fin" type="time" defaultValue="18:00" className={`${champCabinet} w-28`} aria-label="Fin" />
                 <button
                   type="submit"
                   className="rounded-full border border-accent px-4 py-1.5 text-xs font-medium text-accent-text"
@@ -148,9 +153,9 @@ export function Horaires({
         })}
       </section>
 
-      <section className="flex flex-col gap-4">
+      <section id="conges" className="flex flex-col gap-4 scroll-mt-6">
         <div>
-          <h2 className="font-display text-xl">Congés et absences</h2>
+          <TitreSection>Congés et absences</TitreSection>
           <p className="mt-1 text-sm text-ink-muted">
             Aucun créneau n’est proposé sur ces périodes, et les heures qu’elles couvrent ne sont
             pas comptées comme travaillées.

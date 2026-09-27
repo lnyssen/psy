@@ -571,6 +571,7 @@ export async function enregistrerFactureEtablissementManuelle(f: FormData) {
   const libelle = texte(f, "libelle");
   const montant = Number(texte(f, "montant").replace(",", "."));
   const echeanceSaisie = texte(f, "echeance");
+  const commentaire = texte(f, "commentaire") || null;
   if (!libelle || !Number.isFinite(montant) || montant < 0) return;
   const montantCents = Math.round(montant * 100);
 
@@ -581,7 +582,7 @@ export async function enregistrerFactureEtablissementManuelle(f: FormData) {
     if (Number.isNaN(echeanceLe.getTime())) return;
     await prisma.factureEtablissement.update({
       where: { id },
-      data: { libelle, montantCents, echeanceLe },
+      data: { libelle, montantCents, echeanceLe, commentaire },
     });
   } else {
     const cabinetId = texte(f, "cabinetId");
@@ -609,6 +610,7 @@ export async function enregistrerFactureEtablissementManuelle(f: FormData) {
         numero: (dernier?.numero ?? 0) + 1,
         montantCents,
         libelle,
+        commentaire,
         manuelle: true,
         emiseLe: maintenant,
         echeanceLe,
@@ -654,8 +656,7 @@ export async function annulerFactureEtablissement(f: FormData) {
  * conventionné, puisque ce quota se recompte depuis isBillable() à chaque
  * lecture plutôt que d'être suivi à part.
  */
-export async function annulerAbsence(f: FormData) {
-  const id = texte(f, "id");
+export async function annulerAbsence(id: string) {
   const seance = await prisma.session.findUnique({ where: { id } });
   if (!seance || seance.status !== "NO_SHOW") return;
 
