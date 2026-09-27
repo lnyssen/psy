@@ -45,6 +45,13 @@ enum SessionStatus {
   ATTENDED
   CANCELLED_IN_TIME
   NO_SHOW
+  /// Une absence non excusée, mais dont la praticienne a choisi de ne pas
+  /// réclamer le montant après coup. Distincte de CANCELLED_IN_TIME : la
+  /// trace que c'était une absence reste, pour ses propres statistiques
+  /// (« deux absences cette année »), mais isBillable() la traite comme
+  /// CANCELLED_IN_TIME — plus due, plus comptée, et un patient conventionné
+  /// retrouve la séance dans son quota annuel.
+  NO_SHOW_ANNULE
 }
 
 /// Comment le paiement est entré. Sert au reçu, qui doit le mentionner.
@@ -117,6 +124,7 @@ model Cabinet {
   disponibilites Disponibilite[]
   demandes       DemandeRdv[]
   depenses       Depense[]
+  factures       FactureEtablissement[]
 
   @@map("cabinets")
 }
@@ -179,8 +187,12 @@ model DemandeRdv {
   id        String        @id @default(cuid())
   firstName String        @map("first_name")
   lastName  String        @map("last_name")
-  email     String
-  phone     String?
+  /// Facultative : seul le téléphone est exigé, plus fiable pour reprendre
+  /// contact vite. L'e-mail reste demandé — il sert à l'accusé de réception
+  /// et au lien de réservation directe — mais son absence ne bloque pas la
+  /// demande.
+  email     String?
+  phone     String
   message   String?
   souhaite  DateTime
   cabinetId String        @map("cabinet_id")
@@ -232,8 +244,12 @@ model Patient {
 
 model Session {
   id            String        @id @default(cuid())
-  patientId     String        @map("patient_id")
-  patient       Patient       @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  /// Nul pour un bloc facturé à un établissement (l'école) : ce temps-là
+  /// n'appartient à aucun patient précis, seulement au lieu — voir
+  /// Cabinet.factureInstitution. Toute séance qui reçoit quelqu'un
+  /// nommément, elle, en a un.
+  patientId     String?       @map("patient_id")
+  patient       Patient?      @relation(fields: [patientId], references: [id], onDelete: Cascade)
   startsAt      DateTime      @map("starts_at")
   /// Cabinet où se tient la séance. Deux séances consécutives dans des
   /// cabinets différents sans temps de trajet sont signalées à l'écran :
@@ -253,6 +269,12 @@ model Session {
   paymentMethod PaymentMethod? @map("payment_method")
   /// Date d'émission du reçu, pour ne pas en délivrer deux fois sans le savoir.
   receiptAt     DateTime?     @map("receipt_at")
+  /// Facture d'établissement qui couvre cette séance, s'il y en a une. Une
+  /// fois posé, ce lien fige la séance : elle ne peut plus glisser dans une
+  /// autre facture, et la facture déjà émise ne bouge plus si la séance est
+  /// modifiée ensuite (voir FactureEtablissement).
+  factureId     String?              @map("facture_id")
+  facture       FactureEtablissement? @relation(fields: [factureId], references: [id], onDelete: SetNull)
   /// Vrai si la séance a été prise par le patient depuis le site.
   reserveeEnLigne Boolean     @default(false) @map("reservee_en_ligne")
   /// Note clinique. Chiffrement applicatif à venir (le chiffrement de bout en
@@ -309,7 +331,67 @@ model Parametres {
   /// grille seule ne saurait combler.
   chainerSeances   Boolean @default(true) @map("chainer_seances")
 
+  /// Mentions légales de la SRL, reprises sur toute facture émise à un
+  /// établissement. Un reçu au patient n'en a pas besoin — ce n'est pas une
+  /// pièce comptable numérotée — mais une facture en est une.
+  numeroEntreprise   String? @map("numero_entreprise")
+  iban               String?
+  /// Délai de paiement en jours, pour calculer l'échéance à l'émission.
+  delaiPaiementJours Int     @default(30) @map("delai_paiement_jours")
+
   @@map("parametres")
+}
+
+/// Facture émise à un établissement (l'école, aujourd'hui la seule) pour un
+/// mois de vacations.
+///
+/// À la différence du reçu au patient — une pièce informelle, sans
+/// numérotation — c'est ici une pièce comptable au sens plein : la loi belge
+/// impose une numérotation continue et chronologique des factures de vente,
+/// une seule séquence pour toute la société, jamais un trou ni une remise à
+/// zéro par client. `numero` est donc unique par année civile
+/// (`@@unique([annee, numero])`), jamais par établissement.
+///
+/// Les montants sont figés à l'émission (tarif horaire, heures, montant) :
+/// une facture déjà envoyée ne doit plus changer parce qu'une séance a été
+/// corrigée après coup. C'est la raison d'être de ce modèle plutôt qu'un
+/// simple recalcul à la volée depuis les séances.
+model FactureEtablissement {
+  id          String    @id @default(cuid())
+  cabinetId   String    @map("cabinet_id")
+  cabinet     Cabinet   @relation(fields: [cabinetId], references: [id], onDelete: Restrict)
+  annee       Int
+  numero      Int
+  /// Mois couvert par la facture (1-12).
+  mois        Int
+  /// Nulles pour une facture manuelle (manuelle = vrai) : un montant saisi
+  /// directement n'a pas de décompte d'heures à présenter.
+  heuresTotalesMin  Int? @map("heures_totales_min")
+  tarifHoraireCents Int? @map("tarif_horaire_cents")
+  montantCents      Int  @map("montant_cents")
+  /// Description libre, affichée sur le PDF à la place du décompte d'heures.
+  /// Attendue si manuelle est vrai ; sinon dérivée automatiquement.
+  libelle     String?
+  /// Vrai si créée à la main plutôt que calculée depuis les séances de
+  /// l'établissement — un supplément ponctuel, par exemple.
+  manuelle    Boolean   @default(false)
+  emiseLe     DateTime  @default(now()) @map("emise_le")
+  echeanceLe  DateTime  @map("echeance_le")
+  /// Null tant que l'établissement n'a pas réglé.
+  payeeLe     DateTime? @map("payee_le")
+  /// Annulée plutôt que supprimée : la numérotation légale ne tolère pas de
+  /// trou, une facture qui ne doit plus valoir se marque, elle ne disparaît
+  /// pas. Ses séances repartent à factureId nul, prêtes pour une prochaine
+  /// facture. Seule une facture non payée peut être annulée (voir
+  /// annulerFactureEtablissement) — au-delà, la correction relève de la
+  /// comptable.
+  annuleeLe   DateTime? @map("annulee_le")
+
+  seances     Session[]
+
+  @@unique([annee, numero])
+  @@index([cabinetId, annee, mois])
+  @@map("factures_etablissement")
 }
 
 /// Catégories d'une dépense professionnelle. Suffisant pour trier un export

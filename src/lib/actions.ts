@@ -64,7 +64,7 @@ export async function marquerPaye(id: string, methode: "CASH" | "ELECTRONIC") {
       paymentMethod: methode,
       // Le montant se fige au moment de l'encaissement : le tarif du patient
       // peut changer ensuite sans réécrire l'historique comptable.
-      amountCents: seance.amountCents ?? seance.patient.feeCents,
+      amountCents: seance.amountCents ?? seance.patient?.feeCents ?? null,
     },
   });
   revalidatePath("/admin/facturation");
@@ -108,7 +108,7 @@ export async function marquerPayeLot(ids: string[], methode: "CASH" | "ELECTRONI
           paymentStatus: "PAID",
           paidAt: maintenant,
           paymentMethod: methode,
-          amountCents: s.amountCents ?? s.patient.feeCents,
+          amountCents: s.amountCents ?? s.patient?.feeCents ?? null,
         },
       }),
     ),
@@ -365,6 +365,9 @@ export async function enregistrerParametres(f: FormData) {
     pasMin: entier("pasMin", 5, 120, 15),
     horizonSemaines: entier("horizonSemaines", 1, 26, 4),
     chainerSeances: f.get("chainerSeances") === "on",
+    numeroEntreprise: texte(f, "numeroEntreprise") || null,
+    iban: texte(f, "iban") || null,
+    delaiPaiementJours: entier("delaiPaiementJours", 0, 180, 30),
   };
 
   await prisma.parametres.upsert({
@@ -441,48 +444,225 @@ export async function supprimerDepense(f: FormData) {
 }
 
 // ---------------------------------------------------------------------------
-// Facturation à un établissement (l'école) : récapitulatif mensuel
+// Facturation à un établissement (l'école) : factures numérotées
 // ---------------------------------------------------------------------------
 
 /**
- * Marque encaissé un mois de vacations à un établissement.
+ * Émet la facture d'un mois de vacations à un établissement.
  *
  * Contrairement au patient, l'établissement ne paie pas séance par séance : il
- * règle un relevé mensuel d'heures. Le montant de chaque séance se fige ici,
- * au prorata de sa durée et du tarif horaire du lieu — jusque-là il restait
- * indéterminé, la facturation à l'acte ne s'appliquant pas à ce régime (voir
- * Cabinet.factureInstitution).
+ * règle un relevé mensuel d'heures. C'est ici, à l'émission, que tout se fige
+ * — numéro, heures, tarif, montant — et que les séances concernées se lient à
+ * la facture : elles ne pourront plus glisser dans une autre, et modifier une
+ * séance ensuite ne changera plus rien à une facture déjà partie (voir le
+ * commentaire du modèle FactureEtablissement).
+ *
+ * Émettre n'est pas encaisser : le montant devient facturé (Finance le compte
+ * dès maintenant), pas encore payé. Voir marquerFacturePayee.
  */
-export async function marquerMoisEtabli(cabinetId: string, annee: number, mois: number) {
+export async function emettreFactureEtablissement(cabinetId: string, annee: number, mois: number) {
   const cabinet = await prisma.cabinet.findUnique({ where: { id: cabinetId } });
   if (!cabinet?.factureInstitution || !cabinet.tarifHoraireCents) return;
 
   const debut = new Date(Date.UTC(annee, mois - 1, 1));
   const fin = new Date(Date.UTC(annee, mois, 1));
+  // factureId: null exclut ce qu'une facture précédente couvre déjà — une
+  // séance ajoutée en retard sur un mois déjà facturé attend la prochaine
+  // facture plutôt que de rouvrir celle-là.
   const seances = await prisma.session.findMany({
     where: {
       cabinetId,
       startsAt: { gte: debut, lt: fin },
       status: { in: ["ATTENDED", "NO_SHOW"] },
-      paymentStatus: { not: "PAID" },
+      factureId: null,
     },
   });
   if (seances.length === 0) return;
 
+  const heuresTotalesMin = seances.reduce((n, s) => n + s.durationMin, 0);
+  const montantCents = Math.round((heuresTotalesMin / 60) * cabinet.tarifHoraireCents);
+  const reglages = await parametres();
   const maintenant = new Date();
-  await prisma.$transaction(
-    seances.map((s) =>
-      prisma.session.update({
+  const echeanceLe = new Date(maintenant);
+  echeanceLe.setDate(echeanceLe.getDate() + reglages.delaiPaiementJours);
+
+  // Numérotation continue et chronologique, une seule séquence pour l'année —
+  // jamais par établissement (voir le commentaire du modèle). Le dernier
+  // numéro de l'année plus un ; @@unique([annee, numero]) refuse le doublon si
+  // deux émissions se chevauchaient malgré tout.
+  const dernier = await prisma.factureEtablissement.findFirst({
+    where: { annee },
+    orderBy: { numero: "desc" },
+  });
+
+  await prisma.$transaction(async (tx) => {
+    const facture = await tx.factureEtablissement.create({
+      data: {
+        cabinetId,
+        annee,
+        mois,
+        numero: (dernier?.numero ?? 0) + 1,
+        heuresTotalesMin,
+        tarifHoraireCents: cabinet.tarifHoraireCents!,
+        montantCents,
+        emiseLe: maintenant,
+        echeanceLe,
+      },
+    });
+    await tx.session.updateMany({
+      where: { id: { in: seances.map((s) => s.id) } },
+      data: { factureId: facture.id },
+    });
+    // Le montant se fige séance par séance, au prorata de sa durée : c'est ce
+    // que Finance additionnera dans le facturé du mois.
+    for (const s of seances) {
+      await tx.session.update({
         where: { id: s.id },
-        data: {
-          paymentStatus: "PAID",
-          paidAt: maintenant,
-          paymentMethod: "ELECTRONIC",
-          amountCents: Math.round((s.durationMin / 60) * cabinet.tarifHoraireCents!),
-        },
-      }),
-    ),
-  );
+        data: { amountCents: Math.round((s.durationMin / 60) * cabinet.tarifHoraireCents!) },
+      });
+    }
+  });
+
+  revalidatePath("/admin/etablissements");
+  revalidatePath("/admin/finance");
+}
+
+/**
+ * Crée ou modifie une facture manuelle — un supplément ponctuel qui ne vient
+ * pas d'un décompte de séances, une régularisation, ce que le calcul mensuel
+ * ne couvre pas.
+ *
+ * Créer : assigne le prochain numéro de la séquence de l'année, comme
+ * emettreFactureEtablissement. Modifier : seuls le libellé, le montant et
+ * l'échéance bougent — jamais le numéro ni l'année, une fois posés. Refusé
+ * si la facture est déjà payée ou annulée : la corriger relève alors de la
+ * comptable, pas d'un formulaire.
+ */
+export async function enregistrerFactureEtablissementManuelle(f: FormData) {
+  const id = texte(f, "id");
+  const libelle = texte(f, "libelle");
+  const montant = Number(texte(f, "montant").replace(",", "."));
+  const echeanceSaisie = texte(f, "echeance");
+  if (!libelle || !Number.isFinite(montant) || montant < 0) return;
+  const montantCents = Math.round(montant * 100);
+
+  if (id) {
+    const facture = await prisma.factureEtablissement.findUnique({ where: { id } });
+    if (!facture || facture.payeeLe || facture.annuleeLe) return;
+    const echeanceLe = echeanceSaisie ? new Date(echeanceSaisie) : facture.echeanceLe;
+    if (Number.isNaN(echeanceLe.getTime())) return;
+    await prisma.factureEtablissement.update({
+      where: { id },
+      data: { libelle, montantCents, echeanceLe },
+    });
+  } else {
+    const cabinetId = texte(f, "cabinetId");
+    const annee = Number(texte(f, "annee"));
+    const mois = Number(texte(f, "mois"));
+    const cabinet = await prisma.cabinet.findUnique({ where: { id: cabinetId } });
+    if (!cabinet || !Number.isInteger(annee) || !Number.isInteger(mois) || mois < 1 || mois > 12) {
+      return;
+    }
+    const reglages = await parametres();
+    const maintenant = new Date();
+    const echeanceLe = echeanceSaisie ? new Date(echeanceSaisie) : new Date(maintenant);
+    if (!echeanceSaisie) echeanceLe.setDate(echeanceLe.getDate() + reglages.delaiPaiementJours);
+    if (Number.isNaN(echeanceLe.getTime())) return;
+
+    const dernier = await prisma.factureEtablissement.findFirst({
+      where: { annee },
+      orderBy: { numero: "desc" },
+    });
+    await prisma.factureEtablissement.create({
+      data: {
+        cabinetId,
+        annee,
+        mois,
+        numero: (dernier?.numero ?? 0) + 1,
+        montantCents,
+        libelle,
+        manuelle: true,
+        emiseLe: maintenant,
+        echeanceLe,
+      },
+    });
+  }
+
+  revalidatePath("/admin/etablissements");
+  revalidatePath("/admin/finance");
+}
+
+/**
+ * Annule une facture non payée : elle ne se supprime pas — la numérotation ne
+ * tolère pas de trou — elle se marque annulée, et ses séances (s'il y en a)
+ * redeviennent disponibles pour une prochaine facture.
+ */
+export async function annulerFactureEtablissement(f: FormData) {
+  const id = texte(f, "id");
+  const facture = await prisma.factureEtablissement.findUnique({ where: { id } });
+  if (!facture || facture.payeeLe || facture.annuleeLe) return;
+
+  await prisma.$transaction([
+    prisma.factureEtablissement.update({
+      where: { id },
+      data: { annuleeLe: new Date() },
+    }),
+    prisma.session.updateMany({
+      where: { factureId: id },
+      data: { factureId: null, amountCents: null },
+    }),
+  ]);
+
+  revalidatePath("/admin/etablissements");
+  revalidatePath("/admin/finance");
+}
+
+/**
+ * Annule le caractère facturable d'une absence non excusée : la praticienne
+ * choisit de ne pas réclamer le montant. La séance garde la trace que
+ * c'était une absence (NO_SHOW_ANNULE plutôt que CANCELLED_IN_TIME), mais
+ * isBillable() la traite désormais comme non facturable — elle sort du dû,
+ * de l'encaissé possible, et du quota INAMI de l'année si le patient est
+ * conventionné, puisque ce quota se recompte depuis isBillable() à chaque
+ * lecture plutôt que d'être suivi à part.
+ */
+export async function annulerAbsence(f: FormData) {
+  const id = texte(f, "id");
+  const seance = await prisma.session.findUnique({ where: { id } });
+  if (!seance || seance.status !== "NO_SHOW") return;
+
+  await prisma.session.update({
+    where: { id },
+    data: {
+      status: "NO_SHOW_ANNULE",
+      paymentStatus: "DUE",
+      amountCents: null,
+      paidAt: null,
+      paymentMethod: null,
+    },
+  });
+
+  revalidatePath("/admin/facturation");
+  revalidatePath("/admin/finance");
+  revalidatePath(`/admin/patients/${seance.patientId}`);
+}
+
+/** Encaisse une facture déjà émise : la facture et chacune de ses séances. */
+export async function marquerFacturePayee(factureId: string) {
+  const facture = await prisma.factureEtablissement.findUnique({
+    where: { id: factureId },
+    include: { seances: true },
+  });
+  if (!facture || facture.payeeLe) return;
+
+  const maintenant = new Date();
+  await prisma.$transaction([
+    prisma.factureEtablissement.update({ where: { id: factureId }, data: { payeeLe: maintenant } }),
+    prisma.session.updateMany({
+      where: { factureId },
+      data: { paymentStatus: "PAID", paidAt: maintenant, paymentMethod: "ELECTRONIC" },
+    }),
+  ]);
 
   revalidatePath("/admin/etablissements");
   revalidatePath("/admin/finance");

@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { GroupeFiltre, TriMobile, type Params } from "@/components/filtres";
 import { FiltresMobile } from "@/components/FiltresMobile";
 import { TableFacturation, type LigneFacture } from "@/components/TableFacturation";
+import { OngletsFacturation } from "@/components/OngletsFacturation";
 import { cabinetsActifs, optionsCabinet } from "@/lib/cabinets";
 import { euros, isBillable } from "@/lib/format";
 
@@ -13,6 +14,10 @@ export default async function Facturation({ searchParams }: { searchParams: Prom
 
   const toutes = await prisma.session.findMany({
     where: {
+      // Un bloc facturé à un établissement n'a pas de patient et ne se
+      // facture pas ici : il relève de /admin/etablissements, son propre
+      // onglet, avec sa propre logique de facture numérotée.
+      patientId: { not: null },
       ...(params.cabinet ? { cabinetId: params.cabinet } : {}),
       ...(params.regime ? { patient: { scheme: params.regime as CareScheme } } : {}),
       ...(params.paiement
@@ -24,8 +29,11 @@ export default async function Facturation({ searchParams }: { searchParams: Prom
   const cabinets = await cabinetsActifs();
 
   // Une séance à venir ou annulée à temps n'est pas un acte facturable : elle
-  // n'a rien à faire dans cette table.
-  const seances = toutes.filter((s) => isBillable(s.status));
+  // n'a rien à faire dans cette table. Le filtre patientId ci-dessus garantit
+  // déjà que patient n'est jamais nul ici.
+  const seances = toutes.filter(
+    (s): s is typeof s & { patient: NonNullable<typeof s.patient> } => isBillable(s.status) && s.patient !== null,
+  );
 
   const sens = params.sens === "desc" ? -1 : 1;
   const comparateurs: Record<string, (a: (typeof seances)[number], b: (typeof seances)[number]) => number> = {
@@ -56,7 +64,8 @@ export default async function Facturation({ searchParams }: { searchParams: Prom
   // patient — pour que le total de la sélection dise la vérité avant le clic.
   const lignes: LigneFacture[] = seances.map((s) => ({
     id: s.id,
-    patientId: s.patientId,
+    // Non nul : le filtre patientId ci-dessus l'a déjà garanti.
+    patientId: s.patientId!,
     patient: {
       firstName: s.patient.firstName,
       lastName: s.patient.lastName,
@@ -82,6 +91,9 @@ export default async function Facturation({ searchParams }: { searchParams: Prom
           Séances facturables uniquement. Les annulations à temps et les séances à venir n’y
           figurent pas.
         </p>
+        <div className="mt-4">
+          <OngletsFacturation actif="patients" />
+        </div>
       </header>
 
       <FiltresMobile

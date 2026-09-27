@@ -134,6 +134,48 @@ export function Parametres({ valeurs }: { valeurs: ParametresType }) {
           </span>
         </label>
 
+        <div className="border-t border-line pt-4">
+          <h3 className="text-sm font-semibold">Mentions légales de facturation</h3>
+          <p className="mt-1 text-xs text-ink-muted">
+            Reprises sur toute facture émise à un établissement — une pièce comptable numérotée,
+            à la différence du reçu remis à un patient.
+          </p>
+          <div className="mt-3 grid gap-3 sm:grid-cols-3">
+            <label>
+              <span className={libelleChamp}>N° d’entreprise (BCE)</span>
+              <input
+                name="numeroEntreprise"
+                defaultValue={valeurs.numeroEntreprise ?? ""}
+                placeholder="BE 0000.000.000"
+                className={`mt-1 ${champ} w-full`}
+              />
+            </label>
+            <label>
+              <span className={libelleChamp}>IBAN</span>
+              <input
+                name="iban"
+                defaultValue={valeurs.iban ?? ""}
+                placeholder="BE00 0000 0000 0000"
+                className={`mt-1 ${champ} w-full`}
+              />
+            </label>
+            <label>
+              <span className={libelleChamp}>Délai de paiement</span>
+              <span className="mt-1 flex items-center gap-2">
+                <input
+                  name="delaiPaiementJours"
+                  type="number"
+                  min={0}
+                  max={180}
+                  defaultValue={valeurs.delaiPaiementJours}
+                  className={champ}
+                />
+                <span className="text-sm text-ink-muted">jours</span>
+              </span>
+            </label>
+          </div>
+        </div>
+
         <button
           type="submit"
           className="self-start rounded-full bg-accent px-5 py-2 text-sm font-medium text-accent-contrast transition-colors hover:bg-accent-hover"

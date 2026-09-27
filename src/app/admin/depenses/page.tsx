@@ -5,6 +5,7 @@ import { cabinetsActifs } from "@/lib/cabinets";
 import { enregistrerDepense, supprimerDepense } from "@/lib/actions";
 import { CATEGORIE_LABEL, euros, fmtDateCourte, partiesJour } from "@/lib/format";
 import { IconChevronDroite, IconChevronGauche } from "@/components/icons";
+import { DepensePhotoOCR } from "@/components/DepensePhotoOCR";
 
 export const dynamic = "force-dynamic";
 

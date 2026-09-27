@@ -8,7 +8,7 @@ import { IconFlecheBas, IconFlecheHaut } from "@/components/icons";
 
 export type SeanceGrille = {
   id: string;
-  patientId: string;
+  patientId: string | null;
   nom: string;
   isoDebut: string;
   /** Minutes écoulées depuis minuit, heure de Bruxelles. */
@@ -256,7 +256,7 @@ export function GrilleSemaine({
                   {duJour.map((s) => (
                     <li key={s.id}>
                       <Link
-                        href={`/admin/patients/${s.patientId}`}
+                        href={s.patientId ? `/admin/patients/${s.patientId}` : "/admin/etablissements"}
                         className={`flex items-center gap-3 rounded-[14px] border bg-surface py-3 pr-4 pl-3 ${
                           s.conflit ? "border-overdue/50" : "border-line"
                         }`}
@@ -374,7 +374,7 @@ function Bloc({
     >
       <span aria-hidden="true" className="filet-cabinet w-[5px] shrink-0" />
       <Link
-        href={`/admin/patients/${seance.patientId}`}
+        href={seance.patientId ? `/admin/patients/${seance.patientId}` : "/admin/etablissements"}
         className="flex min-w-0 flex-1 flex-col gap-[3px] overflow-hidden px-2 py-1.5"
       >
         <span className="shrink-0 truncate text-[12.5px] leading-[1.25] font-bold" data-numeric>

@@ -157,6 +157,7 @@ async function main() {
   await prisma.indisponibilite.deleteMany();
   await prisma.note.deleteMany();
   await prisma.depense.deleteMany();
+  await prisma.factureEtablissement.deleteMany();
   await prisma.session.deleteMany();
   await prisma.patient.deleteMany();
   await prisma.cabinet.deleteMany();

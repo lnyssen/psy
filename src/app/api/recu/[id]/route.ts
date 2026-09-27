@@ -33,6 +33,12 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   });
 
   if (!seance) return new Response("Séance introuvable.", { status: 404 });
+  if (!seance.patient) {
+    // Un bloc facturé à un établissement n'a pas de patient : c'est une
+    // facture numérotée (/api/facture-etablissement) qu'il lui faut, pas un
+    // reçu individuel.
+    return new Response("Cette séance ne concerne aucun patient.", { status: 409 });
+  }
   if (seance.paymentStatus !== "PAID") {
     return new Response("Le reçu n’est délivré que pour une séance payée.", { status: 409 });
   }

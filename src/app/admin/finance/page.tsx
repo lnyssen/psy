@@ -102,22 +102,32 @@ export default async function Finance({ searchParams }: { searchParams: Promise<
     total: grille[c.id].reduce(cumuler, vide()),
   }));
 
-  const parRegime = (["PRIVE", "CONVENTIONNE", "INSTITUTION"] as const).map((r) => ({
-    regime: r,
-    total: delAnnee
-      .filter((s) => s.patient.scheme === r)
-      .reduce(
-        (acc, s) =>
-          cumuler(acc, {
-            facture: s.amountCents ?? 0,
-            encaisse: s.paymentStatus === "PAID" ? (s.amountCents ?? 0) : 0,
-            du: s.paymentStatus === "DUE" ? (s.amountCents ?? 0) : 0,
-            retard: s.paymentStatus === "OVERDUE" ? (s.amountCents ?? 0) : 0,
-            actes: 1,
-          }),
-        vide(),
-      ),
-  }));
+  const cumulerCas = (parts: typeof delAnnee) =>
+    parts.reduce(
+      (acc, s) =>
+        cumuler(acc, {
+          facture: s.amountCents ?? 0,
+          encaisse: s.paymentStatus === "PAID" ? (s.amountCents ?? 0) : 0,
+          du: s.paymentStatus === "DUE" ? (s.amountCents ?? 0) : 0,
+          retard: s.paymentStatus === "OVERDUE" ? (s.amountCents ?? 0) : 0,
+          actes: 1,
+        }),
+      vide(),
+    );
+  // Une séance sans patient est un bloc facturé à un établissement (voir
+  // Cabinet.factureInstitution) : aucun des trois régimes ne s'y applique,
+  // elle reçoit sa propre ligne plutôt que de disparaître silencieusement du
+  // total.
+  const parRegime = [
+    ...(["PRIVE", "CONVENTIONNE", "INSTITUTION"] as const).map((r) => ({
+      label: SCHEME_LABEL[r],
+      total: cumulerCas(delAnnee.filter((s) => s.patient?.scheme === r)),
+    })),
+    {
+      label: "établissement (bloc)",
+      total: cumulerCas(delAnnee.filter((s) => !s.patient)),
+    },
+  ];
 
   const plafond = Math.max(1, ...parMois.map((m) => m.facture));
   const moisAvecActes = parMois.filter((m) => m.actes > 0).length;
@@ -410,9 +420,9 @@ export default async function Finance({ searchParams }: { searchParams: Promise<
         />
         <Repartition
           titre="Par régime"
-          lignes={parRegime.map(({ regime, total }) => ({
-            cle: regime,
-            etiquette: <span className="text-sm">{SCHEME_LABEL[regime]}</span>,
+          lignes={parRegime.map(({ label, total }) => ({
+            cle: label,
+            etiquette: <span className="text-sm">{label}</span>,
             total,
           }))}
           reference={totalAnnee.facture}

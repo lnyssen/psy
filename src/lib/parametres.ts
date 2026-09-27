@@ -7,6 +7,9 @@ export type Parametres = {
   pasMin: number;
   horizonSemaines: number;
   chainerSeances: boolean;
+  numeroEntreprise: string | null;
+  iban: string | null;
+  delaiPaiementJours: number;
 };
 
 const PAR_DEFAUT: Parametres = {
@@ -16,6 +19,9 @@ const PAR_DEFAUT: Parametres = {
   pasMin: 15,
   horizonSemaines: 4,
   chainerSeances: true,
+  numeroEntreprise: null,
+  iban: null,
+  delaiPaiementJours: 30,
 };
 
 /** Les paramètres tiennent en une ligne, créée à la volée si elle manque : on

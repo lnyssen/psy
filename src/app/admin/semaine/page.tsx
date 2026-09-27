@@ -23,7 +23,7 @@ import {
   lundiDe,
   memeJour,
   minutesDeJour,
-  nomComplet,
+  nomSeance,
   partiesJour,
 } from "@/lib/format";
 
@@ -71,7 +71,7 @@ export default async function Semaine({ searchParams }: { searchParams: Promise<
   const pourGrille: SeanceGrille[] = seances.map((s, i) => ({
     id: s.id,
     patientId: s.patientId,
-    nom: nomComplet(s.patient),
+    nom: nomSeance(s),
     isoDebut: s.startsAt.toISOString(),
     minutes: minutesDeJour(s.startsAt),
     duree: s.durationMin,

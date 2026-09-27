@@ -16,7 +16,7 @@ import {
   heuresTotales,
   isBillable,
   minutesDeJour,
-  nomComplet,
+  nomSeance,
   partiesJour,
 } from "@/lib/format";
 
@@ -158,7 +158,7 @@ export default async function Aujourdhui({ searchParams }: { searchParams: Promi
           {seances.map((s, i) => (
             <li key={s.id}>
               <Link
-                href={`/admin/patients/${s.patientId}`}
+                href={s.patientId ? `/admin/patients/${s.patientId}` : "/admin/etablissements"}
                 className="flex flex-wrap items-center gap-x-5 gap-y-3 rounded-[14px] border border-line bg-surface px-5 py-4 transition-colors hover:border-accent"
               >
                 <time
@@ -172,11 +172,11 @@ export default async function Aujourdhui({ searchParams }: { searchParams: Promi
                   </span>
                 </time>
                 <span className="min-w-40 flex-1 text-base font-medium">
-                  {nomComplet(s.patient)}
+                  {nomSeance(s)}
                 </span>
                 <span className="flex flex-wrap items-center gap-2">
                   <CabinetTag cabinet={s.cabinet} />
-                  <RegimeTag scheme={s.patient.scheme} />
+                  {s.patient && <RegimeTag scheme={s.patient.scheme} />}
                   {conflits.has(i) && <AlerteTrajet />}
                 </span>
                 <span className="flex shrink-0 items-center gap-4">

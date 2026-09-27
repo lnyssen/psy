@@ -31,6 +31,7 @@ export const STATUS_LABEL: Record<SessionStatus, string> = {
   ATTENDED: "honorée",
   CANCELLED_IN_TIME: "annulée à temps",
   NO_SHOW: "absence non excusée",
+  NO_SHOW_ANNULE: "absence annulée",
 };
 
 export const PAYMENT_LABEL: Record<PaymentStatus, string> = {
@@ -142,6 +143,18 @@ export function conflitsDeTrajet<T extends SeanceLike>(
  */
 export function nomComplet(p: { firstName: string; lastName: string }) {
   return `${p.firstName} ${p.lastName}`;
+}
+
+/**
+ * Ce qu'on affiche à la place d'un nom quand la séance n'a pas de patient —
+ * un bloc facturé à un établissement (voir Cabinet.factureInstitution).
+ * Le nom du lieu porte alors l'information : « École », pas un nom inventé.
+ */
+export function nomSeance(s: {
+  patient: { firstName: string; lastName: string } | null;
+  cabinet: { nom: string };
+}) {
+  return s.patient ? nomComplet(s.patient) : s.cabinet.nom;
 }
 
 export function initiales(firstName: string, lastName: string) {
