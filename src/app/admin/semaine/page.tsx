@@ -267,16 +267,6 @@ export default async function Semaine({ searchParams }: { searchParams: Promise<
               tout: "Tous les lieux",
               options: optionsCabinet(cabinets),
             },
-            {
-              cle: "regime",
-              libelle: "Régime",
-              tout: "Tous les régimes",
-              options: [
-                { valeur: "PRIVE", label: "privé" },
-                { valeur: "CONVENTIONNE", label: "conventionné" },
-                { valeur: "INSTITUTION", label: "institution" },
-              ],
-            },
           ]}
       />
 
@@ -287,17 +277,6 @@ export default async function Semaine({ searchParams }: { searchParams: Promise<
           cle="cabinet"
           libelle="Cabinet"
           options={optionsCabinet(cabinets)}
-        />
-        <GroupeFiltre
-          base="/admin/semaine"
-          params={params}
-          cle="regime"
-          libelle="Régime"
-          options={[
-            { valeur: "PRIVE", label: "privé" },
-            { valeur: "CONVENTIONNE", label: "conventionné" },
-            { valeur: "INSTITUTION", label: "institution" },
-          ]}
         />
       </div>
 

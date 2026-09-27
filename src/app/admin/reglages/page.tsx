@@ -301,7 +301,7 @@ export default async function Reglages() {
                       defaultValue={c.acces}
                       rows={3}
                       placeholder={"Tram 4 — arrêt Wagon, à cinq minutes à pied."}
-                      className={`mt-1 ${champ} resize-y leading-snug`}
+                      className={`mt-1 ${champ} resize-y rounded-[14px] leading-snug`}
                     />
                   </label>
 
@@ -434,7 +434,7 @@ export default async function Reglages() {
               name="acces"
               rows={3}
               placeholder="Tram 4 — arrêt Wagon, à cinq minutes à pied."
-              className={`mt-1 ${champ} resize-y leading-snug`}
+              className={`mt-1 ${champ} resize-y rounded-[14px] leading-snug`}
             />
           </label>
           <fieldset className="mt-3 flex flex-wrap items-center gap-3">

@@ -5,6 +5,7 @@ import { CabinetTag, EtatPaiement, RegimeTag, StatutSeance } from "@/components/
 import { Notes } from "@/components/Notes";
 import { Encaisser } from "@/components/Encaisser";
 import { AnnulerAbsence } from "@/components/AnnulerAbsence";
+import { enregistrerPatient } from "@/lib/actions";
 import { plafondConventionne, seancesConventionneAnnee } from "@/lib/quotas";
 import {
   euros,
@@ -19,6 +20,10 @@ import {
 } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
+
+const champ =
+  "w-full rounded-full border border-line bg-surface px-3.5 py-2 text-sm placeholder:text-ink-muted/60";
+const libelleChamp = "block text-[11px] font-semibold tracking-[0.1em] text-ink-muted uppercase";
 
 function age(naissance: Date | null) {
   if (!naissance) return null;
@@ -37,6 +42,13 @@ export default async function FichePatient({ params }: { params: Promise<{ id: s
     },
   });
   if (!patient) notFound();
+
+  // Un lieu facturé à un établissement (l'école) n'a pas de patientèle propre
+  // (voir /admin/patients) : pas la peine de le proposer ici non plus.
+  const cabinets = await prisma.cabinet.findMany({
+    where: { actif: true, factureInstitution: false },
+    orderBy: { ordre: "asc" },
+  });
 
   const facturables = patient.sessions.filter((s) => isBillable(s.status));
   const du = facturables
@@ -97,19 +109,121 @@ export default async function FichePatient({ params }: { params: Promise<{ id: s
       </header>
 
       <section className="rounded-[14px] border border-line bg-surface px-5 py-4">
-        <h2 className="sr-only">Coordonnées</h2>
-        <dl className="grid gap-x-8 gap-y-3 sm:grid-cols-2 lg:grid-cols-3">
-          {coordonnees.map((c) => (
-            <div key={c.t}>
-              <dt className="text-[11px] font-semibold tracking-[0.1em] text-ink-muted uppercase">
-                {c.t}
-              </dt>
-              <dd className={`mt-0.5 text-sm ${c.mono ? "font-mono" : ""}`} data-numeric>
-                {c.v || <span className="text-ink-muted">—</span>}
-              </dd>
+        <div className="flex items-start justify-between gap-3">
+          <h2 className="sr-only">Coordonnées</h2>
+          <dl className="grid flex-1 gap-x-8 gap-y-3 sm:grid-cols-2 lg:grid-cols-3">
+            {coordonnees.map((c) => (
+              <div key={c.t}>
+                <dt className="text-[11px] font-semibold tracking-[0.1em] text-ink-muted uppercase">
+                  {c.t}
+                </dt>
+                <dd className={`mt-0.5 text-sm ${c.mono ? "font-mono" : ""}`} data-numeric>
+                  {c.v || <span className="text-ink-muted">—</span>}
+                </dd>
+              </div>
+            ))}
+          </dl>
+        </div>
+
+        <details className="mt-4 border-t border-line pt-3">
+          <summary className="w-fit cursor-pointer text-sm font-medium text-ink-muted transition-colors hover:text-accent-text">
+            Modifier la fiche
+          </summary>
+          <form
+            action={enregistrerPatient}
+            className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3"
+          >
+            <input type="hidden" name="id" value={patient.id} />
+            <label>
+              <span className={libelleChamp}>Prénom</span>
+              <input name="firstName" defaultValue={patient.firstName} required className={`mt-1 ${champ}`} />
+            </label>
+            <label>
+              <span className={libelleChamp}>Nom</span>
+              <input name="lastName" defaultValue={patient.lastName} required className={`mt-1 ${champ}`} />
+            </label>
+            <label>
+              <span className={libelleChamp}>Régime</span>
+              <select name="scheme" defaultValue={patient.scheme} className={`mt-1 ${champ}`}>
+                <option value="PRIVE">privé</option>
+                <option value="CONVENTIONNE">conventionné</option>
+                <option value="INSTITUTION">institution</option>
+              </select>
+            </label>
+            <label>
+              <span className={libelleChamp}>Téléphone</span>
+              <input name="phone" defaultValue={patient.phone ?? ""} className={`mt-1 ${champ}`} />
+            </label>
+            <label>
+              <span className={libelleChamp}>E-mail</span>
+              <input
+                name="email"
+                type="email"
+                defaultValue={patient.email ?? ""}
+                className={`mt-1 ${champ}`}
+              />
+            </label>
+            <label>
+              <span className={libelleChamp}>Naissance</span>
+              <input
+                name="birthDate"
+                type="date"
+                defaultValue={patient.birthDate ? patient.birthDate.toISOString().slice(0, 10) : ""}
+                className={`mt-1 ${champ}`}
+              />
+            </label>
+            <label className="sm:col-span-2">
+              <span className={libelleChamp}>Rue et numéro</span>
+              <input
+                name="addressLine"
+                defaultValue={patient.addressLine ?? ""}
+                className={`mt-1 ${champ}`}
+              />
+            </label>
+            <div className="grid grid-cols-[6rem_1fr] gap-2">
+              <label>
+                <span className={libelleChamp}>Code</span>
+                <input
+                  name="postalCode"
+                  defaultValue={patient.postalCode ?? ""}
+                  className={`mt-1 ${champ}`}
+                />
+              </label>
+              <label>
+                <span className={libelleChamp}>Commune</span>
+                <input name="city" defaultValue={patient.city ?? ""} className={`mt-1 ${champ}`} />
+              </label>
             </div>
-          ))}
-        </dl>
+            <label>
+              <span className={libelleChamp}>Tarif (€ — vide si conventionné)</span>
+              <input
+                name="feeCents"
+                type="number"
+                step="0.01"
+                min="0"
+                defaultValue={patient.feeCents ? (patient.feeCents / 100).toFixed(2) : ""}
+                className={`mt-1 ${champ}`}
+              />
+            </label>
+            <label>
+              <span className={libelleChamp}>Cabinet habituel</span>
+              <select name="cabinetId" defaultValue={patient.cabinetId ?? ""} className={`mt-1 ${champ}`}>
+                <option value="">Aucun</option>
+                {cabinets.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.nom}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <button
+              type="submit"
+              className="self-start rounded-full bg-accent px-5 py-2 text-sm font-medium text-accent-contrast transition-colors hover:bg-accent-hover sm:col-span-2 lg:col-span-3"
+            >
+              Enregistrer
+            </button>
+          </form>
+        </details>
       </section>
 
       <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">

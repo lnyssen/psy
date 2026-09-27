@@ -49,6 +49,55 @@ export async function supprimerNote(id: string, patientId: string) {
   return { ok: true as const };
 }
 
+/**
+ * Modifie une fiche patient — identité, coordonnées, régime, tarif, cabinet
+ * habituel. La seule validation de fond : un e-mail doit ressembler à un
+ * e-mail s'il est renseigné, rien n'est obligatoire hors nom et prénom.
+ */
+export async function enregistrerPatient(f: FormData) {
+  const id = texte(f, "id");
+  if (!id) return;
+
+  const firstName = texte(f, "firstName");
+  const lastName = texte(f, "lastName");
+  if (!firstName || !lastName) return;
+
+  const email = texte(f, "email");
+  if (email && !email.includes("@")) return;
+
+  const scheme = texte(f, "scheme");
+  if (!["PRIVE", "CONVENTIONNE", "INSTITUTION"].includes(scheme)) return;
+
+  const feeSaisi = texte(f, "feeCents");
+  const feeCents = feeSaisi ? Math.round(Number(feeSaisi.replace(",", ".")) * 100) : null;
+  if (feeSaisi && !Number.isFinite(feeCents)) return;
+
+  const birthSaisie = texte(f, "birthDate");
+  const birthDate = birthSaisie ? new Date(birthSaisie) : null;
+  if (birthSaisie && Number.isNaN(birthDate?.getTime())) return;
+
+  const cabinetId = texte(f, "cabinetId") || null;
+
+  await prisma.patient.update({
+    where: { id },
+    data: {
+      firstName,
+      lastName,
+      email: email || null,
+      phone: texte(f, "phone") || null,
+      addressLine: texte(f, "addressLine") || null,
+      postalCode: texte(f, "postalCode") || null,
+      city: texte(f, "city") || null,
+      birthDate,
+      scheme: scheme as "PRIVE" | "CONVENTIONNE" | "INSTITUTION",
+      feeCents,
+      cabinetId,
+    },
+  });
+  revalidatePath(`/admin/patients/${id}`);
+  revalidatePath("/admin/patients");
+}
+
 export async function marquerPaye(id: string, methode: "CASH" | "ELECTRONIC") {
   const seance = await prisma.session.findUnique({
     where: { id },

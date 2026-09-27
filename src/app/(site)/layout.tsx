@@ -10,7 +10,7 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
   });
 
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="grain flex min-h-screen flex-col">
       <EnteteSite />
 
       {/*

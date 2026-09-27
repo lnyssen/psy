@@ -260,8 +260,14 @@ html {
  *
  * Elle ne capte aucun clic et ne coûte aucune requête : les images sont des
  * data-URI de quelques centaines d'octets, et les motifs se répètent.
+ *
+ * Posée sur .grain plutôt que sur body : le site public en a voulu, l'outil
+ * de gestion l'a explicitement refusé — « aplats sans transparence », dit le
+ * brief. Les deux partagent cette feuille de style ; sans cette classe, le
+ * grain aurait aussi troublé les aplats pleins de l'admin (les pastilles de
+ * navigation, en particulier), qui doivent rester des couleurs nettes.
  */
-body::after {
+.grain::after {
   content: "";
   position: fixed;
   inset: 0;
@@ -277,13 +283,13 @@ body::after {
 
 /* En thème sombre, le grain doit éclaircir et non assombrir, sans quoi il
    disparaît dans le noir. */
-:root[data-theme="dark"] body::after {
+:root[data-theme="dark"] .grain::after {
   opacity: 0.07;
   mix-blend-mode: screen;
 }
 
 @media print {
-  body::after {
+  .grain::after {
     display: none;
   }
 }
