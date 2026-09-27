@@ -14,7 +14,6 @@ import {
   fmtJourMoisAn,
   formatDuree,
   heuresTotales,
-  initiales,
   isBillable,
   nomComplet,
 } from "@/lib/format";
@@ -90,9 +89,6 @@ export default async function FichePatient({ params }: { params: Promise<{ id: s
       </Link>
 
       <header className="flex flex-wrap items-center gap-x-5 gap-y-3">
-        <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-accent-soft font-mono text-base font-semibold text-accent-text">
-          {initiales(patient.firstName, patient.lastName)}
-        </span>
         <div className="flex-1">
           <h1 className="font-display text-3xl tracking-tight">{nomComplet(patient)}</h1>
           <p className="mt-2 flex flex-wrap items-center gap-2">

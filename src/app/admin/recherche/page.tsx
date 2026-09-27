@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { CabinetTag, RegimeTag } from "@/components/tags";
-import { adresseCabinet, fmtDateCourte, initiales, nomComplet } from "@/lib/format";
+import { adresseCabinet, fmtDateCourte, nomComplet } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
 
@@ -93,9 +93,6 @@ export default async function Recherche({
                   href={`/admin/patients/${p.id}`}
                   className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-[14px] border border-line bg-surface px-5 py-3.5 transition-colors hover:border-accent"
                 >
-                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent-soft text-[11px] font-semibold text-accent-text">
-                    {initiales(p.firstName, p.lastName)}
-                  </span>
                   <span className="flex-1 font-medium">{nomComplet(p)}</span>
                   <RegimeTag scheme={p.scheme} />
                   {p.cabinet && <CabinetTag cabinet={p.cabinet} />}
