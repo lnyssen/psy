@@ -101,7 +101,7 @@ export async function reserverOuDemander(_etat: ResultatRdv, f: FormData): Promi
     revalidatePath("/admin");
     return {
       ok: true,
-      message: "Votre rendez-vous est confirmé. Vous le retrouverez dans votre boîte e-mail.",
+      message: "Votre rendez-vous est confirmé.",
     };
   }
 

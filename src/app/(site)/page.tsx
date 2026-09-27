@@ -255,7 +255,7 @@ export default async function Accueil() {
                 Les créneaux libres sont en ligne.
               </p>
               <p className="mt-2 text-sm text-white/90">
-                Un premier rendez-vous se confirme par retour d’e-mail.
+                Une demande reçoit une réponse rapide, pour confirmer ou proposer un autre créneau.
               </p>
             </div>
             <Link

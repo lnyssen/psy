@@ -281,7 +281,7 @@ export function TableFacturation({
               {sansMontant > 0 && (
                 <span className="text-ink-muted">
                   {" "}
-                  · {sansMontant} sans montant
+                  · {sansMontant} sans tarif connu
                 </span>
               )}
             </p>
