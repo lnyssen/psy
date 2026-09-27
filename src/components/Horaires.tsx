@@ -31,7 +31,7 @@ export function Horaires({
   disponibilites,
   conges,
 }: {
-  cabinets: { id: string; nom: string; colorHex: string; publie: boolean }[];
+  cabinets: { id: string; nom: string; colorHex: string; vividHex: string; publie: boolean }[];
   disponibilites: { id: string; cabinetId: string; jour: number; debutMin: number; finMin: number }[];
   conges: { id: string; debut: Date; fin: Date; motif: string | null }[];
 }) {
@@ -53,10 +53,14 @@ export function Horaires({
           return (
             <div
               key={c.id}
-              style={{ "--cab": c.colorHex } as React.CSSProperties}
+              style={{ "--cab": c.colorHex, "--cab-vif": c.vividHex } as React.CSSProperties}
               className="rounded-[14px] border-2 border-[var(--cab)]/25 bg-surface px-5 py-4"
             >
-              <p className="texte-cabinet font-bold">
+              <p className="flex items-center gap-2 texte-cabinet font-bold">
+                {/* La pastille porte la vraie teinte choisie dans la palette —
+                    le texte, lui, est assombri pour rester lisible (voir
+                    palette.ts) et ne peut pas à lui seul en témoigner. */}
+                <span aria-hidden="true" className="filet-cabinet h-3 w-3 shrink-0 rounded-full" />
                 {c.nom}
                 {!c.publie && (
                   <span className="ml-2 text-xs font-normal text-ink-muted">

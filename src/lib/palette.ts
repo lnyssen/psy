@@ -17,6 +17,13 @@
  * de page, texte sur son propre aplat — et tenue à au moins 25° de teinte des
  * couleurs qui portent déjà du sens : le dû, le payé, le retard, le violet de
  * marque. Le fuchsia, essayé, a été écarté : 23° du violet, il s'y confondait.
+ *
+ * Sept teintes, initialement — mais cyan et turquoise n'étaient qu'à 15° l'une
+ * de l'autre, magenta et rose à 5°. Sur un rond de couleur plein (une pastille
+ * de lieu), l'écart ne se voit pas ; deux lieux différents devenaient
+ * indiscernables au premier regard. Cyan et magenta, les deux moins écartées
+ * de leur voisine, sont retirées plutôt que redéfinies : cinq teintes qui se
+ * distinguent vraiment valent mieux que sept dont deux paires se confondent.
  */
 export type TeinteCabinet = {
   cle: string;
@@ -29,8 +36,6 @@ export type TeinteCabinet = {
 };
 
 export const PALETTE_CABINETS: TeinteCabinet[] = [
-  { cle: "cyan", nom: "Cyan", vividHex: "#00C8D4", colorHex: "#056A73", fillHex: "#C6F4F8", contraste: 5.34 },
-  { cle: "magenta", nom: "Magenta", vividHex: "#FF2D8F", colorHex: "#A8005A", fillHex: "#FFD6EA", contraste: 5.71 },
   { cle: "electrique", nom: "Électrique", vividHex: "#2B6BFF", colorHex: "#1A45B8", fillHex: "#D9E4FF", contraste: 6.37 },
   { cle: "azur", nom: "Azur", vividHex: "#00A3FF", colorHex: "#00588F", fillHex: "#CCEBFF", contraste: 6.05 },
   { cle: "turquoise", nom: "Turquoise", vividHex: "#00D9B0", colorHex: "#00695C", fillHex: "#C7F7EE", contraste: 5.66 },
