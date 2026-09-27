@@ -1,6 +1,6 @@
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 import { prisma } from "@/lib/db";
-import { adresseCabinet, euros, fmtJourMoisAn, formatDuree } from "@/lib/format";
+import { adresseCabinet, euros, fmtJourMoisAn, formatDuree, pourPdf } from "@/lib/format";
 
 const MOIS_LABEL = new Intl.DateTimeFormat("fr-BE", {
   month: "long",
@@ -39,7 +39,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     texte: string,
     opts: { taille?: number; police?: typeof normal; couleur?: typeof encre; x?: number } = {},
   ) => {
-    page.drawText(texte, {
+    page.drawText(pourPdf(texte), {
       x: opts.x ?? M,
       y,
       size: opts.taille ?? 10,

@@ -3,8 +3,8 @@
 import { useRouter } from "next/navigation";
 import { useRef, useState, useTransition } from "react";
 import Link from "next/link";
-import { deplacerSeance } from "@/lib/actions";
-import { IconFlecheBas, IconFlecheHaut } from "@/components/icons";
+import { annulerSeance, deplacerSeance } from "@/lib/actions";
+import { IconFermer, IconFlecheBas, IconFlecheHaut } from "@/components/icons";
 
 export type SeanceGrille = {
   id: string;
@@ -22,6 +22,8 @@ export type SeanceGrille = {
   paiement: "DUE" | "PAID" | "OVERDUE" | null;
   libellePaiement: string | null;
   conflit: boolean;
+  /** Seule une séance à venir s'annule d'ici — voir annulerSeance. */
+  aVenir: boolean;
 };
 
 export type JourGrille = { iso: string; nom: string; numero: string; total: string; aujourdhui: boolean };
@@ -83,6 +85,13 @@ export function GrilleSemaine({
       const r = await deplacerSeance(id, d.toISOString());
       if (!r.ok) setErreur(r.message);
       else router.refresh();
+    });
+  }
+
+  function annuler(id: string) {
+    demarrer(async () => {
+      await annulerSeance(id);
+      router.refresh();
     });
   }
 
@@ -217,6 +226,7 @@ export function GrilleSemaine({
                       saisie={saisie === seance.id}
                       onSaisir={setSaisie}
                       onDecaler={(pas) => deplacer(seance.id, j.iso, seance.minutes + pas)}
+                      onAnnuler={() => annuler(seance.id)}
                       style={{
                         top: ((seance.minutes - heureDebut * 60) / 60) * PX_PAR_HEURE + MARGE_HAUT,
                         height: Math.max((seance.duree / 60) * PX_PAR_HEURE - 3, 34),
@@ -254,12 +264,15 @@ export function GrilleSemaine({
               ) : (
                 <ol className="flex flex-col gap-2">
                   {duJour.map((s) => (
-                    <li key={s.id}>
+                    <li
+                      key={s.id}
+                      className={`flex items-center gap-2 rounded-[14px] border bg-surface pr-2 ${
+                        s.conflit ? "border-overdue/50" : "border-line"
+                      }`}
+                    >
                       <Link
                         href={s.patientId ? `/admin/patients/${s.patientId}` : "/admin/etablissements"}
-                        className={`flex items-center gap-3 rounded-[14px] border bg-surface py-3 pr-4 pl-3 ${
-                          s.conflit ? "border-overdue/50" : "border-line"
-                        }`}
+                        className="flex flex-1 items-center gap-3 py-3 pr-2 pl-3"
                       >
                         <span
                           aria-hidden="true"
@@ -279,6 +292,16 @@ export function GrilleSemaine({
                           </span>
                         )}
                       </Link>
+                      {s.aVenir && (
+                        <button
+                          type="button"
+                          onClick={() => annuler(s.id)}
+                          aria-label={`Annuler la séance de ${s.nom}`}
+                          className="shrink-0 rounded-full border border-line-strong p-1.5 text-ink-muted transition-colors hover:border-overdue hover:text-overdue"
+                        >
+                          <IconFermer className="h-3 w-3" />
+                        </button>
+                      )}
                     </li>
                   ))}
                 </ol>
@@ -327,12 +350,14 @@ function Bloc({
   saisie,
   onSaisir,
   onDecaler,
+  onAnnuler,
   style,
 }: {
   seance: SeanceGrille;
   saisie: boolean;
   onSaisir: (id: string | null) => void;
   onDecaler: (pas: number) => void;
+  onAnnuler: () => void;
   style: React.CSSProperties;
 }) {
   const hhmm = (m: number) =>
@@ -441,6 +466,16 @@ function Bloc({
         >
           <IconFlecheBas className="h-3 w-3" />
         </button>
+        {seance.aVenir && (
+          <button
+            type="button"
+            onClick={onAnnuler}
+            aria-label={`Annuler la séance de ${seance.nom}`}
+            className="flex h-[22px] w-[22px] items-center justify-center rounded-full border border-line bg-surface text-ink-muted shadow-sm transition-colors hover:border-overdue hover:text-overdue"
+          >
+            <IconFermer className="h-2.5 w-2.5" />
+          </button>
+        )}
       </span>
     </div>
   );

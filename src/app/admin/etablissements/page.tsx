@@ -262,7 +262,7 @@ export default async function Etablissements({
                 name="commentaire"
                 rows={2}
                 placeholder="Pour toi seule — le contexte de cette facture."
-                className={`mt-1 ${champ} resize-y rounded-[14px] leading-snug`}
+                className={`mt-1 ${champ.replace("rounded-full", "rounded-[14px]")} resize-y leading-snug`}
               />
             </label>
 
@@ -405,7 +405,7 @@ export default async function Etablissements({
                           name="commentaire"
                           rows={2}
                           defaultValue={f.commentaire ?? ""}
-                          className={`mt-1 ${champ} resize-y rounded-[14px] leading-snug`}
+                          className={`mt-1 ${champ.replace("rounded-full", "rounded-[14px]")} resize-y leading-snug`}
                         />
                       </label>
                       <BoutonEnregistrer />

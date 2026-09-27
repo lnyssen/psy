@@ -155,10 +155,28 @@ export default async function Depenses({
         <h2 className="text-lg font-semibold tracking-tight capitalize" data-numeric>
           {MOIS_LABEL.format(debut)}
         </h2>
-        <p className="ml-auto text-sm text-ink-muted">
+        <p className="text-sm text-ink-muted">
           Total du mois : <span className="font-mono text-base font-semibold text-ink" data-numeric>{euros(total)}</span>
         </p>
+        <span className="ml-auto flex flex-wrap gap-2">
+          <a
+            href={`/api/export/comptable?annee=${annee}&mois=${m}`}
+            className="rounded-full border border-line-strong px-3.5 py-1.5 text-xs font-medium transition-colors hover:border-accent hover:text-accent-text"
+          >
+            Export Excel
+          </a>
+          <a
+            href={`/api/export/justificatifs?annee=${annee}&mois=${m}`}
+            className="rounded-full border border-line-strong px-3.5 py-1.5 text-xs font-medium transition-colors hover:border-accent hover:text-accent-text"
+          >
+            Reçus en PDF
+          </a>
+        </span>
       </div>
+      <p className="text-xs text-ink-muted">
+        Le classeur reprend les recettes et les dépenses du mois ; le PDF rassemble les photos des
+        reçus, pour donner les deux à la comptable d’un bloc.
+      </p>
 
       {depenses.length === 0 ? (
         <p className="rounded-[14px] border border-dashed border-line-strong px-6 py-12 text-center text-sm text-ink-muted">

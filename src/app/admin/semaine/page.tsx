@@ -10,6 +10,7 @@ import { cabinetsActifs, optionsCabinet } from "@/lib/cabinets";
 import { heuresFacturablesSemaine } from "@/lib/quotas";
 import { creerSeanceDepuisFormulaire } from "@/lib/actions";
 import { BoutonEnregistrer } from "@/components/BoutonEnregistrer";
+import { SelectPatientRecherche } from "@/components/SelectPatientRecherche";
 import {
   ajouterJours,
   isoJour,
@@ -95,6 +96,7 @@ export default async function Semaine({ searchParams }: { searchParams: Promise<
     paiement: isBillable(s.status) ? s.paymentStatus : null,
     libellePaiement: isBillable(s.status) ? PAYMENT_LABEL[s.paymentStatus] : null,
     conflit: conflits.has(i),
+    aVenir: s.status === "SCHEDULED",
   }));
 
   // Le lien porte la date lue à Bruxelles, pas la découpe d'un horodatage UTC.
@@ -148,54 +150,48 @@ export default async function Semaine({ searchParams }: { searchParams: Promise<
 
   return (
     <div className="flex flex-col gap-6">
-      <header className="flex flex-wrap items-center gap-x-4 gap-y-3">
-        <div className="flex items-center gap-1">
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <header className="flex flex-wrap items-center gap-x-4 gap-y-3">
+          <div className="flex items-center gap-1">
+            <Link
+              href={decalage(-1)}
+              aria-label="Semaine précédente"
+              className="flex h-9 w-9 items-center justify-center rounded-full border border-line-strong text-ink-muted transition-colors hover:border-accent hover:text-accent-text"
+            >
+              <IconChevronGauche />
+            </Link>
+            <Link
+              href={decalage(1)}
+              aria-label="Semaine suivante"
+              className="flex h-9 w-9 items-center justify-center rounded-full border border-line-strong text-ink-muted transition-colors hover:border-accent hover:text-accent-text"
+            >
+              <IconChevronDroite />
+            </Link>
+          </div>
+          <h1 className="text-xl font-semibold tracking-tight" data-numeric>
+            {fmtJourMois.format(lundi)} – {fmtJourMoisAn.format(vendredi)}
+          </h1>
           <Link
-            href={decalage(-1)}
-            aria-label="Semaine précédente"
-            className="flex h-9 w-9 items-center justify-center rounded-full border border-line-strong text-ink-muted transition-colors hover:border-accent hover:text-accent-text"
+            href={avecParam("/admin/semaine", params, "semaine")}
+            className="rounded-full border border-line-strong px-3.5 py-1.5 text-xs font-medium text-ink-muted transition-colors hover:border-accent hover:text-accent-text"
           >
-            <IconChevronGauche />
+            Cette semaine
           </Link>
-          <Link
-            href={decalage(1)}
-            aria-label="Semaine suivante"
-            className="flex h-9 w-9 items-center justify-center rounded-full border border-line-strong text-ink-muted transition-colors hover:border-accent hover:text-accent-text"
-          >
-            <IconChevronDroite />
-          </Link>
-        </div>
-        <h1 className="text-xl font-semibold tracking-tight" data-numeric>
-          {fmtJourMois.format(lundi)} – {fmtJourMoisAn.format(vendredi)}
-        </h1>
-        <Link
-          href={avecParam("/admin/semaine", params, "semaine")}
-          className="rounded-full border border-line-strong px-3.5 py-1.5 text-xs font-medium text-ink-muted transition-colors hover:border-accent hover:text-accent-text"
-        >
-          Cette semaine
-        </Link>
-      </header>
+        </header>
 
-      <details className="rounded-[14px] border border-dashed border-line-strong bg-surface px-5 py-3">
-        <summary className="w-fit cursor-pointer list-none rounded-full bg-accent px-4 py-1.5 text-xs font-medium text-accent-contrast transition-colors hover:bg-accent-hover">
-          Nouvelle séance
-        </summary>
-        <form
+        <details className="rounded-[14px] open:border open:border-dashed open:border-line-strong open:bg-surface open:px-5 open:py-3">
+          <summary className="w-fit cursor-pointer list-none rounded-full bg-accent px-5 py-2.5 text-sm font-medium text-accent-contrast transition-colors hover:bg-accent-hover">
+            Nouvelle séance
+          </summary>
+          <form
           action={creerSeanceDepuisFormulaire}
           className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4"
         >
           <label className="sm:col-span-2">
             <span className={libelleChamp}>Patient</span>
-            <select name="patientId" required defaultValue="" className={`mt-1 ${champ}`}>
-              <option value="" disabled>
-                Choisir…
-              </option>
-              {patients.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.lastName} {p.firstName}
-                </option>
-              ))}
-            </select>
+            <div className="mt-1">
+              <SelectPatientRecherche patients={patients} />
+            </div>
           </label>
           <label>
             <span className={libelleChamp}>Cabinet</span>
@@ -217,9 +213,17 @@ export default async function Semaine({ searchParams }: { searchParams: Promise<
               <input name="heure" type="time" required defaultValue="09:00" className={`mt-1 ${champ}`} />
             </label>
           </div>
+          <label>
+            <span className={libelleChamp}>Jusqu’au (optionnel)</span>
+            <input name="jusquau" type="date" className={`mt-1 ${champ}`} />
+            <span className="mt-1 block text-[11px] text-ink-muted">
+              Répète chaque semaine, même jour et même heure, jusqu’à cette date.
+            </span>
+          </label>
           <BoutonEnregistrer className="self-end">Créer</BoutonEnregistrer>
         </form>
-      </details>
+        </details>
+      </div>
 
       {/* Le volume de la semaine est la première chose qu'on vient chercher :
           il passe en chiffres pleins plutôt qu'en mention de coin. */}

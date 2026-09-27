@@ -6,6 +6,7 @@ import { BoutonEnregistrer } from "@/components/BoutonEnregistrer";
 import { Notes } from "@/components/Notes";
 import { Encaisser } from "@/components/Encaisser";
 import { AnnulerAbsence } from "@/components/AnnulerAbsence";
+import { AnnulerSeance } from "@/components/AnnulerSeance";
 import { creerSeanceDepuisFormulaire, enregistrerPatient } from "@/lib/actions";
 import { plafondConventionne, seancesConventionneAnnee } from "@/lib/quotas";
 import {
@@ -100,7 +101,7 @@ export default async function FichePatient({ params }: { params: Promise<{ id: s
       </header>
 
       <details className="rounded-[14px] border border-dashed border-line-strong bg-surface px-5 py-3">
-        <summary className="w-fit cursor-pointer list-none rounded-full bg-accent px-5 py-2 text-sm font-medium text-accent-contrast transition-colors hover:bg-accent-hover">
+        <summary className="w-fit cursor-pointer list-none rounded-full bg-accent px-5 py-2.5 text-sm font-medium text-accent-contrast transition-colors hover:bg-accent-hover">
           Nouvelle séance
         </summary>
         <form
@@ -128,6 +129,13 @@ export default async function FichePatient({ params }: { params: Promise<{ id: s
           <label>
             <span className={libelleChamp}>Heure</span>
             <input name="heure" type="time" required defaultValue="09:00" className={`mt-1 ${champ}`} />
+          </label>
+          <label>
+            <span className={libelleChamp}>Jusqu’au (optionnel)</span>
+            <input name="jusquau" type="date" className={`mt-1 ${champ}`} />
+            <span className="mt-1 block text-[11px] text-ink-muted">
+              Répète chaque semaine, même jour et même heure.
+            </span>
           </label>
           <BoutonEnregistrer className="self-end">Créer</BoutonEnregistrer>
         </form>
@@ -304,6 +312,7 @@ export default async function FichePatient({ params }: { params: Promise<{ id: s
                 <EtatPaiement status={s.status} payment={s.paymentStatus} methode={s.paymentMethod} />
                 {isBillable(s.status) && s.paymentStatus !== "PAID" && <Encaisser id={s.id} />}
                 {s.status === "NO_SHOW" && <AnnulerAbsence id={s.id} />}
+                {s.status === "SCHEDULED" && <AnnulerSeance id={s.id} />}
                 {s.paymentStatus === "PAID" && (
                   <a
                     href={`/api/recu/${s.id}`}

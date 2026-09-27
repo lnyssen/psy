@@ -194,6 +194,21 @@ export async function creerSeance(patientId: string, isoDebut: string, cabinetId
  * refusé ici aussi, pas seulement dans l'agenda : une règle qui ne vaudrait
  * que côté affichage n'en serait pas une.
  */
+/** Un jour ouvré (lundi-vendredi), sur le calendrier bruxellois — pas
+ *  l'heure locale du serveur (voir le même souci résolu dans format.ts). */
+function estJourOuvre(d: Date) {
+  const { annee, mois, jour } = partiesJour(d);
+  const jourSemaine = new Date(Date.UTC(annee, mois - 1, jour)).getUTCDay();
+  return (jourSemaine + 6) % 7 < JOURS_OUVRES;
+}
+
+/**
+ * Crée une séance, seule ou répétée chaque semaine jusqu'à une date — le
+ * même geste : le formulaire ne change pas, un champ « jusqu'au » en plus
+ * suffit. Plafonné à cinquante-deux occurrences (un an de rythme
+ * hebdomadaire) : au-delà, mieux vaut reprendre la main que de peupler
+ * l'agenda d'une seule frappe.
+ */
 export async function creerSeanceDepuisFormulaire(f: FormData) {
   const patientId = texte(f, "patientId");
   const cabinetId = texte(f, "cabinetId");
@@ -202,27 +217,52 @@ export async function creerSeanceDepuisFormulaire(f: FormData) {
   if (!patientId || !cabinetId || !date || !heure) return;
 
   const debut = new Date(`${date}T${heure}:00`);
-  if (Number.isNaN(debut.getTime())) return;
-
-  const jour = new Date(
-    Date.UTC(partiesJour(debut).annee, partiesJour(debut).mois - 1, partiesJour(debut).jour),
-  ).getUTCDay();
-  if ((jour + 6) % 7 >= JOURS_OUVRES) return;
+  if (Number.isNaN(debut.getTime()) || !estJourOuvre(debut)) return;
 
   const patient = await prisma.patient.findUnique({ where: { id: patientId } });
   if (!patient) return;
 
-  await prisma.session.create({
-    data: {
-      patientId,
-      cabinetId,
-      startsAt: debut,
-      durationMin: (await parametres()).dureeSeanceMin,
-    },
+  const dates = [debut];
+  const jusquauSaisi = texte(f, "jusquau");
+  if (jusquauSaisi) {
+    const jusquau = new Date(`${jusquauSaisi}T23:59:59`);
+    if (!Number.isNaN(jusquau.getTime())) {
+      let suivante = debut;
+      for (let i = 0; i < 52 && dates.length < 52; i++) {
+        suivante = new Date(suivante);
+        suivante.setDate(suivante.getDate() + 7);
+        if (suivante > jusquau) break;
+        // Une semaine plus tard tombe toujours le même jour ouvré ; la
+        // vérification reste par prudence si un décalage d'heure d'été
+        // glissait la date d'un jour.
+        if (estJourOuvre(suivante)) dates.push(suivante);
+      }
+    }
+  }
+
+  const duree = (await parametres()).dureeSeanceMin;
+  await prisma.session.createMany({
+    data: dates.map((d) => ({ patientId, cabinetId, startsAt: d, durationMin: duree })),
   });
+
   revalidatePath("/admin/semaine");
   revalidatePath("/admin");
   revalidatePath(`/admin/patients/${patientId}`);
+}
+
+/** Annule un rendez-vous à venir — pas encore honoré, donc pas encore
+ *  facturable : passer par CANCELLED_IN_TIME plutôt que de le supprimer
+ *  garde la trace pour la praticienne, au même titre qu'une annulation par
+ *  le patient. Une séance déjà passée relève d'un autre geste (le statut se
+ *  pose après coup, celui-ci n'annule qu'un avenir). */
+export async function annulerSeance(id: string) {
+  const seance = await prisma.session.findUnique({ where: { id } });
+  if (!seance || seance.status !== "SCHEDULED") return;
+
+  await prisma.session.update({ where: { id }, data: { status: "CANCELLED_IN_TIME" } });
+  revalidatePath("/admin/semaine");
+  revalidatePath("/admin");
+  if (seance.patientId) revalidatePath(`/admin/patients/${seance.patientId}`);
 }
 
 /**

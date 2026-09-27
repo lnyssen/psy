@@ -202,6 +202,16 @@ export const fmtDateCourte = new Intl.DateTimeFormat(LOCALE, {
   timeZone: FUSEAU,
 });
 
+/**
+ * Les polices standard d'un PDF (WinAnsi) n'encodent pas toutes les espaces
+ * qu'Intl produit — l'espace insécable fine placée avant l'euro, entre
+ * autres, selon la version d'ICU du serveur qui l'exécute. Un texte destiné
+ * à pdf-lib passe par ici, jamais directement une valeur d'Intl.
+ */
+export function pourPdf(texte: string) {
+  return texte.replace(/[   -​  　﻿]/g, " ");
+}
+
 export function euros(cents: number | null | undefined) {
   if (cents === null || cents === undefined) return "—";
   return new Intl.NumberFormat(LOCALE, { style: "currency", currency: "EUR" }).format(cents / 100);
