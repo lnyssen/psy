@@ -8,6 +8,8 @@ import { FiltresMobile } from "@/components/FiltresMobile";
 import { IconChevronDroite, IconChevronGauche } from "@/components/icons";
 import { cabinetsActifs, optionsCabinet } from "@/lib/cabinets";
 import { heuresFacturablesSemaine } from "@/lib/quotas";
+import { creerSeanceDepuisFormulaire } from "@/lib/actions";
+import { BoutonEnregistrer } from "@/components/BoutonEnregistrer";
 import {
   ajouterJours,
   isoJour,
@@ -32,6 +34,10 @@ export const dynamic = "force-dynamic";
 const HEURE_DEBUT = 8;
 const HEURE_FIN = 20;
 
+const champ =
+  "w-full rounded-full border border-line bg-surface px-3.5 py-2 text-sm placeholder:text-ink-muted/60";
+const libelleChamp = "block text-[11px] font-semibold tracking-[0.1em] text-ink-muted uppercase";
+
 export default async function Semaine({ searchParams }: { searchParams: Promise<Params> }) {
   const params = await searchParams;
   const ancre = params.semaine ? new Date(params.semaine) : new Date();
@@ -49,6 +55,12 @@ export default async function Semaine({ searchParams }: { searchParams: Promise<
     include: { patient: true, cabinet: true },
   });
   const cabinets = await cabinetsActifs();
+  const cabinetsPatients = cabinets.filter((c) => !c.factureInstitution);
+  const patients = await prisma.patient.findMany({
+    where: { active: true },
+    orderBy: { lastName: "asc" },
+    select: { id: true, firstName: true, lastName: true },
+  });
 
   const reglages = await parametres();
   const conflits = conflitsDeTrajet(seances, reglages.trajetMin);
@@ -163,6 +175,51 @@ export default async function Semaine({ searchParams }: { searchParams: Promise<
           Cette semaine
         </Link>
       </header>
+
+      <details className="rounded-[14px] border border-dashed border-line-strong bg-surface px-5 py-3">
+        <summary className="w-fit cursor-pointer list-none rounded-full bg-accent px-4 py-1.5 text-xs font-medium text-accent-contrast transition-colors hover:bg-accent-hover">
+          Nouvelle séance
+        </summary>
+        <form
+          action={creerSeanceDepuisFormulaire}
+          className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4"
+        >
+          <label className="sm:col-span-2">
+            <span className={libelleChamp}>Patient</span>
+            <select name="patientId" required defaultValue="" className={`mt-1 ${champ}`}>
+              <option value="" disabled>
+                Choisir…
+              </option>
+              {patients.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.lastName} {p.firstName}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            <span className={libelleChamp}>Cabinet</span>
+            <select name="cabinetId" required defaultValue={cabinetsPatients[0]?.id} className={`mt-1 ${champ}`}>
+              {cabinetsPatients.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.nom}
+                </option>
+              ))}
+            </select>
+          </label>
+          <div className="grid grid-cols-2 gap-2">
+            <label>
+              <span className={libelleChamp}>Date</span>
+              <input name="date" type="date" required defaultValue={isoJour(lundi)} className={`mt-1 ${champ}`} />
+            </label>
+            <label>
+              <span className={libelleChamp}>Heure</span>
+              <input name="heure" type="time" required defaultValue="09:00" className={`mt-1 ${champ}`} />
+            </label>
+          </div>
+          <BoutonEnregistrer className="self-end">Créer</BoutonEnregistrer>
+        </form>
+      </details>
 
       {/* Le volume de la semaine est la première chose qu'on vient chercher :
           il passe en chiffres pleins plutôt qu'en mention de coin. */}

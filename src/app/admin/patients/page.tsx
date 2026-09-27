@@ -59,12 +59,12 @@ export default async function Patients({ searchParams }: { searchParams: Promise
             {enrichis.length} dossier{enrichis.length > 1 ? "s" : ""}.
           </p>
         </div>
-        <button
-          type="button"
+        <Link
+          href="/admin/patients/nouveau"
           className="rounded-full bg-accent px-5 py-2.5 text-sm font-medium text-accent-contrast transition-colors hover:bg-accent-hover"
         >
           Nouveau patient
-        </button>
+        </Link>
       </header>
 
       <FiltresMobile

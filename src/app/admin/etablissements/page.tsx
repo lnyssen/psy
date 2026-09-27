@@ -10,6 +10,7 @@ import {
 import { adresseCabinet, euros, fmtDateCourte, formatDuree, partiesJour } from "@/lib/format";
 import { heuresFacturablesSemaine } from "@/lib/quotas";
 import { IconChevronDroite, IconChevronGauche } from "@/components/icons";
+import { BoutonEnregistrer } from "@/components/BoutonEnregistrer";
 import { OngletsFacturation } from "@/components/OngletsFacturation";
 
 export const dynamic = "force-dynamic";
@@ -407,12 +408,7 @@ export default async function Etablissements({
                           className={`mt-1 ${champ} resize-y rounded-[14px] leading-snug`}
                         />
                       </label>
-                      <button
-                        type="submit"
-                        className="self-start rounded-full bg-accent px-4 py-1.5 text-xs font-medium text-accent-contrast transition-colors hover:bg-accent-hover"
-                      >
-                        Enregistrer
-                      </button>
+                      <BoutonEnregistrer />
                     </form>
                   </details>
                 )}

@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { JOURS_OUVRES, partiesJour } from "@/lib/format";
 import { parametres } from "@/lib/parametres";
@@ -184,6 +185,86 @@ export async function creerSeance(patientId: string, isoDebut: string, cabinetId
   revalidatePath("/admin/semaine");
   revalidatePath(`/admin/patients/${patientId}`);
   return { ok: true as const };
+}
+
+/**
+ * Même création, mais depuis un formulaire ordinaire (patient, cabinet, date
+ * et heure séparés) plutôt que des arguments positionnels — pour un bouton
+ * « nouvelle séance » qui ne connaît pas encore l'ISO exact. Le week-end est
+ * refusé ici aussi, pas seulement dans l'agenda : une règle qui ne vaudrait
+ * que côté affichage n'en serait pas une.
+ */
+export async function creerSeanceDepuisFormulaire(f: FormData) {
+  const patientId = texte(f, "patientId");
+  const cabinetId = texte(f, "cabinetId");
+  const date = texte(f, "date");
+  const heure = texte(f, "heure");
+  if (!patientId || !cabinetId || !date || !heure) return;
+
+  const debut = new Date(`${date}T${heure}:00`);
+  if (Number.isNaN(debut.getTime())) return;
+
+  const jour = new Date(
+    Date.UTC(partiesJour(debut).annee, partiesJour(debut).mois - 1, partiesJour(debut).jour),
+  ).getUTCDay();
+  if ((jour + 6) % 7 >= JOURS_OUVRES) return;
+
+  const patient = await prisma.patient.findUnique({ where: { id: patientId } });
+  if (!patient) return;
+
+  await prisma.session.create({
+    data: {
+      patientId,
+      cabinetId,
+      startsAt: debut,
+      durationMin: (await parametres()).dureeSeanceMin,
+    },
+  });
+  revalidatePath("/admin/semaine");
+  revalidatePath("/admin");
+  revalidatePath(`/admin/patients/${patientId}`);
+}
+
+/**
+ * Crée une fiche patient, puis ouvre son dossier — c'est là qu'on continue
+ * (première séance, notes). Prénom et nom seuls sont exigés ; le reste se
+ * complète quand on l'a sous la main, comme pour enregistrerPatient.
+ */
+export async function creerPatient(f: FormData) {
+  const firstName = texte(f, "firstName");
+  const lastName = texte(f, "lastName");
+  if (!firstName || !lastName) return;
+
+  const scheme = texte(f, "scheme");
+  const schemeValide = ["PRIVE", "CONVENTIONNE", "INSTITUTION"].includes(scheme)
+    ? (scheme as "PRIVE" | "CONVENTIONNE" | "INSTITUTION")
+    : "PRIVE";
+
+  const email = texte(f, "email");
+  const feeSaisi = texte(f, "feeCents");
+  const feeCents = feeSaisi ? Math.round(Number(feeSaisi.replace(",", ".")) * 100) : null;
+  const birthSaisie = texte(f, "birthDate");
+  const birthDate = birthSaisie ? new Date(birthSaisie) : null;
+  const cabinetId = texte(f, "cabinetId") || null;
+
+  const patient = await prisma.patient.create({
+    data: {
+      firstName,
+      lastName,
+      email: email || null,
+      phone: texte(f, "phone") || null,
+      addressLine: texte(f, "addressLine") || null,
+      postalCode: texte(f, "postalCode") || null,
+      city: texte(f, "city") || null,
+      birthDate: birthDate && !Number.isNaN(birthDate.getTime()) ? birthDate : null,
+      scheme: schemeValide,
+      feeCents: Number.isFinite(feeCents) ? feeCents : null,
+      cabinetId,
+      jetonRdv: crypto.randomUUID(),
+    },
+  });
+  revalidatePath("/admin/patients");
+  redirect(`/admin/patients/${patient.id}`);
 }
 
 // ---------------------------------------------------------------------------

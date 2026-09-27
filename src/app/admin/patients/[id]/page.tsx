@@ -2,10 +2,11 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { CabinetTag, EtatPaiement, RegimeTag, StatutSeance } from "@/components/tags";
+import { BoutonEnregistrer } from "@/components/BoutonEnregistrer";
 import { Notes } from "@/components/Notes";
 import { Encaisser } from "@/components/Encaisser";
 import { AnnulerAbsence } from "@/components/AnnulerAbsence";
-import { enregistrerPatient } from "@/lib/actions";
+import { creerSeanceDepuisFormulaire, enregistrerPatient } from "@/lib/actions";
 import { plafondConventionne, seancesConventionneAnnee } from "@/lib/quotas";
 import {
   euros,
@@ -96,13 +97,41 @@ export default async function FichePatient({ params }: { params: Promise<{ id: s
             {patient.cabinet && <CabinetTag cabinet={patient.cabinet} />}
           </p>
         </div>
-        <button
-          type="button"
-          className="rounded-full bg-accent px-5 py-2.5 text-sm font-medium text-accent-contrast transition-colors hover:bg-accent-hover"
-        >
-          Nouvelle séance
-        </button>
       </header>
+
+      <details className="rounded-[14px] border border-dashed border-line-strong bg-surface px-5 py-3">
+        <summary className="w-fit cursor-pointer list-none rounded-full bg-accent px-5 py-2 text-sm font-medium text-accent-contrast transition-colors hover:bg-accent-hover">
+          Nouvelle séance
+        </summary>
+        <form
+          action={creerSeanceDepuisFormulaire}
+          className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4"
+        >
+          <input type="hidden" name="patientId" value={patient.id} />
+          <label>
+            <span className={libelleChamp}>Cabinet</span>
+            <select name="cabinetId" required defaultValue={patient.cabinetId ?? ""} className={`mt-1 ${champ}`}>
+              <option value="" disabled>
+                Choisir…
+              </option>
+              {cabinets.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.nom}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            <span className={libelleChamp}>Date</span>
+            <input name="date" type="date" required className={`mt-1 ${champ}`} />
+          </label>
+          <label>
+            <span className={libelleChamp}>Heure</span>
+            <input name="heure" type="time" required defaultValue="09:00" className={`mt-1 ${champ}`} />
+          </label>
+          <BoutonEnregistrer className="self-end">Créer</BoutonEnregistrer>
+        </form>
+      </details>
 
       <section className="rounded-[14px] border border-line bg-surface px-5 py-4">
         <div className="flex items-start justify-between gap-3">
@@ -212,12 +241,7 @@ export default async function FichePatient({ params }: { params: Promise<{ id: s
                 ))}
               </select>
             </label>
-            <button
-              type="submit"
-              className="self-start rounded-full bg-accent px-5 py-2 text-sm font-medium text-accent-contrast transition-colors hover:bg-accent-hover sm:col-span-2 lg:col-span-3"
-            >
-              Enregistrer
-            </button>
+            <BoutonEnregistrer />
           </form>
         </details>
       </section>
