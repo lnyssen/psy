@@ -1,4 +1,4 @@
-import type { PaymentStatus, SessionStatus, CareScheme } from "@prisma/client";
+import type { CategorieDepense, PaymentStatus, SessionStatus, CareScheme } from "@prisma/client";
 
 /**
  * Vue minimale d'un cabinet, telle que les composants d'affichage en ont
@@ -42,6 +42,17 @@ export const PAYMENT_LABEL: Record<PaymentStatus, string> = {
 export const METHOD_LABEL: Record<"CASH" | "ELECTRONIC", string> = {
   CASH: "espèces",
   ELECTRONIC: "électronique",
+};
+
+export const CATEGORIE_LABEL: Record<CategorieDepense, string> = {
+  LOYER: "Loyer",
+  ASSURANCE: "Assurance",
+  FORMATION: "Formation",
+  MATERIEL: "Matériel",
+  COMPTABLE: "Comptable",
+  DEPLACEMENT: "Déplacement",
+  COTISATIONS: "Cotisations sociales",
+  AUTRE: "Autre",
 };
 
 /** Durée d'une séance — valeur de repli seulement. La vraie se règle dans les

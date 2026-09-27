@@ -149,6 +149,8 @@ function rafraichirTout() {
     "/admin/semaine",
     "/admin/patients",
     "/admin/facturation",
+    "/admin/etablissements",
+    "/admin/depenses",
     "/admin/reglages",
   ]) {
     revalidatePath(chemin);
@@ -161,6 +163,16 @@ function texte(f: FormData, cle: string) {
 
 export async function enregistrerCabinet(f: FormData) {
   const id = texte(f, "id");
+  // Plafond hebdomadaire saisi en heures, gardé en minutes ; vide = pas de
+  // plafond. Le tarif horaire suit la même convention euros → centimes que
+  // les tarifs de la grille.
+  const quotaHeures = texte(f, "quotaHebdoHeures");
+  const quotaHebdoMin = quotaHeures ? Math.round(Number(quotaHeures.replace(",", ".")) * 60) : null;
+  const tarifHoraire = texte(f, "tarifHoraireEuros");
+  const tarifHoraireCents = tarifHoraire
+    ? Math.round(Number(tarifHoraire.replace(",", ".")) * 100)
+    : null;
+
   const donnees = {
     nom: texte(f, "nom"),
     addressLine: texte(f, "addressLine"),
@@ -170,6 +182,10 @@ export async function enregistrerCabinet(f: FormData) {
     acces: texte(f, "acces"),
     actif: f.get("actif") === "on",
     publie: f.get("publie") === "on",
+    quotaHebdoMin: quotaHeures && Number.isFinite(quotaHebdoMin) ? quotaHebdoMin : null,
+    factureInstitution: f.get("factureInstitution") === "on",
+    tarifHoraireCents:
+      tarifHoraire && Number.isFinite(tarifHoraireCents) ? tarifHoraireCents : null,
   };
   if (!donnees.nom) return;
 
@@ -359,4 +375,115 @@ export async function enregistrerParametres(f: FormData) {
 
   rafraichirTout();
   revalidatePath("/rendez-vous");
+}
+
+// ---------------------------------------------------------------------------
+// Dépenses professionnelles, reçu photographié
+// ---------------------------------------------------------------------------
+
+/**
+ * Enregistre une dépense, avec la photo de son reçu si elle a été jointe.
+ *
+ * Le fichier est stocké en base plutôt que sur un service à part : au volume
+ * d'une pratique individuelle, ça reste négligeable, et ça évite d'introduire
+ * un stockage externe pour ce premier jet (voir le commentaire du modèle).
+ */
+export async function enregistrerDepense(f: FormData) {
+  const libelle = texte(f, "libelle");
+  const dateSaisie = new Date(texte(f, "date"));
+  const montant = Number(texte(f, "montant").replace(",", "."));
+  const categorie = texte(f, "categorie");
+  const CATEGORIES = [
+    "LOYER",
+    "ASSURANCE",
+    "FORMATION",
+    "MATERIEL",
+    "COMPTABLE",
+    "DEPLACEMENT",
+    "COTISATIONS",
+    "AUTRE",
+  ] as const;
+  if (!libelle || Number.isNaN(dateSaisie.getTime())) return;
+  if (!Number.isFinite(montant) || montant < 0) return;
+  if (!CATEGORIES.includes(categorie as (typeof CATEGORIES)[number])) return;
+
+  const fichier = f.get("photo");
+  // Le typage DOM de arrayBuffer() admet un SharedArrayBuffer que Prisma
+  // refuse ; un fichier issu d'un formulaire n'en est jamais un, d'où le cast.
+  let photo: Uint8Array<ArrayBuffer> | null = null;
+  let photoMime: string | null = null;
+  if (fichier instanceof File && fichier.size > 0) {
+    photo = new Uint8Array(await fichier.arrayBuffer()) as Uint8Array<ArrayBuffer>;
+    photoMime = fichier.type || "application/octet-stream";
+  }
+
+  const cabinetId = texte(f, "cabinetId");
+
+  await prisma.depense.create({
+    data: {
+      libelle,
+      date: dateSaisie,
+      amountCents: Math.round(montant * 100),
+      categorie: categorie as (typeof CATEGORIES)[number],
+      fournisseur: texte(f, "fournisseur") || null,
+      cabinetId: cabinetId || null,
+      ...(photo ? { photo, photoMime } : {}),
+    },
+  });
+  revalidatePath("/admin/depenses");
+}
+
+export async function supprimerDepense(f: FormData) {
+  const id = texte(f, "id");
+  if (!id) return;
+  await prisma.depense.delete({ where: { id } });
+  revalidatePath("/admin/depenses");
+}
+
+// ---------------------------------------------------------------------------
+// Facturation à un établissement (l'école) : récapitulatif mensuel
+// ---------------------------------------------------------------------------
+
+/**
+ * Marque encaissé un mois de vacations à un établissement.
+ *
+ * Contrairement au patient, l'établissement ne paie pas séance par séance : il
+ * règle un relevé mensuel d'heures. Le montant de chaque séance se fige ici,
+ * au prorata de sa durée et du tarif horaire du lieu — jusque-là il restait
+ * indéterminé, la facturation à l'acte ne s'appliquant pas à ce régime (voir
+ * Cabinet.factureInstitution).
+ */
+export async function marquerMoisEtabli(cabinetId: string, annee: number, mois: number) {
+  const cabinet = await prisma.cabinet.findUnique({ where: { id: cabinetId } });
+  if (!cabinet?.factureInstitution || !cabinet.tarifHoraireCents) return;
+
+  const debut = new Date(Date.UTC(annee, mois - 1, 1));
+  const fin = new Date(Date.UTC(annee, mois, 1));
+  const seances = await prisma.session.findMany({
+    where: {
+      cabinetId,
+      startsAt: { gte: debut, lt: fin },
+      status: { in: ["ATTENDED", "NO_SHOW"] },
+      paymentStatus: { not: "PAID" },
+    },
+  });
+  if (seances.length === 0) return;
+
+  const maintenant = new Date();
+  await prisma.$transaction(
+    seances.map((s) =>
+      prisma.session.update({
+        where: { id: s.id },
+        data: {
+          paymentStatus: "PAID",
+          paidAt: maintenant,
+          paymentMethod: "ELECTRONIC",
+          amountCents: Math.round((s.durationMin / 60) * cabinet.tarifHoraireCents!),
+        },
+      }),
+    ),
+  );
+
+  revalidatePath("/admin/etablissements");
+  revalidatePath("/admin/finance");
 }

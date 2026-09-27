@@ -7,6 +7,7 @@ import { GroupeFiltre, avecParam, type Params } from "@/components/filtres";
 import { FiltresMobile } from "@/components/FiltresMobile";
 import { IconChevronDroite, IconChevronGauche } from "@/components/icons";
 import { cabinetsActifs, optionsCabinet } from "@/lib/cabinets";
+import { heuresFacturablesSemaine } from "@/lib/quotas";
 import {
   ajouterJours,
   isoJour,
@@ -94,6 +95,23 @@ export default async function Semaine({ searchParams }: { searchParams: Promise<
 
   const vendredi = ajouterJours(lundi, JOURS_OUVRES - 1);
   const totalSemaine = heuresTotales(seances);
+
+  // Plafond hebdomadaire d'un lieu facturé à un tiers (l'école, 24 h) : sans
+  // filtre, sur la semaine entière, quels que soient les filtres affichés —
+  // le quota ne se négocie pas avec ce qu'on choisit de regarder.
+  const cabinetsAQuota = await prisma.cabinet.findMany({
+    where: { quotaHebdoMin: { not: null } },
+  });
+  const quotas = await Promise.all(
+    cabinetsAQuota.map(async (c) => {
+      const seancesCabinet = await prisma.session.findMany({
+        where: { cabinetId: c.id, startsAt: { gte: lundi, lt: finSemaine } },
+        select: { durationMin: true, status: true },
+      });
+      const heures = heuresFacturablesSemaine(seancesCabinet);
+      return { cabinet: c, heures, plafond: c.quotaHebdoMin! / 60 };
+    }),
+  );
 
   // Période libre : deux dates au choix, pour un décompte de séances et
   // d'heures sur autre chose qu'une semaine calendaire — un mois, un trimestre,
@@ -219,6 +237,25 @@ export default async function Semaine({ searchParams }: { searchParams: Promise<
           )}
         </form>
       </div>
+
+      {quotas.length > 0 && (
+        <ul className="flex flex-wrap gap-3">
+          {quotas.map(({ cabinet: c, heures, plafond }) => {
+            const ratio = heures / plafond;
+            const ton = ratio >= 1 ? "text-overdue bg-overdue-soft" : ratio >= 0.9 ? "text-due bg-due-soft" : "bg-sunken text-ink-muted";
+            return (
+              <li
+                key={c.id}
+                className={`rounded-full px-4 py-1.5 text-xs font-medium ${ton}`}
+                data-numeric
+              >
+                {c.nom} : {formatDuree(heures)} / {formatDuree(plafond)} cette semaine
+                {ratio >= 1 && " — plafond dépassé"}
+              </li>
+            );
+          })}
+        </ul>
+      )}
 
       <FiltresMobile
         base="/admin/semaine"

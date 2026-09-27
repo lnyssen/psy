@@ -154,6 +154,30 @@ export function IconDemandes({ className }: Props) {
   );
 }
 
+/** Reçu de dépense : le même ticket que la facturation, mais tourné vers ce
+ *  qui entre plutôt que ce qui sort — un appareil photo plutôt qu'un cachet. */
+export function IconDepenses({ className }: Props) {
+  return (
+    <svg {...base} className={className}>
+      <path d="M4 3.5h9L16 6.5v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-12a1 1 0 0 1 1-1Z" />
+      <path d="M13 3.5v3h3" />
+      <path d="M6 10h8M6 13h5" />
+    </svg>
+  );
+}
+
+/** Bâtiment à frontons — l'établissement facturé au forfait, distinct des
+ *  cabinets où l'on reçoit des patients. */
+export function IconEtablissement({ className }: Props) {
+  return (
+    <svg {...base} className={className}>
+      <path d="M3 8.5 10 3l7 5.5" />
+      <path d="M4.5 8.5v8.5h11V8.5" />
+      <path d="M8 17v-4.5h4V17" />
+    </svg>
+  );
+}
+
 export function IconMenu({ className }: Props) {
   return (
     <svg {...base} className={className}>

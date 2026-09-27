@@ -98,10 +98,25 @@ model Cabinet {
   acces       String  @default("") @db.Text
   ordre       Int     @default(0)
 
+  /// Plafond hebdomadaire, en minutes — l'école en a un (24 h), les cabinets
+  /// privés n'en ont pas. Null : aucun plafond à surveiller. Ce n'est pas un
+  /// horaire d'ouverture (Disponibilite) : c'est un volume convenu avec un
+  /// tiers, que l'agenda peut dépasser sans qu'aucun créneau ne le signale de
+  /// lui-même.
+  quotaHebdoMin Int? @map("quota_hebdo_min")
+  /// Vrai pour un lieu facturé à un établissement plutôt qu'au patient : la
+  /// facture porte alors sur des heures, pas sur des actes individuels.
+  factureInstitution Boolean @default(false) @map("facture_institution")
+  /// Tarif horaire de cette facturation, en centimes. N'a de sens que si
+  /// factureInstitution est vrai ; sinon les tarifs viennent de Tarif ou du
+  /// patient.
+  tarifHoraireCents  Int?    @map("tarif_horaire_cents")
+
   sessions       Session[]
   patients       Patient[]
   disponibilites Disponibilite[]
   demandes       DemandeRdv[]
+  depenses       Depense[]
 
   @@map("cabinets")
 }
@@ -295,4 +310,50 @@ model Parametres {
   chainerSeances   Boolean @default(true) @map("chainer_seances")
 
   @@map("parametres")
+}
+
+/// Catégories d'une dépense professionnelle. Suffisant pour trier un export
+/// comptable ; une nomenclature plus fine reste celle de la comptable, pas de
+/// l'outil.
+enum CategorieDepense {
+  LOYER
+  ASSURANCE
+  FORMATION
+  MATERIEL
+  COMPTABLE
+  DEPLACEMENT
+  COTISATIONS
+  AUTRE
+}
+
+/// Une dépense professionnelle, avec la photo de son reçu.
+///
+/// Symétrique du reçu délivré au patient (Session.receiptAt, /api/recu) mais
+/// dans l'autre sens : ce que la praticienne reçoit, pas ce qu'elle émet.
+/// Photographiée au comptoir plutôt qu'agrafée à un classeur — c'est le geste
+/// qui remplace la boîte à chaussures.
+///
+/// Le fichier est gardé en base (Bytes) plutôt que sur un stockage à part :
+/// au volume d'une pratique individuelle, une dépense par jour ouvré tout au
+/// plus, ça ne pèse rien, et ça évite une dépendance externe pour un premier
+/// jet. À revoir si le volume change.
+model Depense {
+  id          String           @id @default(cuid())
+  date        DateTime
+  libelle     String
+  categorie   CategorieDepense
+  fournisseur String?
+  /// TTC : la praticienne n'étant pas assujettie à la TVA sur ses
+  /// prestations, elle ne la récupère pas davantage sur ses achats.
+  amountCents Int              @map("amount_cents")
+  /// Rattachement facultatif à un lieu, pour ventiler une charge qui lui est
+  /// propre (loyer d'un cabinet). Une dépense commune aux deux n'en a pas.
+  cabinetId   String?          @map("cabinet_id")
+  cabinet     Cabinet?         @relation(fields: [cabinetId], references: [id], onDelete: SetNull)
+  photo       Bytes?
+  photoMime   String?          @map("photo_mime")
+  createdAt   DateTime         @default(now()) @map("created_at")
+
+  @@index([date])
+  @@map("depenses")
 }

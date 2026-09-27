@@ -12,6 +12,7 @@ import {
   SessionStatus,
   PaymentStatus,
   PaymentMethod,
+  CategorieDepense,
 } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { config as loadEnv } from "dotenv";
@@ -104,6 +105,12 @@ const CABINETS = [
     // L'école n'est pas un lieu où l'on prend rendez-vous : elle n'a rien à
     // faire sur le site public.
     publie: false,
+    // Vingt-quatre heures par semaine, convenues avec l'établissement — et
+    // facturées à l'heure plutôt que par élève, d'où le tarif horaire plutôt
+    // qu'un tarif de la grille.
+    quotaHebdoMin: 24 * 60,
+    factureInstitution: true,
+    tarifHoraireCents: 7500,
   },
 ];
 
@@ -149,6 +156,7 @@ async function main() {
   await prisma.disponibilite.deleteMany();
   await prisma.indisponibilite.deleteMany();
   await prisma.note.deleteMany();
+  await prisma.depense.deleteMany();
   await prisma.session.deleteMany();
   await prisma.patient.deleteMany();
   await prisma.cabinet.deleteMany();
@@ -303,6 +311,31 @@ async function main() {
   ];
   for (const [who, body] of notes) {
     await prisma.note.create({ data: { patientId: p[who].id, body } });
+  }
+
+  // Deux dépenses de démonstration, sans reçu joint : la photo est un geste de
+  // l'utilisatrice, pas quelque chose qu'un jeu de données peut simuler.
+  const DEPENSES: {
+    libelle: string; categorie: CategorieDepense; montant: number; jour: number; cabinet?: string; fournisseur?: string;
+  }[] = [
+    { libelle: "Assurance RC professionnelle", categorie: CategorieDepense.ASSURANCE, montant: 42000, jour: 3, fournisseur: "AG Assurances" },
+    { libelle: "Loyer du mois — Uccle", categorie: CategorieDepense.LOYER, montant: 85000, jour: 1, cabinet: "Uccle" },
+  ];
+  const ceMois = new Date();
+  ceMois.setDate(1);
+  for (const d of DEPENSES) {
+    const date = new Date(ceMois);
+    date.setDate(d.jour);
+    await prisma.depense.create({
+      data: {
+        libelle: d.libelle,
+        categorie: d.categorie,
+        amountCents: d.montant,
+        date,
+        fournisseur: d.fournisseur ?? null,
+        cabinetId: d.cabinet ? c[d.cabinet].id : null,
+      },
+    });
   }
 
   console.log(

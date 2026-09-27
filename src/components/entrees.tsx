@@ -1,5 +1,7 @@
 import {
   IconDemandes,
+  IconDepenses,
+  IconEtablissement,
   IconFacturation,
   IconFinance,
   IconJour,
@@ -19,6 +21,8 @@ export const ENTREES = [
   { href: "/admin/semaine", label: "Semaine", Icone: IconSemaine },
   { href: "/admin/patients", label: "Patients", Icone: IconPatients },
   { href: "/admin/facturation", label: "Facturation", Icone: IconFacturation },
+  { href: "/admin/etablissements", label: "Établissements", Icone: IconEtablissement },
+  { href: "/admin/depenses", label: "Dépenses", Icone: IconDepenses },
   { href: "/admin/finance", label: "Finance", Icone: IconFinance },
   { href: "/admin/demandes", label: "Demandes", Icone: IconDemandes },
 ];

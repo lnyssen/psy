@@ -223,6 +223,41 @@ export default async function Reglages() {
                     ))}
                   </fieldset>
 
+                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                    <label>
+                      <span className={libelleChamp}>Plafond hebdomadaire (h)</span>
+                      <input
+                        name="quotaHebdoHeures"
+                        type="number"
+                        step="0.25"
+                        min="0"
+                        placeholder="aucun"
+                        defaultValue={c.quotaHebdoMin ? c.quotaHebdoMin / 60 : ""}
+                        className={`mt-1 ${champ}`}
+                      />
+                    </label>
+                    <label className="flex items-end gap-2 pb-2 text-sm">
+                      <input
+                        type="checkbox"
+                        name="factureInstitution"
+                        defaultChecked={c.factureInstitution}
+                      />
+                      Facturé à l’heure à un établissement
+                    </label>
+                    <label>
+                      <span className={libelleChamp}>Tarif horaire établissement (€)</span>
+                      <input
+                        name="tarifHoraireEuros"
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        placeholder="—"
+                        defaultValue={c.tarifHoraireCents ? (c.tarifHoraireCents / 100).toFixed(2) : ""}
+                        className={`mt-1 ${champ}`}
+                      />
+                    </label>
+                  </div>
+
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <span className="flex flex-wrap gap-x-5 gap-y-1">
                       <label className="flex items-center gap-2 text-sm">
@@ -319,6 +354,34 @@ export default async function Reglages() {
               </label>
             ))}
           </fieldset>
+          <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <label>
+              <span className={libelleChamp}>Plafond hebdomadaire (h)</span>
+              <input
+                name="quotaHebdoHeures"
+                type="number"
+                step="0.25"
+                min="0"
+                placeholder="aucun"
+                className={`mt-1 ${champ}`}
+              />
+            </label>
+            <label className="flex items-end gap-2 pb-2 text-sm">
+              <input type="checkbox" name="factureInstitution" />
+              Facturé à l’heure à un établissement
+            </label>
+            <label>
+              <span className={libelleChamp}>Tarif horaire établissement (€)</span>
+              <input
+                name="tarifHoraireEuros"
+                type="number"
+                step="0.01"
+                min="0"
+                placeholder="—"
+                className={`mt-1 ${champ}`}
+              />
+            </label>
+          </div>
           <div className="mt-3 flex flex-wrap items-center gap-4">
             <label className="flex items-center gap-2 text-sm">
               <input type="checkbox" name="actif" defaultChecked />

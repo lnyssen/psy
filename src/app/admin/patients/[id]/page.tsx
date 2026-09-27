@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { CabinetTag, EtatPaiement, RegimeTag, StatutSeance } from "@/components/tags";
 import { Notes } from "@/components/Notes";
 import { Encaisser } from "@/components/Encaisser";
+import { plafondConventionne, seancesConventionneAnnee } from "@/lib/quotas";
 import {
   euros,
   fmtDateCourte,
@@ -43,6 +44,14 @@ export default async function FichePatient({ params }: { params: Promise<{ id: s
   const encaisse = facturables
     .filter((s) => s.paymentStatus === "PAID")
     .reduce((n, s) => n + (s.amountCents ?? 0), 0);
+
+  // Plafond INAMI de la convention de première ligne : huit séances par
+  // année civile, vingt pour les 16-25 ans. Ne s'affiche que pour un patient
+  // conventionné — un patient privé n'y est pas soumis.
+  const anneeCourante = new Date().getFullYear();
+  const plafondInami = patient.scheme === "CONVENTIONNE" ? plafondConventionne(patient.birthDate) : null;
+  const utiliseesInami =
+    plafondInami !== null ? seancesConventionneAnnee(patient.sessions, anneeCourante) : null;
 
   const coordonnees = [
     { t: "Téléphone", v: patient.phone, mono: true },
@@ -108,6 +117,15 @@ export default async function FichePatient({ params }: { params: Promise<{ id: s
           { t: "Heures", v: formatDuree(heuresTotales(patient.sessions)) },
           { t: "Encaissé", v: euros(encaisse) },
           { t: "Dû", v: du > 0 ? euros(du) : "—", alerte: du > 0 },
+          ...(plafondInami !== null
+            ? [
+                {
+                  t: `Séances INAMI ${anneeCourante}`,
+                  v: `${utiliseesInami} / ${plafondInami}`,
+                  alerte: (utiliseesInami ?? 0) >= plafondInami,
+                },
+              ]
+            : []),
         ].map((c) => (
           <div key={c.t} className="rounded-[14px] border border-line bg-surface px-5 py-4">
             <dt className="text-[11px] font-semibold tracking-[0.1em] text-ink-muted uppercase">
