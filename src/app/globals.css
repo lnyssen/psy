@@ -386,6 +386,75 @@ time,
   }
 }
 
+/*
+ * Entrée du hero.
+ *
+ * Le seul mouvement du site : au chargement de l'accueil, le sur-titre, le
+ * nom, les publics, l'accroche et les boutons montent et apparaissent en
+ * cascade, à quatre-vingt-dix millisecondes d'écart. Un geste unique,
+ * orchestré, plutôt qu'une collection de tics — rien d'autre ne bouge nulle
+ * part ailleurs sur le site ni dans l'outil.
+ *
+ * Transform et opacity seuls, jamais de propriété de mise en page : la
+ * cascade ne coûte aucun reflow. `prefers-reduced-motion` est déjà neutralisé
+ * juste au-dessus (durées ramenées à 0,01 ms) : rien à dupliquer ici.
+ */
+@keyframes hero-monte {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.hero-cascade > * {
+  opacity: 0;
+  animation: hero-monte 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.hero-cascade > *:nth-child(1) {
+  animation-delay: 0ms;
+}
+.hero-cascade > *:nth-child(2) {
+  animation-delay: 90ms;
+}
+.hero-cascade > *:nth-child(3) {
+  animation-delay: 180ms;
+}
+.hero-cascade > *:nth-child(4) {
+  animation-delay: 270ms;
+}
+.hero-cascade > *:nth-child(5) {
+  animation-delay: 360ms;
+}
+
+/*
+ * Entrée des sections au défilement.
+ *
+ * Prolonge la cascade du hero le long de la page : chaque bande apparaît une
+ * fois, en montant légèrement, quand elle atteint le tiers inférieur de
+ * l'écran. Pas de répétition en remontant — une section déjà vue reste en
+ * place, la rejouer aurait fait de la page un manège.
+ *
+ * Réservé au site public via le composant `Reveal` ; l'admin n'importe pas ce
+ * fichier de classes différemment, mais n'utilise jamais ce composant.
+ */
+.reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition:
+    opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.reveal-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
 @media print {
   body {
     background: #fff;

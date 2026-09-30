@@ -2,6 +2,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { adresseCabinet } from "@/lib/format";
 import { SITE } from "@/lib/site";
+import { Reveal } from "@/components/Reveal";
 
 export const dynamic = "force-dynamic";
 
@@ -107,7 +108,7 @@ export default async function Accueil() {
         {/* Le haut du bloc réserve la hauteur de la pastille : sur téléphone le
             texte dépasse la hauteur minimale de la section et remontait sinon
             sous l'en-tête, qui coupait le sur-titre. */}
-        <div className="mx-auto w-full max-w-5xl pt-[calc(var(--entete)+2rem)] pb-16 text-white md:pt-[calc(var(--entete)+3rem)] md:pb-24">
+        <div className="hero-cascade mx-auto w-full max-w-5xl pt-[calc(var(--entete)+2rem)] pb-16 text-white md:pt-[calc(var(--entete)+3rem)] md:pb-24">
           <p className="text-[11px] font-bold tracking-[0.2em] text-white/85 uppercase">
             {SITE.titre}
           </p>
@@ -144,13 +145,13 @@ export default async function Accueil() {
       </section>
 
       <section className="bg-bande-violette px-6 py-16 text-nuit md:py-20">
-        <div className="mx-auto max-w-5xl">
+        <Reveal className="mx-auto max-w-5xl">
           <p className="max-w-3xl font-display text-[1.6rem] leading-snug tracking-tight md:text-[2.25rem]">
             Je reçois les enfants dès quatre ans, les adolescents et leurs parents, ainsi que les
             jeunes adultes.
           </p>
           <p className="mt-6 text-lg font-semibold text-nuit">{SITE.langues}</p>
-        </div>
+        </Reveal>
       </section>
 
       {/*
@@ -164,7 +165,7 @@ export default async function Accueil() {
         sur un écran à haute densité.
       */}
       <section className="px-6 py-20 md:py-28">
-        <div className="mx-auto grid max-w-5xl gap-10 md:grid-cols-[16rem_1fr] md:gap-14">
+        <Reveal className="mx-auto grid max-w-5xl gap-10 md:grid-cols-[16rem_1fr] md:gap-14">
           <div className="order-1 md:order-none">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
@@ -186,11 +187,11 @@ export default async function Accueil() {
               ))}
             </div>
           </div>
-        </div>
+        </Reveal>
       </section>
 
       <section className="bg-bande-claire px-6 py-20 md:py-28">
-        <div className="mx-auto max-w-5xl">
+        <Reveal className="mx-auto max-w-5xl">
           <Titre>Ce que j’accompagne</Titre>
           <p className="mt-8 max-w-2xl text-lg leading-relaxed text-ink">
             Je propose un espace de parole et d’accompagnement pour de nombreuses problématiques.
@@ -206,11 +207,11 @@ export default async function Accueil() {
               </li>
             ))}
           </ul>
-        </div>
+        </Reveal>
       </section>
 
       <section className="bg-bande-violette px-6 py-20 text-nuit md:py-28">
-        <div className="mx-auto max-w-5xl">
+        <Reveal className="mx-auto max-w-5xl">
           <Titre>La première séance</Titre>
           <div className="mt-10 grid gap-8 md:grid-cols-2 md:gap-14">
             <p className="text-lg leading-relaxed text-nuit/80">
@@ -230,11 +231,11 @@ export default async function Accueil() {
               </Link>
             </div>
           </div>
-        </div>
+        </Reveal>
       </section>
 
       <section className="px-6 py-20 md:py-28">
-        <div className="mx-auto max-w-5xl">
+        <Reveal className="mx-auto max-w-5xl">
           <Titre>Où me trouver</Titre>
           {/* Cartes neutres, à dessein. Le code couleur des lieux sert à les
               distinguer d'un coup d'œil dans l'agenda, où ils se croisent vingt
@@ -242,7 +243,10 @@ export default async function Accueil() {
               n'y apporte rien et fait bariolé. Elle reste dans l'outil. */}
           <div className="mt-10 grid gap-4 sm:grid-cols-2">
             {cabinets.map((c) => (
-              <div key={c.id} className="rounded-[24px] bg-sunken px-8 py-8">
+              <div
+                key={c.id}
+                className="rounded-[24px] bg-sunken px-8 py-8 transition-transform duration-300 ease-out hover:-translate-y-1"
+              >
                 <p className="font-display text-2xl">{c.nom}</p>
                 <p className="mt-2 text-sm text-ink-muted">{adresseCabinet(c)}</p>
               </div>
@@ -265,7 +269,7 @@ export default async function Accueil() {
               Prendre rendez-vous
             </Link>
           </div>
-        </div>
+        </Reveal>
       </section>
     </>
   );

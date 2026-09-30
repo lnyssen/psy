@@ -120,8 +120,9 @@ export default async function Aujourdhui({ searchParams }: { searchParams: Promi
       {aStatuer.length > 0 && (
         <p className="rounded-[14px] border border-line bg-surface px-5 py-4 text-sm">
           <span className="font-semibold">{aStatuer.length}</span> séance
-          {aStatuer.length > 1 ? "s" : ""} passée{aStatuer.length > 1 ? "s" : ""} attend
-          {aStatuer.length > 1 ? "ent" : ""} un statut.
+          {aStatuer.length > 1 ? "s" : ""} passée{aStatuer.length > 1 ? "s" : ""} sans venue ni
+          absence notée{aStatuer.length > 1 ? "s" : ""} — ouvrez la fiche du patient pour trancher,
+          sinon {aStatuer.length > 1 ? "elles" : "elle"} ne pourr{aStatuer.length > 1 ? "ont" : "a"} pas se facturer.
         </p>
       )}
 
@@ -129,7 +130,9 @@ export default async function Aujourdhui({ searchParams }: { searchParams: Promi
         <div className="rounded-[14px] border border-dashed border-line-strong bg-surface px-6 py-16 text-center">
           <p className="font-display text-xl">Journée libre</p>
           <p className="mx-auto mt-2 max-w-sm text-sm text-ink-muted">
-            Aucune séance ne correspond, dans aucun des deux cabinets.
+            {params.cabinet
+              ? `Aucune séance à ${cabinets.find((c) => c.id === params.cabinet)?.nom ?? "ce cabinet"} ce jour-là.`
+              : "Aucune séance ce jour-là, dans aucun cabinet."}
           </p>
         </div>
       ) : (

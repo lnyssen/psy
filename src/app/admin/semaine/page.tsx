@@ -251,6 +251,9 @@ export default async function Semaine({ searchParams }: { searchParams: Promise<
         >
           {params.cabinet && <input type="hidden" name="cabinet" value={params.cabinet} />}
           {params.regime && <input type="hidden" name="regime" value={params.regime} />}
+          <p className="w-full text-[11px] font-semibold tracking-[0.1em] text-ink-muted uppercase">
+            Compter sur une autre période
+          </p>
           <div>
             <label
               htmlFor="du"
@@ -346,11 +349,14 @@ export default async function Semaine({ searchParams }: { searchParams: Promise<
         jours={jours}
         heureDebut={HEURE_DEBUT}
         heureFin={HEURE_FIN}
+        patients={patients}
+        cabinets={cabinetsPatients}
       />
 
       <p className="text-xs text-ink-muted">
-        Glissez une séance pour la déplacer, au quart d’heure près. Au clavier, les deux flèches
-        qui apparaissent sur un bloc la décalent d’un quart d’heure. Le week-end est refusé.
+        Cliquez une case vide pour y créer une séance, au quart d’heure près. Glissez une séance
+        existante pour la déplacer. Au clavier, les deux flèches qui apparaissent sur un bloc la
+        décalent d’un quart d’heure. Le week-end est refusé.
       </p>
     </div>
   );

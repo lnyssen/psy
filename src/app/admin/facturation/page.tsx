@@ -48,6 +48,12 @@ export default async function Facturation({ searchParams }: { searchParams: Prom
   const tri = comparateurs[params.tri ?? "date"] ?? comparateurs.date;
   seances.sort((a, b) => tri(a, b) * (params.tri ? sens : -1));
 
+  // Les cartes de totaux portent sur l'ensemble filtré, la pagination ne
+  // découpe que la table en dessous — sans quoi « Dû » mentirait dès la
+  // deuxième page.
+  const taille = tailleDePage(params);
+  const page = Math.min(pageDe(params), Math.max(1, Math.ceil(seances.length / taille)));
+
   const somme = (f: typeof seances) => f.reduce((n, s) => n + (s.amountCents ?? 0), 0);
   const cartes = [
     { t: "Encaissé", v: euros(somme(seances.filter((s) => s.paymentStatus === "PAID"))) },
@@ -83,6 +89,7 @@ export default async function Facturation({ searchParams }: { searchParams: Prom
     // montant. Le signaler plutôt que de la compter pour zéro en silence.
     montantConnu: (s.amountCents ?? s.patient.feeCents) !== null,
   }));
+  const ligneActuelles = lignes.slice((page - 1) * taille, page * taille);
 
   return (
     <div className="flex flex-col gap-7">
@@ -186,7 +193,9 @@ export default async function Facturation({ searchParams }: { searchParams: Prom
         ]}
       />
 
-      <TableFacturation lignes={lignes} params={params} />
+      <TableFacturation lignes={ligneActuelles} params={params} />
+
+      <Pagination base="/admin/facturation" params={params} total={lignes.length} taille={taille} />
 
       <p className="text-xs text-ink-muted">
         Les séances conventionnées n’affichent pas de montant : le circuit de facturation au

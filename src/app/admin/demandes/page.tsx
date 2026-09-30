@@ -19,7 +19,8 @@ export default async function Demandes() {
         <h1 className="font-display text-3xl tracking-tight">Demandes</h1>
         <p className="mt-2 text-sm text-ink-muted">
           Rendez-vous demandés depuis le site par des personnes que l’outil ne connaît pas encore.
-          Confirmer crée le dossier et la séance.
+          Confirmer crée le dossier et la séance ; décliner ne crée rien. Dans les deux cas,
+          personne n’est prévenu automatiquement — un appel ou un message reste à faire.
         </p>
       </header>
 

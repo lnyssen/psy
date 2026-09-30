@@ -240,19 +240,58 @@ export default async function Etablissements({
               </label>
             </div>
 
+            {/* Heures et tarif, comme un décompte de séances — pour refaire à la main
+                une facture que l'agenda n'a pas calculée. Facultatif : une
+                régularisation ponctuelle n'a besoin que du libellé et du montant. */}
+            <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-4">
+              <label className="lg:max-w-24">
+                <span className={libelleChamp}>Heures</span>
+                <input name="heures" type="number" min="0" step="1" placeholder="0" className={`mt-1 ${champ}`} />
+              </label>
+              <label className="lg:max-w-24">
+                <span className={libelleChamp}>Minutes</span>
+                <input
+                  name="minutes"
+                  type="number"
+                  min="0"
+                  max="59"
+                  step="1"
+                  placeholder="0"
+                  className={`mt-1 ${champ}`}
+                />
+              </label>
+              <label className="lg:max-w-44">
+                <span className={libelleChamp}>Tarif horaire (€)</span>
+                <input
+                  name="tarifHoraireEuros"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  placeholder="—"
+                  className={`mt-1 ${champ}`}
+                />
+              </label>
+            </div>
+
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
               <label className="sm:col-span-2">
                 <span className={libelleChamp}>Libellé</span>
                 <input
                   name="libelle"
-                  required
-                  placeholder="Supplément octobre"
+                  placeholder="Supplément octobre — vide si heures et tarif suffisent"
                   className={`mt-1 ${champ}`}
                 />
               </label>
               <label className="lg:max-w-40">
                 <span className={libelleChamp}>Montant (€)</span>
-                <input name="montant" type="number" step="0.01" min="0" required className={`mt-1 ${champ}`} />
+                <input
+                  name="montant"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  placeholder="calculé si heures + tarif"
+                  className={`mt-1 ${champ}`}
+                />
               </label>
             </div>
 
@@ -370,11 +409,45 @@ export default async function Etablissements({
                     >
                       <input type="hidden" name="id" value={f.id} />
                       <label>
+                        <span className={libelleChamp}>Heures</span>
+                        <input
+                          name="heures"
+                          type="number"
+                          min="0"
+                          step="1"
+                          defaultValue={f.heuresTotalesMin !== null ? Math.floor(f.heuresTotalesMin / 60) : ""}
+                          className={`mt-1 ${champ}`}
+                        />
+                      </label>
+                      <label>
+                        <span className={libelleChamp}>Minutes</span>
+                        <input
+                          name="minutes"
+                          type="number"
+                          min="0"
+                          max="59"
+                          step="1"
+                          defaultValue={f.heuresTotalesMin !== null ? f.heuresTotalesMin % 60 : ""}
+                          className={`mt-1 ${champ}`}
+                        />
+                      </label>
+                      <label>
+                        <span className={libelleChamp}>Tarif horaire (€)</span>
+                        <input
+                          name="tarifHoraireEuros"
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          defaultValue={f.tarifHoraireCents !== null ? (f.tarifHoraireCents / 100).toFixed(2) : ""}
+                          className={`mt-1 ${champ}`}
+                        />
+                      </label>
+                      <label>
                         <span className={libelleChamp}>Libellé</span>
                         <input
                           name="libelle"
-                          defaultValue={f.libelle ?? `Vacations ${MOIS_LABEL.format(new Date(Date.UTC(f.annee, f.mois - 1, 1)))}`}
-                          required
+                          defaultValue={f.libelle ?? ""}
+                          placeholder={`Vacations ${MOIS_LABEL.format(new Date(Date.UTC(f.annee, f.mois - 1, 1)))}`}
                           className={`mt-1 ${champ}`}
                         />
                       </label>
@@ -385,8 +458,12 @@ export default async function Etablissements({
                           type="number"
                           step="0.01"
                           min="0"
-                          defaultValue={(f.montantCents / 100).toFixed(2)}
-                          required
+                          defaultValue={
+                            f.heuresTotalesMin === null || f.tarifHoraireCents === null
+                              ? (f.montantCents / 100).toFixed(2)
+                              : ""
+                          }
+                          placeholder="calculé si heures + tarif"
                           className={`mt-1 ${champ}`}
                         />
                       </label>

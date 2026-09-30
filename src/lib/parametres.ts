@@ -10,6 +10,8 @@ export type Parametres = {
   numeroEntreprise: string | null;
   iban: string | null;
   delaiPaiementJours: number;
+  adresseSiege: string | null;
+  mentionLegale: string | null;
 };
 
 const PAR_DEFAUT: Parametres = {
@@ -22,6 +24,8 @@ const PAR_DEFAUT: Parametres = {
   numeroEntreprise: null,
   iban: null,
   delaiPaiementJours: 30,
+  adresseSiege: null,
+  mentionLegale: null,
 };
 
 /** Les paramètres tiennent en une ligne, créée à la volée si elle manque : on

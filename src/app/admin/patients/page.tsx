@@ -216,6 +216,8 @@ export default async function Patients({ searchParams }: { searchParams: Promise
           Aucun patient ne correspond à ces filtres.
         </p>
       )}
+
+      <Pagination base="/admin/patients" params={params} total={enrichis.length} taille={taille} />
     </div>
   );
 }

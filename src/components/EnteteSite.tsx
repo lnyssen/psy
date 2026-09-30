@@ -112,23 +112,40 @@ export function EnteteSite() {
           onClick={() => setOuvert((o) => !o)}
           aria-expanded={ouvert}
           aria-controls="menu-site"
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-line-strong text-ink md:hidden"
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-ink/35 text-ink transition-colors hover:border-ink md:hidden"
         >
           <span className="sr-only">{ouvert ? "Fermer le menu" : "Ouvrir le menu"}</span>
           {ouvert ? <IconFermer /> : <IconMenu />}
         </button>
       </div>
 
-      {ouvert && (
-        /*
-          L'en-tête ayant une hauteur fixe, le menu déplié ne peut plus pousser
-          quoi que ce soit : il devient un panneau qui flotte sous la pastille,
-          au même retrait qu'elle.
-        */
+      {/*
+        L'en-tête ayant une hauteur fixe, le menu déplié ne peut plus pousser
+        quoi que ce soit : il devient un panneau qui flotte sous la pastille,
+        au même retrait qu'elle.
+
+        Toujours dans le DOM plutôt qu'en rendu conditionnel : c'est ce qui
+        permet une fermeture animée plutôt qu'une disparition sèche. La rangée
+        de grille passe de 0fr à 1fr — la bonne façon d'animer une hauteur qui
+        dépend du contenu, sans jamais toucher `height` elle-même. `inert`
+        retire le panneau du clavier et des lecteurs d'écran tant qu'il est
+        refermé, ce que le rendu conditionnel garantissait avant sans y penser.
+      */}
+      <div
+        className={`grid transition-[grid-template-rows] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] md:hidden ${
+          ouvert ? "mt-2 grid-rows-[1fr]" : "grid-rows-[0fr]"
+        }`}
+      >
         <nav
           id="menu-site"
           aria-label="Navigation du site"
-          className="mt-2 flex flex-col rounded-[24px] bg-paper/88 px-5 py-2 ring-1 ring-line/70 ring-inset backdrop-blur-2xl md:hidden"
+          aria-hidden={!ouvert}
+          inert={!ouvert}
+          className={`flex flex-col overflow-hidden rounded-[24px] transition-opacity duration-200 ${
+            ouvert
+              ? "bg-paper/88 px-5 py-2 opacity-100 ring-1 ring-line/70 ring-inset backdrop-blur-2xl"
+              : "opacity-0"
+          }`}
         >
           {PAGES.map((p) => (
             <Link
@@ -143,7 +160,7 @@ export function EnteteSite() {
             </Link>
           ))}
         </nav>
-      )}
+      </div>
     </header>
   );
 }

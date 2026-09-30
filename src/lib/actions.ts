@@ -356,6 +356,9 @@ export async function enregistrerCabinet(f: FormData) {
     factureInstitution: f.get("factureInstitution") === "on",
     tarifHoraireCents:
       tarifHoraire && Number.isFinite(tarifHoraireCents) ? tarifHoraireCents : null,
+    raisonSociale: texte(f, "raisonSociale") || null,
+    mentionLegaleClient: texte(f, "mentionLegaleClient") || null,
+    prefixeReference: texte(f, "prefixeReference") || null,
   };
   if (!donnees.nom) return;
 
@@ -538,6 +541,8 @@ export async function enregistrerParametres(f: FormData) {
     numeroEntreprise: texte(f, "numeroEntreprise") || null,
     iban: texte(f, "iban") || null,
     delaiPaiementJours: entier("delaiPaiementJours", 0, 180, 30),
+    adresseSiege: texte(f, "adresseSiege") || null,
+    mentionLegale: texte(f, "mentionLegale") || null,
   };
 
   await prisma.parametres.upsert({
@@ -738,12 +743,40 @@ export async function emettreFactureEtablissement(cabinetId: string, annee: numb
  */
 export async function enregistrerFactureEtablissementManuelle(f: FormData) {
   const id = texte(f, "id");
-  const libelle = texte(f, "libelle");
-  const montant = Number(texte(f, "montant").replace(",", "."));
+  const libelleSaisi = texte(f, "libelle");
   const echeanceSaisie = texte(f, "echeance");
   const commentaire = texte(f, "commentaire") || null;
-  if (!libelle || !Number.isFinite(montant) || montant < 0) return;
-  const montantCents = Math.round(montant * 100);
+
+  // Heures et tarif horaire sont facultatifs : une régularisation ponctuelle
+  // n'en a pas besoin, mais un décompte tapé à la main — pour refaire une
+  // facture antérieure à l'outil, par exemple — en a besoin exactement comme
+  // celui que l'agenda calcule automatiquement. Quand les deux sont fournis,
+  // le montant s'en déduit ; sinon il vient du champ saisi directement.
+  const heures = Number(texte(f, "heures") || "0");
+  const minutes = Number(texte(f, "minutes") || "0");
+  const heuresTotalesMin =
+    Number.isFinite(heures) && Number.isFinite(minutes) && (heures > 0 || minutes > 0)
+      ? Math.round(heures * 60 + minutes)
+      : null;
+  const tarifHoraire = Number(texte(f, "tarifHoraireEuros").replace(",", "."));
+  const tarifHoraireCents =
+    heuresTotalesMin !== null && Number.isFinite(tarifHoraire) && tarifHoraire > 0
+      ? Math.round(tarifHoraire * 100)
+      : null;
+
+  let montantCents: number;
+  if (heuresTotalesMin !== null && tarifHoraireCents !== null) {
+    montantCents = Math.round((heuresTotalesMin / 60) * tarifHoraireCents);
+  } else {
+    const montant = Number(texte(f, "montant").replace(",", "."));
+    if (!Number.isFinite(montant) || montant < 0) return;
+    montantCents = Math.round(montant * 100);
+  }
+  // Un libellé reste nécessaire pour une régularisation (rien d'autre ne dit
+  // de quoi il s'agit) ; un décompte d'heures se suffit à lui-même, l'objet
+  // par défaut de la facture s'en charge (voir la route PDF).
+  if (!libelleSaisi && heuresTotalesMin === null) return;
+  const libelle = libelleSaisi || null;
 
   if (id) {
     const facture = await prisma.factureEtablissement.findUnique({ where: { id } });
@@ -752,7 +785,7 @@ export async function enregistrerFactureEtablissementManuelle(f: FormData) {
     if (Number.isNaN(echeanceLe.getTime())) return;
     await prisma.factureEtablissement.update({
       where: { id },
-      data: { libelle, montantCents, echeanceLe, commentaire },
+      data: { libelle, montantCents, echeanceLe, commentaire, heuresTotalesMin, tarifHoraireCents },
     });
   } else {
     const cabinetId = texte(f, "cabinetId");
@@ -784,6 +817,8 @@ export async function enregistrerFactureEtablissementManuelle(f: FormData) {
         manuelle: true,
         emiseLe: maintenant,
         echeanceLe,
+        heuresTotalesMin,
+        tarifHoraireCents,
       },
     });
   }

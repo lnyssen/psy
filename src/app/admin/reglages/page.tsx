@@ -360,6 +360,38 @@ export default async function Reglages() {
                     </label>
                   </div>
 
+                  {/* Identité légale du client, pour la facture uniquement — sans effet
+                      ailleurs dans l'outil, où le nom court (« École ») reste en usage. */}
+                  <div className="grid gap-3 sm:grid-cols-3">
+                    <label>
+                      <span className={libelleChamp}>Raison sociale (sur la facture)</span>
+                      <input
+                        name="raisonSociale"
+                        defaultValue={c.raisonSociale ?? ""}
+                        placeholder={c.nom}
+                        className={`mt-1 ${champ}`}
+                      />
+                    </label>
+                    <label>
+                      <span className={libelleChamp}>Mention légale (TVA, RPM…)</span>
+                      <input
+                        name="mentionLegaleClient"
+                        defaultValue={c.mentionLegaleClient ?? ""}
+                        placeholder="TVA NA — RPM 0000.000.000"
+                        className={`mt-1 ${champ}`}
+                      />
+                    </label>
+                    <label>
+                      <span className={libelleChamp}>Préfixe de communication</span>
+                      <input
+                        name="prefixeReference"
+                        defaultValue={c.prefixeReference ?? ""}
+                        placeholder="FACT"
+                        className={`mt-1 ${champ}`}
+                      />
+                    </label>
+                  </div>
+
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <span className="flex flex-wrap gap-x-5 gap-y-1">
                       <label className="flex items-center gap-2 text-sm">

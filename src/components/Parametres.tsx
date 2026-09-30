@@ -174,6 +174,25 @@ export function Parametres({ valeurs }: { valeurs: ParametresType }) {
                 <span className="text-sm text-ink-muted">jours</span>
               </span>
             </label>
+            <label className="sm:col-span-2">
+              <span className={libelleChamp}>Adresse du siège — une ligne par ligne</span>
+              <textarea
+                name="adresseSiege"
+                defaultValue={valeurs.adresseSiege ?? ""}
+                rows={2}
+                placeholder={"Rue Victor Allard 191\n1180 Uccle"}
+                className={`mt-1 ${champ.replace("rounded-full", "rounded-[14px]")} w-full resize-y leading-snug`}
+              />
+            </label>
+            <label>
+              <span className={libelleChamp}>Mention légale (RPM…)</span>
+              <input
+                name="mentionLegale"
+                defaultValue={valeurs.mentionLegale ?? ""}
+                placeholder="RPM Bruxelles — Francophone"
+                className={`mt-1 ${champ} w-full`}
+              />
+            </label>
           </div>
         </div>
 

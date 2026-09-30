@@ -193,3 +193,11 @@ export function IconFermer({ className }: Props) {
     </svg>
   );
 }
+
+export function IconPlus({ className }: Props) {
+  return (
+    <svg {...base} className={className}>
+      <path d="M10 4v12M4 10h12" />
+    </svg>
+  );
+}

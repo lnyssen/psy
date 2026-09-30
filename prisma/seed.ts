@@ -96,8 +96,15 @@ const CABINETS = [
   },
   {
     nom: "École",
-    addressLine: "Adresse à compléter",
-    postalCode: "1000",
+    // Fictif — voir la remarque « démonstration ouverte » dans lib/demo.ts :
+    // cette instance ne doit porter que des données inventées. La vraie
+    // raison sociale, adresse et mention légale se saisissent depuis
+    // Réglages → Lieux, une fois hors démonstration.
+    raisonSociale: "École du Verger ASBL",
+    mentionLegaleClient: "TVA NA — RPM 0456.789.123",
+    prefixeReference: "FACT",
+    addressLine: "Avenue de la Chanson 12",
+    postalCode: "1160",
     city: "Bruxelles",
     colorHex: "#1A45B8",
     fillHex: "#D9E4FF",

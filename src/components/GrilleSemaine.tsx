@@ -3,8 +3,9 @@
 import { useRouter } from "next/navigation";
 import { useRef, useState, useTransition } from "react";
 import Link from "next/link";
-import { annulerSeance, deplacerSeance } from "@/lib/actions";
-import { IconFermer, IconFlecheBas, IconFlecheHaut } from "@/components/icons";
+import { annulerSeance, creerSeanceDepuisFormulaire, deplacerSeance } from "@/lib/actions";
+import { IconFermer, IconFlecheBas, IconFlecheHaut, IconPlus } from "@/components/icons";
+import { SelectPatientRecherche } from "@/components/SelectPatientRecherche";
 
 export type SeanceGrille = {
   id: string;
@@ -52,17 +53,26 @@ export function GrilleSemaine({
   jours,
   heureDebut,
   heureFin,
+  patients,
+  cabinets,
 }: {
   seances: SeanceGrille[];
   jours: JourGrille[];
   heureDebut: number;
   heureFin: number;
+  /** Pour la création rapide au clic sur une case vide. */
+  patients: { id: string; firstName: string; lastName: string }[];
+  cabinets: { id: string; nom: string }[];
 }) {
   const router = useRouter();
   const [, demarrer] = useTransition();
   const [saisie, setSaisie] = useState<string | null>(null);
   const [apercu, setApercu] = useState<{ jour: number; minutes: number } | null>(null);
   const [erreur, setErreur] = useState<string | null>(null);
+  const [creation, setCreation] = useState<{ jour: number; minutes: number } | null>(null);
+  // Sous 900 px, la grille cède la place à une liste : pas de position à
+  // cliquer, donc un bouton par jour plutôt qu'un point dans le vide.
+  const [creationMobile, setCreationMobile] = useState<number | null>(null);
   const colonnes = useRef<(HTMLDivElement | null)[]>([]);
 
   const heures = Array.from({ length: heureFin - heureDebut + 1 }, (_, i) => heureDebut + i);
@@ -91,6 +101,15 @@ export function GrilleSemaine({
   function annuler(id: string) {
     demarrer(async () => {
       await annulerSeance(id);
+      router.refresh();
+    });
+  }
+
+  function creer(f: FormData) {
+    demarrer(async () => {
+      await creerSeanceDepuisFormulaire(f);
+      setCreation(null);
+      setCreationMobile(null);
       router.refresh();
     });
   }
@@ -177,7 +196,7 @@ export function GrilleSemaine({
                   ref={(el) => {
                     colonnes.current[ji] = el;
                   }}
-                  className={`relative border-l border-line ${j.aujourdhui ? "bg-accent-soft/20" : ""}`}
+                  className={`relative cursor-pointer border-l border-line ${j.aujourdhui ? "bg-accent-soft/20" : ""}`}
                   style={{ height: hauteur }}
                   onDragOver={(e) => {
                     e.preventDefault();
@@ -191,6 +210,14 @@ export function GrilleSemaine({
                     setApercu(null);
                     const id = e.dataTransfer.getData("text/plain");
                     if (id && m !== null) deplacer(id, j.iso, m);
+                  }}
+                  onClick={(e) => {
+                    // Un clic qui vient d'une séance existante (le bloc, son
+                    // lien, ses boutons) a déjà arrêté sa propagation : n'arrive
+                    // ici qu'un clic sur une case vide.
+                    const m = minutesDepuisY(ji, e.clientY);
+                    if (m === null) return;
+                    setCreation((c) => (c && c.jour === ji && c.minutes === m ? null : { jour: ji, minutes: m }));
                   }}
                 >
                   {heures.slice(1).map((h, i) => (
@@ -235,6 +262,21 @@ export function GrilleSemaine({
                       }}
                     />
                   ))}
+
+                  {creation?.jour === ji && (
+                    <PopoverCreation
+                      jour={j}
+                      minutes={creation.minutes}
+                      patients={patients}
+                      cabinets={cabinets}
+                      alignerADroite={ji >= 3}
+                      style={{
+                        top: ((creation.minutes - heureDebut * 60) / 60) * PX_PAR_HEURE + MARGE_HAUT,
+                      }}
+                      onFermer={() => setCreation(null)}
+                      onCreer={creer}
+                    />
+                  )}
                 </div>
               );
             })}
@@ -247,16 +289,38 @@ export function GrilleSemaine({
           const duJour = seances.filter((s) => s.jour === ji).sort((a, b) => a.minutes - b.minutes);
           return (
             <section key={j.iso}>
-              <h2 className="mb-2 flex items-baseline gap-2">
-                <span
-                  className={`font-mono text-sm font-semibold ${j.aujourdhui ? "text-accent-text" : ""}`}
+              <h2 className="mb-2 flex items-center justify-between gap-2">
+                <span className="flex items-baseline gap-2">
+                  <span
+                    className={`font-mono text-sm font-semibold ${j.aujourdhui ? "text-accent-text" : ""}`}
+                  >
+                    {j.nom} {j.numero}
+                  </span>
+                  <span className="font-mono text-[11px] text-ink-muted" data-numeric>
+                    {j.total}
+                  </span>
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setCreationMobile((c) => (c === ji ? null : ji))}
+                  aria-expanded={creationMobile === ji}
+                  aria-label={`Nouvelle séance ${j.nom} ${j.numero}`}
+                  className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-line-strong text-ink-muted transition-colors hover:border-accent hover:text-accent-text"
                 >
-                  {j.nom} {j.numero}
-                </span>
-                <span className="font-mono text-[11px] text-ink-muted" data-numeric>
-                  {j.total}
-                </span>
+                  <IconPlus className="h-3.5 w-3.5" />
+                </button>
               </h2>
+
+              {creationMobile === ji && (
+                <CreationMobile
+                  jour={j}
+                  patients={patients}
+                  cabinets={cabinets}
+                  onFermer={() => setCreationMobile(null)}
+                  onCreer={creer}
+                />
+              )}
+
               {duJour.length === 0 ? (
                 <p className="rounded-[14px] border border-dashed border-line-strong px-4 py-5 text-center text-xs text-ink-muted">
                   Journée libre
@@ -345,6 +409,168 @@ function repartirEnColonnes(seances: SeanceGrille[]) {
   return resultat;
 }
 
+/**
+ * Création rapide au clic sur une case vide de la grille : la même action
+ * server-side que le formulaire « Nouvelle séance » en haut de page, mais
+ * sans quitter la grille et avec le jour et l'heure déjà remplis — c'est le
+ * point qu'on vient de désigner du doigt.
+ *
+ * Pas de récurrence ici : elle reste dans le formulaire du haut, pour ne pas
+ * alourdir un geste pensé pour un seul rendez-vous.
+ */
+function PopoverCreation({
+  jour,
+  minutes,
+  patients,
+  cabinets,
+  alignerADroite,
+  style,
+  onFermer,
+  onCreer,
+}: {
+  jour: JourGrille;
+  minutes: number;
+  patients: { id: string; firstName: string; lastName: string }[];
+  cabinets: { id: string; nom: string }[];
+  alignerADroite: boolean;
+  style: React.CSSProperties;
+  onFermer: () => void;
+  onCreer: (f: FormData) => void;
+}) {
+  const d = new Date(jour.iso);
+  d.setHours(Math.floor(minutes / 60), minutes % 60, 0, 0);
+  const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  const heureStr = `${String(Math.floor(minutes / 60)).padStart(2, "0")}:${String(minutes % 60).padStart(2, "0")}`;
+
+  return (
+    <div
+      onClick={(e) => e.stopPropagation()}
+      style={{ ...style, [alignerADroite ? "right" : "left"]: 4, width: 232 }}
+      className="absolute z-30 flex flex-col gap-2.5 rounded-[14px] border border-accent/40 bg-surface p-3.5 shadow-[0_8px_24px_rgba(39,39,87,0.16)]"
+    >
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-xs font-semibold" data-numeric>
+          {jour.nom} {jour.numero} · {heureStr}
+        </p>
+        <button
+          type="button"
+          onClick={onFermer}
+          aria-label="Annuler la création"
+          className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-ink-muted transition-colors hover:text-ink"
+        >
+          <IconFermer className="h-3 w-3" />
+        </button>
+      </div>
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          onCreer(new FormData(e.currentTarget));
+        }}
+        className="flex flex-col gap-2"
+      >
+        <input type="hidden" name="date" value={dateStr} />
+        <input type="hidden" name="heure" value={heureStr} />
+        <SelectPatientRecherche patients={patients} />
+        <select
+          name="cabinetId"
+          required
+          defaultValue={cabinets[0]?.id}
+          className="w-full rounded-full border border-line bg-surface px-3.5 py-1.5 text-sm"
+        >
+          {cabinets.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.nom}
+            </option>
+          ))}
+        </select>
+        <button
+          type="submit"
+          className="mt-0.5 rounded-full bg-accent px-4 py-1.5 text-sm font-medium text-accent-contrast transition-colors hover:bg-accent-hover"
+        >
+          Créer
+        </button>
+      </form>
+    </div>
+  );
+}
+
+/**
+ * Équivalent de `PopoverCreation` pour la liste mobile : pas de position à
+ * cliquer pour en déduire l'heure, donc un champ heure à remplir, avec le
+ * jour déjà fixé par le bouton qui l'a ouvert.
+ */
+function CreationMobile({
+  jour,
+  patients,
+  cabinets,
+  onFermer,
+  onCreer,
+}: {
+  jour: JourGrille;
+  patients: { id: string; firstName: string; lastName: string }[];
+  cabinets: { id: string; nom: string }[];
+  onFermer: () => void;
+  onCreer: (f: FormData) => void;
+}) {
+  const d = new Date(jour.iso);
+  const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+
+  return (
+    <div className="mb-3 flex flex-col gap-2.5 rounded-[14px] border border-accent/40 bg-surface p-3.5 shadow-[0_8px_24px_rgba(39,39,87,0.1)]">
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-xs font-semibold" data-numeric>
+          Nouvelle séance — {jour.nom} {jour.numero}
+        </p>
+        <button
+          type="button"
+          onClick={onFermer}
+          aria-label="Annuler la création"
+          className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-ink-muted transition-colors hover:text-ink"
+        >
+          <IconFermer className="h-3 w-3" />
+        </button>
+      </div>
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          onCreer(new FormData(e.currentTarget));
+        }}
+        className="flex flex-col gap-2"
+      >
+        <input type="hidden" name="date" value={dateStr} />
+        <div className="grid grid-cols-2 gap-2">
+          <input
+            name="heure"
+            type="time"
+            required
+            defaultValue="09:00"
+            className="w-full rounded-full border border-line bg-surface px-3.5 py-1.5 text-sm"
+          />
+          <select
+            name="cabinetId"
+            required
+            defaultValue={cabinets[0]?.id}
+            className="w-full rounded-full border border-line bg-surface px-3.5 py-1.5 text-sm"
+          >
+            {cabinets.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.nom}
+              </option>
+            ))}
+          </select>
+        </div>
+        <SelectPatientRecherche patients={patients} />
+        <button
+          type="submit"
+          className="mt-0.5 rounded-full bg-accent px-4 py-1.5 text-sm font-medium text-accent-contrast transition-colors hover:bg-accent-hover"
+        >
+          Créer
+        </button>
+      </form>
+    </div>
+  );
+}
+
 function Bloc({
   seance,
   saisie,
@@ -378,6 +604,7 @@ function Bloc({
     <div
       draggable
       data-glisse={saisie ? "true" : undefined}
+      onClick={(e) => e.stopPropagation()}
       onDragStart={(e) => {
         e.dataTransfer.setData("text/plain", seance.id);
         e.dataTransfer.effectAllowed = "move";

@@ -119,6 +119,18 @@ model Cabinet {
   /// patient.
   tarifHoraireCents  Int?    @map("tarif_horaire_cents")
 
+  /// Nom légal complet de l'établissement facturé, tel qu'il doit apparaître
+  /// sur une facture — pas le nom court utilisé partout ailleurs dans
+  /// l'outil (« École »). Vide : la facture reprend `nom`.
+  raisonSociale String? @map("raison_sociale")
+  /// Mentions légales du client (TVA, RPM…), reprises telles quelles sous
+  /// son adresse sur la facture. Texte libre : chaque structure les rédige à
+  /// sa façon, et ce n'est pas à l'outil d'en imposer une forme.
+  mentionLegaleClient String? @map("mention_legale_client") @db.Text
+  /// Préfixe de la communication de paiement portée sur la facture
+  /// (« FACE2026/001 » pour le préfixe « FACE »). Vide : « FACT ».
+  prefixeReference String? @map("prefixe_reference")
+
   sessions       Session[]
   patients       Patient[]
   disponibilites Disponibilite[]
@@ -338,6 +350,12 @@ model Parametres {
   iban               String?
   /// Délai de paiement en jours, pour calculer l'échéance à l'émission.
   delaiPaiementJours Int     @default(30) @map("delai_paiement_jours")
+  /// Adresse du siège social, reprise en en-tête de toute facture émise à un
+  /// établissement — une idée par ligne, ce n'est pas un champ structuré.
+  adresseSiege  String? @map("adresse_siege") @db.Text
+  /// Mention légale complémentaire de la société (RPM…), reprise sous son
+  /// numéro d'entreprise sur la facture.
+  mentionLegale String? @map("mention_legale")
 
   @@map("parametres")
 }
