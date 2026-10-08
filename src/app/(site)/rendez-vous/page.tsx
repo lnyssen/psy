@@ -2,6 +2,7 @@ import { prisma } from "@/lib/db";
 import { creneauxDisponibles } from "@/lib/creneaux";
 import { parametres } from "@/lib/parametres";
 import { debutDeJour } from "@/lib/format";
+import { synchroniser } from "@/lib/google-sync";
 import { PriseRdv } from "@/components/PriseRdv";
 import { adresseCabinet } from "@/lib/format";
 
@@ -13,6 +14,14 @@ export default async function RendezVous({
   searchParams: Promise<{ cabinet?: string; p?: string }>;
 }) {
   const { cabinet, p } = await searchParams;
+
+  // Les rendez-vous ajoutés dans Google Agenda doivent bloquer les créneaux
+  // proposés. Au plus un passage toutes les deux minutes, et jamais plus de
+  // quelques secondes d'attente : le public n'a pas à pâtir d'un Google lent.
+  await Promise.race([
+    synchroniser({ maxAgeMs: 120_000 }).catch(() => null),
+    new Promise((r) => setTimeout(r, 3000)),
+  ]);
 
   const cabinets = await prisma.cabinet.findMany({
     where: { actif: true, publie: true },

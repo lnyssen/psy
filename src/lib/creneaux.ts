@@ -40,7 +40,7 @@ export async function creneauxDisponibles(
   const fin = new Date(debut);
   fin.setDate(fin.getDate() + portee * 7);
 
-  const [ouvertures, seances, conges, demandes] = await Promise.all([
+  const [ouvertures, seancesAgenda, conges, demandes, externes] = await Promise.all([
     prisma.disponibilite.findMany({ where: { cabinetId } }),
     prisma.session.findMany({
       where: { startsAt: { gte: debut, lt: fin }, status: { not: "CANCELLED_IN_TIME" } },
@@ -52,7 +52,24 @@ export async function creneauxDisponibles(
       where: { statut: "EN_ATTENTE", souhaite: { gte: debut, lt: fin } },
       select: { souhaite: true },
     }),
+    // Rendez-vous venus de Google qui ne sont pas (ou pas encore) des séances :
+    // ils occupent quand même le temps d'Amandine.
+    prisma.evenementGoogle.findMany({
+      where: { statut: { in: ["A_RATTACHER", "OCCUPE"] }, debut: { lt: fin }, fin: { gt: debut } },
+      select: { debut: true, fin: true },
+    }),
   ]);
+
+  // Traités comme des séances du lieu demandé : même chevauchement franc, même
+  // battement avant et après, et les créneaux se raccrochent à eux.
+  const seances = [
+    ...seancesAgenda,
+    ...externes.map((e) => ({
+      startsAt: e.debut,
+      durationMin: Math.max(1, Math.round((e.fin.getTime() - e.debut.getTime()) / 60_000)),
+      cabinetId,
+    })),
+  ].sort((a, b) => a.startsAt.getTime() - b.startsAt.getTime());
 
   if (ouvertures.length === 0) return [];
 

@@ -11,6 +11,8 @@ import { heuresFacturablesSemaine } from "@/lib/quotas";
 import { creerSeanceDepuisFormulaire } from "@/lib/actions";
 import { BoutonEnregistrer } from "@/components/BoutonEnregistrer";
 import { SelectPatientRecherche } from "@/components/SelectPatientRecherche";
+import { EvenementsGoogle } from "@/components/EvenementsGoogle";
+import { synchroniser } from "@/lib/google-sync";
 import {
   ajouterJours,
   isoJour,
@@ -41,6 +43,15 @@ const libelleChamp = "block text-[11px] font-semibold tracking-[0.1em] text-ink-
 
 export default async function Semaine({ searchParams }: { searchParams: Promise<Params> }) {
   const params = await searchParams;
+
+  // Ce qui a été ajouté dans Google doit être là dès l'ouverture de l'agenda.
+  // Passage incrémental, donc rapide ; on n'attend de toute façon pas au-delà
+  // de quelques secondes, et un échec ne doit jamais empêcher d'afficher.
+  await Promise.race([
+    synchroniser({ maxAgeMs: 30_000 }).catch(() => null),
+    new Promise((r) => setTimeout(r, 4500)),
+  ]);
+
   const ancre = params.semaine ? new Date(params.semaine) : new Date();
   const lundi = lundiDe(Number.isNaN(ancre.getTime()) ? new Date() : ancre);
 
@@ -57,6 +68,15 @@ export default async function Semaine({ searchParams }: { searchParams: Promise<
   });
   const cabinets = await cabinetsActifs();
   const cabinetsPatients = cabinets.filter((c) => !c.factureInstitution);
+  const externes = await prisma.evenementGoogle.findMany({
+    where: { statut: { in: ["A_RATTACHER", "OCCUPE"] }, debut: { gte: lundi, lt: finSemaine } },
+    orderBy: { debut: "asc" },
+  });
+  const aRattacher = await prisma.evenementGoogle.findMany({
+    where: { statut: "A_RATTACHER", fin: { gte: new Date() } },
+    orderBy: { debut: "asc" },
+    take: 200,
+  });
   const patients = await prisma.patient.findMany({
     where: { active: true },
     orderBy: { lastName: "asc" },
@@ -98,6 +118,29 @@ export default async function Semaine({ searchParams }: { searchParams: Promise<
     conflit: conflits.has(i),
     aVenir: s.status === "SCHEDULED",
   }));
+  // Rendez-vous Google : mêmes colonnes, mais ni séance ni facturables.
+  for (const e of externes) {
+    const jour = jours.findIndex((j) => memeJour(new Date(j.iso), e.debut));
+    if (jour < 0) continue;
+    pourGrille.push({
+      id: `google-${e.id}`,
+      patientId: null,
+      nom: e.titre,
+      isoDebut: e.debut.toISOString(),
+      minutes: minutesDeJour(e.debut),
+      duree: Math.max(5, Math.round((e.fin.getTime() - e.debut.getTime()) / 60_000)),
+      jour,
+      cabinetNom: "Google",
+      cabinetColor: "#5f5f80",
+      cabinetFill: "#eeeef4",
+      cabinetVif: "#9a9ab5",
+      paiement: null,
+      libellePaiement: null,
+      conflit: false,
+      aVenir: false,
+      externe: e.statut === "A_RATTACHER" ? "A_RATTACHER" : "OCCUPE",
+    });
+  }
 
   // Le lien porte la date lue à Bruxelles, pas la découpe d'un horodatage UTC.
   // Minuit à Bruxelles vaut 22 h UTC la veille : toISOString() rendait donc le
@@ -343,6 +386,12 @@ export default async function Semaine({ searchParams }: { searchParams: Promise<
           options={optionsCabinet(cabinets)}
         />
       </div>
+
+      <EvenementsGoogle
+        evenements={aRattacher}
+        patients={patients}
+        cabinets={cabinets.map((c) => ({ id: c.id, nom: c.nom, factureInstitution: c.factureInstitution }))}
+      />
 
       <GrilleSemaine
         seances={pourGrille}

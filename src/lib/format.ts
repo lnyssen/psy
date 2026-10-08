@@ -298,6 +298,24 @@ function minuit(annee: number, mois: number, jour: number) {
 }
 
 /**
+ * L'instant qui correspond à une date (AAAA-MM-JJ) et une heure (HH:MM) lues à
+ * Bruxelles. À préférer à `new Date("2026-10-13T09:00:00")`, qui lit l'heure
+ * dans le fuseau du serveur : juste sur un poste bruxellois, décalée de une ou
+ * deux heures sur Vercel, qui tourne en UTC.
+ */
+export function instantBruxelles(date: string, heure: string) {
+  const d = /^(\d{4})-(\d{2})-(\d{2})$/.exec(date);
+  const h = /^(\d{1,2}):(\d{2})$/.exec(heure);
+  if (!d || !h) return null;
+  const [annee, mois, jour, hh, mm] = [d[1], d[2], d[3], h[1], h[2]].map(Number);
+  if (mois < 1 || mois > 12 || jour < 1 || jour > 31 || hh > 23 || mm > 59) return null;
+  const vise = Date.UTC(annee, mois - 1, jour, hh, mm);
+  let t = vise - decalageMs(new Date(vise));
+  t = vise - decalageMs(new Date(t));
+  return new Date(t);
+}
+
+/**
  * La date telle qu'on la lit à Bruxelles, au format AAAA-MM-JJ.
  *
  * À ne jamais remplacer par toISOString().slice(0, 10) : minuit à Bruxelles

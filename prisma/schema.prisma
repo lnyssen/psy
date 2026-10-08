@@ -293,6 +293,19 @@ model Session {
   /// bout a été écarté, voir les arbitrages du brief) : ce champ restera vide
   /// tant que ce chiffrement n'est pas en place.
   note          String?
+  /// Lien avec l'événement Google Agenda correspondant, s'il y en a un.
+  /// Identifiant déterministe côté Google (voir lib/google-sync.ts) : un
+  /// envoi rejoué après une coupure retombe sur le même événement au lieu de
+  /// le dupliquer.
+  googleEventId  String? @unique @map("google_event_id")
+  /// Dernier état de l'événement connu de nous. S'il diffère de celui que
+  /// Google renvoie, c'est quelqu'un d'autre qui l'a modifié.
+  googleEtag     String? @map("google_etag")
+  /// Empreinte de ce que nous avons envoyé (titre, lieu, horaire) : elle
+  /// remplace une date de dernière modification, et rend l'envoi idempotent
+  /// quel que soit le chemin par lequel la séance a changé.
+  googleEmpreinte String? @map("google_empreinte")
+
   createdAt     DateTime      @default(now()) @map("created_at")
   updatedAt     DateTime      @updatedAt @map("updated_at")
 
@@ -461,4 +474,59 @@ model Depense {
 
   @@index([date])
   @@map("depenses")
+}
+
+
+/// Connexion unique au Google Agenda d'Amandine.
+///
+/// Le jeton de rafraîchissement donne accès à son agenda : il n'est jamais
+/// stocké en clair (AES-256-GCM, clé GOOGLE_TOKEN_KEY hors base).
+model GoogleConnexion {
+  id String @id @default("global")
+  email String
+  refreshTokenChiffre String @map("refresh_token_chiffre") @db.Text
+  /// « primary » : l'agenda principal du compte.
+  calendrierId String @default("primary") @map("calendrier_id")
+  /// Curseur de synchronisation incrémentale de Google ; nul = tout relire.
+  syncToken String? @map("sync_token") @db.Text
+  derniereSynchro DateTime? @map("derniere_synchro")
+  derniereErreur String? @map("derniere_erreur") @db.Text
+  /// Verrou léger : deux synchronisations simultanées dupliqueraient des
+  /// événements. Expire de lui-même si une exécution meurt en route.
+  verrouJusqua DateTime? @map("verrou_jusqua")
+  creeLe DateTime @default(now()) @map("cree_le")
+
+  @@map("google_connexions")
+}
+
+enum StatutEvenementGoogle {
+  /// Arrivé de Google, en attente d'une décision : séance, ou simple créneau pris.
+  A_RATTACHER
+  /// Créneau pris : affiché, il bloque la réservation en ligne, sans être une
+  /// séance ni facturable.
+  OCCUPE
+  /// Ni affiché ni bloquant.
+  IGNORE
+}
+
+/// Événement créé dans Google Agenda qui n'est pas (encore) une séance.
+/// Une fois rattaché à un patient ou à un lieu, il devient une Session et
+/// cette ligne disparaît.
+model EvenementGoogle {
+  id        String   @id @default(cuid())
+  googleId  String   @unique @map("google_id")
+  etag      String?
+  titre     String
+  lieu      String?
+  debut     DateTime
+  fin       DateTime
+  statut    StatutEvenementGoogle @default(A_RATTACHER)
+  /// Série d'événements récurrents dont celui-ci est une occurrence : on les
+  /// rattache d'un coup plutôt qu'un par un.
+  serieId   String?  @map("serie_id")
+  majLe     DateTime @updatedAt @map("maj_le")
+
+  @@index([debut])
+  @@index([serieId])
+  @@map("evenements_google")
 }

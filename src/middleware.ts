@@ -20,7 +20,10 @@ export async function middleware(req: NextRequest) {
   const hote = req.headers.get("host") ?? "";
   const surSousDomaineAdmin = hote.startsWith("admin.");
 
-  if (chemin.startsWith("/api/agenda")) return NextResponse.next();
+  // Le flux iCalendar a son jeton ; les routes Google vérifient elles-mêmes la
+  // session (le retour d'autorisation arrive de chez Google, sans réécriture
+  // possible vers /admin).
+  if (chemin.startsWith("/api/agenda") || chemin.startsWith("/api/google")) return NextResponse.next();
 
   // Sur admin.…, la racine est l'outil.
   if (surSousDomaineAdmin && !chemin.startsWith("/admin") && chemin !== "/connexion") {

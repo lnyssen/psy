@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { CareScheme } from "@prisma/client";
 import { prisma } from "@/lib/db";
+import { synchroniserApres } from "@/lib/google-sync";
 import { parametres } from "@/lib/parametres";
 import { AlerteTrajet, CabinetTag, EtatPaiement, RegimeTag, StatutSeance } from "@/components/tags";
 import { GroupeFiltre, type Params } from "@/components/filtres";
@@ -36,7 +37,9 @@ function prochainJourOuvre(d: Date) {
 
 export default async function Aujourdhui({ searchParams }: { searchParams: Promise<Params> }) {
   const params = await searchParams;
+  synchroniserApres(120_000);
   const maintenant = new Date();
+  const googleARattacher = await prisma.evenementGoogle.count({ where: { statut: "A_RATTACHER" } });
   // Le week-end, l'écran montre la prochaine journée travaillée plutôt qu'un
   // vide : c'est ce qu'on vient y chercher un samedi.
   const cible = prochainJourOuvre(maintenant);
@@ -116,6 +119,18 @@ export default async function Aujourdhui({ searchParams }: { searchParams: Promi
           options={optionsCabinet(cabinets)}
         />
       </div>
+
+      {googleARattacher > 0 && (
+        <Link
+          href="/admin/semaine#google"
+          className="rounded-[14px] border border-accent/40 bg-surface px-5 py-4 text-sm transition-colors hover:border-accent"
+        >
+          <span className="font-semibold">{googleARattacher}</span> rendez-vous de ton Google
+          Agenda attend{googleARattacher > 1 ? "ent" : ""} d’être rattaché
+          {googleARattacher > 1 ? "s" : ""} à un patient — ou marqué{googleARattacher > 1 ? "s" : ""}{" "}
+          comme occupé{googleARattacher > 1 ? "s" : ""}.
+        </Link>
+      )}
 
       {aStatuer.length > 0 && (
         <p className="rounded-[14px] border border-line bg-surface px-5 py-4 text-sm">

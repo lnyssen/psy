@@ -1,9 +1,10 @@
 "use server";
 
+import { synchroniserApres } from "@/lib/google-sync";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
-import { JOURS_OUVRES, partiesJour } from "@/lib/format";
+import { JOURS_OUVRES, instantBruxelles, partiesJour } from "@/lib/format";
 import { parametres } from "@/lib/parametres";
 import { PALETTE_CABINETS } from "@/lib/palette";
 
@@ -216,27 +217,24 @@ export async function creerSeanceDepuisFormulaire(f: FormData) {
   const heure = texte(f, "heure");
   if (!patientId || !cabinetId || !date || !heure) return;
 
-  const debut = new Date(`${date}T${heure}:00`);
-  if (Number.isNaN(debut.getTime()) || !estJourOuvre(debut)) return;
+  const debut = instantBruxelles(date, heure);
+  if (!debut || !estJourOuvre(debut)) return;
 
   const patient = await prisma.patient.findUnique({ where: { id: patientId } });
   if (!patient) return;
 
   const dates = [debut];
-  const jusquauSaisi = texte(f, "jusquau");
-  if (jusquauSaisi) {
-    const jusquau = new Date(`${jusquauSaisi}T23:59:59`);
-    if (!Number.isNaN(jusquau.getTime())) {
-      let suivante = debut;
-      for (let i = 0; i < 52 && dates.length < 52; i++) {
-        suivante = new Date(suivante);
-        suivante.setDate(suivante.getDate() + 7);
-        if (suivante > jusquau) break;
-        // Une semaine plus tard tombe toujours le même jour ouvré ; la
-        // vérification reste par prudence si un décalage d'heure d'été
-        // glissait la date d'un jour.
-        if (estJourOuvre(suivante)) dates.push(suivante);
-      }
+  const jusquau = texte(f, "jusquau");
+  if (/^\d{4}-\d{2}-\d{2}$/.test(jusquau)) {
+    // Chaque occurrence est recalculée à l'heure murale de Bruxelles, une
+    // semaine de calendrier après la précédente. Ajouter 7 × 24 h ferait
+    // glisser les séances d'une heure après le passage à l'heure d'hiver.
+    const [a, m, j] = date.split("-").map(Number);
+    for (let semaine = 1; semaine < 52; semaine++) {
+      const jourCible = new Date(Date.UTC(a, m - 1, j + 7 * semaine)).toISOString().slice(0, 10);
+      if (jourCible > jusquau) break;
+      const suivante = instantBruxelles(jourCible, heure);
+      if (suivante && estJourOuvre(suivante)) dates.push(suivante);
     }
   }
 
@@ -314,6 +312,8 @@ export async function creerPatient(f: FormData) {
 /** Toutes les vues qui affichent un lieu ou un tarif doivent être rafraîchies :
  *  un changement de nom ou de couleur se répercute partout. */
 function rafraichirTout() {
+  // Une modification de l'agenda part vers Google une fois la réponse envoyée.
+  synchroniserApres();
   for (const chemin of [
     "/admin",
     "/admin/semaine",

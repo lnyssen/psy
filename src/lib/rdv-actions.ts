@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { synchroniserApres } from "@/lib/google-sync";
 import { prisma } from "@/lib/db";
 import { creneauEncoreLibre } from "@/lib/creneaux";
 import { parametres } from "@/lib/parametres";
@@ -99,6 +100,7 @@ export async function reserverOuDemander(_etat: ResultatRdv, f: FormData): Promi
     });
     revalidatePath("/admin/semaine");
     revalidatePath("/admin");
+    synchroniserApres();
     return {
       ok: true,
       message: "Votre rendez-vous est confirmé.",
@@ -190,4 +192,5 @@ export async function traiterDemande(f: FormData) {
   for (const c of ["/admin/demandes", "/admin", "/admin/semaine", "/admin/patients"]) {
     revalidatePath(c);
   }
+  synchroniserApres();
 }

@@ -13,6 +13,7 @@ import { euros } from "@/lib/format";
 import { Horaires } from "@/components/Horaires";
 import { Parametres } from "@/components/Parametres";
 import { parametres } from "@/lib/parametres";
+import { GoogleAgenda } from "@/components/GoogleAgenda";
 
 export const dynamic = "force-dynamic";
 
@@ -20,7 +21,12 @@ const champ =
   "w-full rounded-full border border-line bg-surface px-3.5 py-2 text-sm placeholder:text-ink-muted/60";
 const libelleChamp = "block text-[11px] font-semibold tracking-[0.1em] text-ink-muted uppercase";
 
-export default async function Reglages() {
+export default async function Reglages({
+  searchParams,
+}: {
+  searchParams: Promise<{ google?: string }>;
+}) {
+  const { google } = await searchParams;
   const [cabinets, tarifs, categoriesDepense, comptes, comptesCategorie, disponibilites, conges] =
     await Promise.all([
       prisma.cabinet.findMany({ orderBy: { ordre: "asc" } }),
@@ -40,8 +46,9 @@ export default async function Reglages() {
       <header>
         <h1 className="font-display text-3xl tracking-tight">Réglages</h1>
         <p className="mt-2 text-sm text-ink-muted">
-          Six réglages, du plus consulté au plus rare : le rythme des séances, les horaires
-          d’ouverture, les congés, les tarifs, les catégories de dépenses, puis les lieux.
+          Sept réglages, du plus consulté au plus rare : le rythme des séances, les horaires
+          d’ouverture, les congés, les tarifs, les catégories de dépenses, les lieux, puis le
+          Google Agenda.
         </p>
 
         {/* Un sommaire d'ancres plutôt qu'un onglet par section : la page reste
@@ -56,6 +63,7 @@ export default async function Reglages() {
             ["tarifs", "Tarifs"],
             ["categories-depense", "Catégories de dépenses"],
             ["lieux", "Lieux"],
+            ["google", "Google Agenda"],
           ].map(([id, label]) => (
             <a
               key={id}
@@ -535,6 +543,8 @@ export default async function Reglages() {
         </form>
       </section>
 
+
+      <GoogleAgenda retour={google} />
     </div>
   );
 }

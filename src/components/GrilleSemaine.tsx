@@ -25,6 +25,9 @@ export type SeanceGrille = {
   conflit: boolean;
   /** Seule une séance à venir s'annule d'ici — voir annulerSeance. */
   aVenir: boolean;
+  /** Rendez-vous venu de Google Agenda qui n'est pas une séance : affiché, mais
+   *  ni déplaçable, ni annulable, ni lié à un patient. */
+  externe?: "A_RATTACHER" | "OCCUPE";
 };
 
 export type JourGrille = { iso: string; nom: string; numero: string; total: string; aujourdhui: boolean };
@@ -246,7 +249,19 @@ export function GrilleSemaine({
                     />
                   )}
 
-                  {places.map(({ seance, voie, voies }) => (
+                  {places.map(({ seance, voie, voies }) =>
+                    seance.externe ? (
+                      <BlocExterne
+                        key={seance.id}
+                        seance={seance}
+                        style={{
+                          top: ((seance.minutes - heureDebut * 60) / 60) * PX_PAR_HEURE + MARGE_HAUT,
+                          height: Math.max((seance.duree / 60) * PX_PAR_HEURE - 3, 34),
+                          left: `calc(${(voie / voies) * 100}% + 3px)`,
+                          width: `calc(${100 / voies}% - 6px)`,
+                        }}
+                      />
+                    ) : (
                     <Bloc
                       key={seance.id}
                       seance={seance}
@@ -261,7 +276,8 @@ export function GrilleSemaine({
                         width: `calc(${100 / voies}% - 6px)`,
                       }}
                     />
-                  ))}
+                    ),
+                  )}
 
                   {creation?.jour === ji && (
                     <PopoverCreation
@@ -335,7 +351,13 @@ export function GrilleSemaine({
                       }`}
                     >
                       <Link
-                        href={s.patientId ? `/admin/patients/${s.patientId}` : "/admin/etablissements"}
+                        href={
+                          s.externe
+                            ? "/admin/semaine#google"
+                            : s.patientId
+                              ? `/admin/patients/${s.patientId}`
+                              : "/admin/etablissements"
+                        }
                         className="flex flex-1 items-center gap-3 py-3 pr-2 pl-3"
                       >
                         <span
@@ -347,7 +369,12 @@ export function GrilleSemaine({
                           <span className="block truncate text-sm font-medium">{s.nom}</span>
                           <span className="font-mono text-[11px] text-ink-muted" data-numeric>
                             {String(Math.floor(s.minutes / 60)).padStart(2, "0")}:
-                            {String(s.minutes % 60).padStart(2, "0")} · {s.cabinetNom}
+                            {String(s.minutes % 60).padStart(2, "0")} ·{" "}
+                            {s.externe === "A_RATTACHER"
+                              ? "Google — à rattacher"
+                              : s.externe === "OCCUPE"
+                                ? "Google — occupé"
+                                : s.cabinetNom}
                           </span>
                         </span>
                         {s.libellePaiement && (
@@ -568,6 +595,36 @@ function CreationMobile({
         </button>
       </form>
     </div>
+  );
+}
+
+/** Rendez-vous Google : hachuré et sans poignée, pour qu'on ne le prenne ni
+ *  pour une séance ni pour quelque chose qu'on pourrait glisser. */
+function BlocExterne({ seance, style }: { seance: SeanceGrille; style: React.CSSProperties }) {
+  const hhmm = (m: number) =>
+    `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
+  const aRattacher = seance.externe === "A_RATTACHER";
+  return (
+    <a
+      href="#google"
+      onClick={(e) => e.stopPropagation()}
+      style={{
+        ...style,
+        backgroundImage:
+          "repeating-linear-gradient(135deg, transparent 0 6px, rgba(95,95,128,0.10) 6px 7px)",
+      }}
+      className={`absolute flex min-w-0 flex-col gap-[2px] overflow-hidden rounded-lg border border-dashed px-2 py-1.5 ${
+        aRattacher ? "border-accent bg-accent-soft/50" : "border-line-strong bg-sunken"
+      }`}
+    >
+      <span className="truncate text-[12px] leading-[1.25] font-bold" data-numeric>
+        {hhmm(seance.minutes)}–{hhmm(seance.minutes + seance.duree)}
+      </span>
+      <span className="truncate text-[12px] leading-tight font-medium">{seance.nom}</span>
+      <span className="truncate text-[10.5px] leading-[1.45] font-semibold text-ink-muted">
+        {aRattacher ? "Google · à rattacher" : "Google · occupé"}
+      </span>
+    </a>
   );
 }
 
