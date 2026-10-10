@@ -516,6 +516,7 @@ export async function etatGoogle() {
     demo,
     connecte: Boolean(connexion),
     email: connexion?.email ?? null,
+    calendrierId: connexion?.calendrierId ?? null,
     derniereSynchro: connexion?.derniereSynchro ?? null,
     derniereErreur: connexion?.derniereErreur ?? null,
     aRattacher,

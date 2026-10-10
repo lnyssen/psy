@@ -1,5 +1,5 @@
 import { TitreSection } from "@/components/tags";
-import { deconnecterGoogle, synchroniserMaintenant } from "@/lib/google-actions";
+import { changerAgendaGoogle, deconnecterGoogle, synchroniserMaintenant } from "@/lib/google-actions";
 import { etatGoogle } from "@/lib/google-sync";
 
 const MESSAGES: Record<string, { ton: "ok" | "erreur"; texte: string }> = {
@@ -17,6 +17,27 @@ const MESSAGES: Record<string, { ton: "ok" | "erreur"; texte: string }> = {
       "Google n’a pas renvoyé d’accès durable. Retire l’accès de cette application sur myaccount.google.com/permissions, puis réessaie.",
   },
   echec: { ton: "erreur", texte: "La connexion à Google a échoué. Réessaie dans un instant." },
+  "agenda-ok": {
+    ton: "ok",
+    texte: "Agenda changé. Les séances y sont recréées, la synchronisation est en cours.",
+  },
+  "agenda-inchange": { ton: "ok", texte: "C’est déjà l’agenda synchronisé : rien n’a changé." },
+  "agenda-invalide": {
+    ton: "erreur",
+    texte: "Identifiant d’agenda non reconnu. Il ressemble à une adresse : …@group.calendar.google.com.",
+  },
+  "agenda-introuvable": {
+    ton: "erreur",
+    texte: "Agenda introuvable ou non accessible avec ce compte Google. Rien n’a changé.",
+  },
+  "agenda-occupe": {
+    ton: "erreur",
+    texte: "Une synchronisation est en cours. Réessaie dans un instant.",
+  },
+  "agenda-echec": {
+    ton: "erreur",
+    texte: "Google n’a pas pu être joint pour vérifier l’agenda. Rien n’a changé, réessaie dans un instant.",
+  },
 };
 
 function ilYa(d: Date | null) {
@@ -143,6 +164,37 @@ export async function GoogleAgenda({ retour }: { retour?: string }) {
                 </button>
               </form>
             </div>
+            <form action={changerAgendaGoogle} className="flex flex-col gap-2 border-t border-line pt-3">
+              <label htmlFor="calendrierId" className="font-medium">
+                Agenda synchronisé
+              </label>
+              <p className="text-ink-muted">
+                Actuellement :{" "}
+                <span className="font-semibold text-ink break-all">
+                  {e.calendrierId === "primary" ? "Agenda principal" : e.calendrierId}
+                </span>
+              </p>
+              <div className="flex flex-wrap gap-2">
+                <input
+                  id="calendrierId"
+                  name="calendrierId"
+                  type="text"
+                  defaultValue={e.calendrierId === "primary" ? "" : (e.calendrierId ?? "")}
+                  placeholder="primary"
+                  autoComplete="off"
+                  spellCheck={false}
+                  className="min-w-0 flex-1 rounded-full border border-line bg-surface px-3.5 py-1.5 text-sm"
+                />
+                <button type="submit" className={bouton}>
+                  Enregistrer
+                </button>
+              </div>
+              <p className="text-xs text-ink-muted">
+                L’identifiant se trouve dans Google Agenda → paramètres de l’agenda → « Intégrer
+                l’agenda » → « ID de l’agenda ». « primary » ou vide = agenda principal. Changer
+                d’agenda recrée les séances dans le nouveau ; l’ancien n’est pas modifié.
+              </p>
+            </form>
             <p className="text-xs text-ink-muted">
               Déconnecter n’efface rien dans Google : les événements déjà créés y restent, et sont
               reconnus si tu te reconnectes.
