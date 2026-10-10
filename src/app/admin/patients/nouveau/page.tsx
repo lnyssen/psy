@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ChampNumeroNational } from "@/components/ChampNumeroNational";
 import { prisma } from "@/lib/db";
 import { creerPatient } from "@/lib/actions";
 
@@ -79,14 +80,7 @@ export default async function NouveauPatient() {
         </label>
         <label>
           <span className={libelleChamp}>Numéro national</span>
-          <input
-            name="nationalNumber"
-            pattern="\d{2}\.?\d{2}\.?\d{2}(-| )?\d{3}\.?\d{2}"
-            placeholder="AAMMJJ-XXX.CC"
-            title="Numéro national belge : AAMMJJ-XXX.CC"
-            inputMode="numeric"
-            className={`mt-1 ${champ}`}
-          />
+          <ChampNumeroNational className={`mt-1 ${champ}`} />
         </label>
         <label className="sm:col-span-2">
           <span className={libelleChamp}>Rue et numéro</span>

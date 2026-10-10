@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ChampNumeroNational } from "@/components/ChampNumeroNational";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { CabinetTag, EtatPaiement, RegimeTag, StatutSeance } from "@/components/tags";
@@ -246,15 +247,7 @@ export default async function FichePatient({ params }: { params: Promise<{ id: s
             </label>
             <label>
               <span className={libelleChamp}>Numéro national</span>
-              <input
-                name="nationalNumber"
-                pattern="\d{2}\.?\d{2}\.?\d{2}(-| )?\d{3}\.?\d{2}"
-                placeholder="AAMMJJ-XXX.CC"
-                title="Numéro national belge : AAMMJJ-XXX.CC"
-                inputMode="numeric"
-                defaultValue={patient.nationalNumber ?? ""}
-                className={`mt-1 ${champ}`}
-              />
+              <ChampNumeroNational defaultValue={patient.nationalNumber ?? ""} className={`mt-1 ${champ}`} />
             </label>
             <label className="sm:col-span-2">
               <span className={libelleChamp}>Rue et numéro</span>
