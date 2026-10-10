@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <title>Amandine Monsel</title>
+  <rect width="512" height="512" rx="112" fill="#7F00FF"/>
+  <!-- faisceaux : deux éventails de lumière, de part et d'autre de la lanterne -->
+  <path d="M256 178 L28 108 L28 248 Z" fill="#D3D3FF" fill-opacity="0.55"/>
+  <path d="M256 178 L484 108 L484 248 Z" fill="#D3D3FF" fill-opacity="0.55"/>
+  <!-- tour -->
+  <path d="M214 214 H298 L344 438 H168 Z" fill="#FFFFFF"/>
+  <!-- bande -->
+  <path d="M199 288 H313 L323 338 H189 Z" fill="#7F00FF"/>
+  <!-- lanterne et toit -->
+  <rect x="222" y="148" width="68" height="66" rx="8" fill="#FFFFFF"/>
+  <path d="M208 150 L256 100 L304 150 Z" fill="#1B1464"/>
+  <!-- socle -->
+  <rect x="136" y="438" width="240" height="30" rx="15" fill="#1B1464"/>
+</svg>
