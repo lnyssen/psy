@@ -5,6 +5,7 @@ import { synchroniserApres } from "@/lib/google-sync";
 import { prisma } from "@/lib/db";
 import { creneauEncoreLibre } from "@/lib/creneaux";
 import { parametres } from "@/lib/parametres";
+import { exigerSession } from "@/lib/garde";
 
 /**
  * Prise de rendez-vous depuis le site public.
@@ -149,6 +150,7 @@ export async function reserverOuDemander(_etat: ResultatRdv, f: FormData): Promi
 /** Confirmation d'une demande : elle crée le dossier patient s'il n'existe pas,
  *  puis la séance. Décliner ne crée rien. */
 export async function traiterDemande(f: FormData) {
+  await exigerSession();
   const id = texte(f, "id");
   const decision = texte(f, "decision");
   if (!id) return;

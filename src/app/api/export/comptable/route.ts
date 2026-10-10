@@ -1,6 +1,7 @@
 import ExcelJS from "exceljs";
 import { prisma } from "@/lib/db";
 import { SCHEME_LABEL, adresseCabinet, fmtDateCourte, isBillable } from "@/lib/format";
+import { refusSansSession } from "@/lib/garde";
 
 /**
  * Export comptable d'un mois : un classeur avec trois onglets — recettes,
@@ -12,6 +13,8 @@ import { SCHEME_LABEL, adresseCabinet, fmtDateCourte, isBillable } from "@/lib/f
  * patient : la colonne porte alors le nom du lieu, jamais un nom inventé.
  */
 export async function GET(req: Request) {
+  const refus = await refusSansSession();
+  if (refus) return refus;
   const url = new URL(req.url);
   const annee = Number(url.searchParams.get("annee"));
   const mois = Number(url.searchParams.get("mois"));

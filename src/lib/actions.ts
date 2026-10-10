@@ -7,6 +7,7 @@ import { prisma } from "@/lib/db";
 import { JOURS_OUVRES, instantBruxelles, partiesJour } from "@/lib/format";
 import { parametres } from "@/lib/parametres";
 import { PALETTE_CABINETS } from "@/lib/palette";
+import { exigerSession } from "@/lib/garde";
 
 /**
  * Déplace une séance sur un autre créneau, depuis le glisser-déposer de la
@@ -16,6 +17,7 @@ import { PALETTE_CABINETS } from "@/lib/palette";
  * règle métier qui ne vit que dans le navigateur n'est pas une règle.
  */
 export async function deplacerSeance(id: string, isoDebut: string) {
+  await exigerSession();
   const debut = new Date(isoDebut);
   if (Number.isNaN(debut.getTime())) {
     return { ok: false as const, message: "Créneau invalide." };
@@ -37,6 +39,7 @@ export async function deplacerSeance(id: string, isoDebut: string) {
 }
 
 export async function ajouterNote(patientId: string, body: string) {
+  await exigerSession();
   const texte = body.trim();
   if (!texte) return { ok: false as const, message: "La note est vide." };
 
@@ -46,6 +49,7 @@ export async function ajouterNote(patientId: string, body: string) {
 }
 
 export async function supprimerNote(id: string, patientId: string) {
+  await exigerSession();
   await prisma.note.delete({ where: { id } });
   revalidatePath(`/admin/patients/${patientId}`);
   return { ok: true as const };
@@ -57,6 +61,7 @@ export async function supprimerNote(id: string, patientId: string) {
  * e-mail s'il est renseigné, rien n'est obligatoire hors nom et prénom.
  */
 export async function enregistrerPatient(f: FormData) {
+  await exigerSession();
   const id = texte(f, "id");
   if (!id) return;
 
@@ -101,6 +106,7 @@ export async function enregistrerPatient(f: FormData) {
 }
 
 export async function marquerPaye(id: string, methode: "CASH" | "ELECTRONIC") {
+  await exigerSession();
   const seance = await prisma.session.findUnique({
     where: { id },
     include: { patient: true },
@@ -135,6 +141,7 @@ export async function marquerPaye(id: string, methode: "CASH" | "ELECTRONIC") {
  * Une transaction, pour que le lot passe entier ou pas du tout.
  */
 export async function marquerPayeLot(ids: string[], methode: "CASH" | "ELECTRONIC") {
+  await exigerSession();
   if (ids.length === 0) return { ok: false as const, message: "Aucune séance sélectionnée." };
 
   const seances = await prisma.session.findMany({
@@ -172,6 +179,7 @@ export async function marquerPayeLot(ids: string[], methode: "CASH" | "ELECTRONI
 }
 
 export async function creerSeance(patientId: string, isoDebut: string, cabinetId: string) {
+  await exigerSession();
   const patient = await prisma.patient.findUnique({ where: { id: patientId } });
   if (!patient) return { ok: false as const, message: "Patient introuvable." };
 
@@ -211,6 +219,7 @@ function estJourOuvre(d: Date) {
  * l'agenda d'une seule frappe.
  */
 export async function creerSeanceDepuisFormulaire(f: FormData) {
+  await exigerSession();
   const patientId = texte(f, "patientId");
   const cabinetId = texte(f, "cabinetId");
   const date = texte(f, "date");
@@ -254,6 +263,7 @@ export async function creerSeanceDepuisFormulaire(f: FormData) {
  *  le patient. Une séance déjà passée relève d'un autre geste (le statut se
  *  pose après coup, celui-ci n'annule qu'un avenir). */
 export async function annulerSeance(id: string) {
+  await exigerSession();
   const seance = await prisma.session.findUnique({ where: { id } });
   if (!seance || seance.status !== "SCHEDULED") return;
 
@@ -269,6 +279,7 @@ export async function annulerSeance(id: string) {
  * complète quand on l'a sous la main, comme pour enregistrerPatient.
  */
 export async function creerPatient(f: FormData) {
+  await exigerSession();
   const firstName = texte(f, "firstName");
   const lastName = texte(f, "lastName");
   if (!firstName || !lastName) return;
@@ -332,6 +343,7 @@ function texte(f: FormData, cle: string) {
 }
 
 export async function enregistrerCabinet(f: FormData) {
+  await exigerSession();
   const id = texte(f, "id");
   // Plafond hebdomadaire saisi en heures, gardé en minutes ; vide = pas de
   // plafond. Le tarif horaire suit la même convention euros → centimes que
@@ -393,6 +405,7 @@ export async function enregistrerCabinet(f: FormData) {
  * mentionne cette adresse.
  */
 export async function supprimerCabinet(f: FormData) {
+  await exigerSession();
   const id = texte(f, "id");
   if (!id) return;
 
@@ -407,6 +420,7 @@ export async function supprimerCabinet(f: FormData) {
 }
 
 export async function enregistrerTarif(f: FormData) {
+  await exigerSession();
   const id = texte(f, "id");
   const libelle = texte(f, "libelle");
   // Saisi en euros, stocké en centimes : aucun flottant ne traverse la base.
@@ -434,6 +448,7 @@ export async function enregistrerTarif(f: FormData) {
 }
 
 export async function supprimerTarif(f: FormData) {
+  await exigerSession();
   const id = texte(f, "id");
   if (!id) return;
   await prisma.tarif.delete({ where: { id } });
@@ -463,6 +478,7 @@ function minutesDepuisHeure(v: string) {
  * plutôt qu'une confiance aveugle dans le formulaire.
  */
 export async function enregistrerDisponibilite(f: FormData) {
+  await exigerSession();
   const cabinetId = texte(f, "cabinetId");
   const jour = Number(texte(f, "jour"));
   const debutMin = minutesDepuisHeure(texte(f, "debut"));
@@ -483,6 +499,7 @@ export async function enregistrerDisponibilite(f: FormData) {
 }
 
 export async function supprimerDisponibilite(f: FormData) {
+  await exigerSession();
   const id = texte(f, "id");
   if (!id) return;
   await prisma.disponibilite.delete({ where: { id } });
@@ -492,6 +509,7 @@ export async function supprimerDisponibilite(f: FormData) {
 
 /** Congés et absences. Se soustraient des créneaux proposés. */
 export async function enregistrerConge(f: FormData) {
+  await exigerSession();
   const debut = new Date(texte(f, "debut"));
   const finSaisie = new Date(texte(f, "fin"));
   if (Number.isNaN(debut.getTime()) || Number.isNaN(finSaisie.getTime())) return;
@@ -509,6 +527,7 @@ export async function enregistrerConge(f: FormData) {
 }
 
 export async function supprimerConge(f: FormData) {
+  await exigerSession();
   const id = texte(f, "id");
   if (!id) return;
   await prisma.indisponibilite.delete({ where: { id } });
@@ -526,6 +545,7 @@ export async function supprimerConge(f: FormData) {
  * praticienne.
  */
 export async function enregistrerParametres(f: FormData) {
+  await exigerSession();
   const entier = (cle: string, min: number, max: number, defaut: number) => {
     const n = Number(texte(f, cle));
     return Number.isFinite(n) && n >= min && n <= max ? Math.round(n) : defaut;
@@ -567,6 +587,7 @@ export async function enregistrerParametres(f: FormData) {
  * un stockage externe pour ce premier jet (voir le commentaire du modèle).
  */
 export async function enregistrerDepense(f: FormData) {
+  await exigerSession();
   const libelle = texte(f, "libelle");
   const dateSaisie = new Date(texte(f, "date"));
   const montant = Number(texte(f, "montant").replace(",", "."));
@@ -602,6 +623,7 @@ export async function enregistrerDepense(f: FormData) {
 }
 
 export async function supprimerDepense(f: FormData) {
+  await exigerSession();
   const id = texte(f, "id");
   if (!id) return;
   await prisma.depense.delete({ where: { id } });
@@ -613,6 +635,7 @@ export async function supprimerDepense(f: FormData) {
  * les tarifs, ce ne sont pas des valeurs figées dans le code.
  */
 export async function enregistrerCategorieDepense(f: FormData) {
+  await exigerSession();
   const id = texte(f, "id");
   const libelle = texte(f, "libelle");
   if (!libelle) return;
@@ -634,6 +657,7 @@ export async function enregistrerCategorieDepense(f: FormData) {
  *  effacer la catégorie d'une dépense passée réécrirait l'histoire de
  *  l'export comptable déjà remis. */
 export async function supprimerCategorieDepense(f: FormData) {
+  await exigerSession();
   const id = texte(f, "id");
   if (!id) return;
   const nb = await prisma.depense.count({ where: { categorieId: id } });
@@ -664,6 +688,7 @@ export async function supprimerCategorieDepense(f: FormData) {
  * dès maintenant), pas encore payé. Voir marquerFacturePayee.
  */
 export async function emettreFactureEtablissement(cabinetId: string, annee: number, mois: number) {
+  await exigerSession();
   const cabinet = await prisma.cabinet.findUnique({ where: { id: cabinetId } });
   if (!cabinet?.factureInstitution || !cabinet.tarifHoraireCents) return;
 
@@ -742,6 +767,7 @@ export async function emettreFactureEtablissement(cabinetId: string, annee: numb
  * comptable, pas d'un formulaire.
  */
 export async function enregistrerFactureEtablissementManuelle(f: FormData) {
+  await exigerSession();
   const id = texte(f, "id");
   const libelleSaisi = texte(f, "libelle");
   const echeanceSaisie = texte(f, "echeance");
@@ -833,6 +859,7 @@ export async function enregistrerFactureEtablissementManuelle(f: FormData) {
  * redeviennent disponibles pour une prochaine facture.
  */
 export async function annulerFactureEtablissement(f: FormData) {
+  await exigerSession();
   const id = texte(f, "id");
   const facture = await prisma.factureEtablissement.findUnique({ where: { id } });
   if (!facture || facture.payeeLe || facture.annuleeLe) return;
@@ -862,6 +889,7 @@ export async function annulerFactureEtablissement(f: FormData) {
  * lecture plutôt que d'être suivi à part.
  */
 export async function annulerAbsence(id: string) {
+  await exigerSession();
   const seance = await prisma.session.findUnique({ where: { id } });
   if (!seance || seance.status !== "NO_SHOW") return;
 
@@ -883,6 +911,7 @@ export async function annulerAbsence(id: string) {
 
 /** Encaisse une facture déjà émise : la facture et chacune de ses séances. */
 export async function marquerFacturePayee(factureId: string) {
+  await exigerSession();
   const facture = await prisma.factureEtablissement.findUnique({
     where: { id: factureId },
     include: { seances: true },

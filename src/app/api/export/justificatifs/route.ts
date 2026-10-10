@@ -1,6 +1,7 @@
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 import { prisma } from "@/lib/db";
 import { euros, fmtDateCourte, pourPdf } from "@/lib/format";
+import { refusSansSession } from "@/lib/garde";
 
 const MOIS_LABEL = new Intl.DateTimeFormat("fr-BE", { month: "long", year: "numeric", timeZone: "UTC" });
 
@@ -16,6 +17,8 @@ const MOIS_LABEL = new Intl.DateTimeFormat("fr-BE", { month: "long", year: "nume
  * preuve est une information, pas une raison de disparaître du mois.
  */
 export async function GET(req: Request) {
+  const refus = await refusSansSession();
+  if (refus) return refus;
   const url = new URL(req.url);
   const annee = Number(url.searchParams.get("annee"));
   const mois = Number(url.searchParams.get("mois"));

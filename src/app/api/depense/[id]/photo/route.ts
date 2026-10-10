@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db";
+import { refusSansSession } from "@/lib/garde";
 
 /**
  * Sert la photo d'un reçu de dépense, gardée en base à côté de sa fiche (voir
@@ -6,6 +7,8 @@ import { prisma } from "@/lib/db";
  * comptable se sert tel quel, pas par un chemin de stockage public.
  */
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const refus = await refusSansSession();
+  if (refus) return refus;
   const { id } = await params;
   const depense = await prisma.depense.findUnique({
     where: { id },

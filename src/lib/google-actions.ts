@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db";
 import { dechiffrer } from "@/lib/chiffrement";
 import { revoquer } from "@/lib/google-api";
 import { synchroniser, synchroniserApres } from "@/lib/google-sync";
+import { exigerSession } from "@/lib/garde";
 
 /**
  * Actions de l'interface pour la synchronisation Google Agenda.
@@ -40,6 +41,7 @@ async function cibles(f: FormData) {
 }
 
 export async function rattacherEvenementGoogle(f: FormData) {
+  await exigerSession();
   const cabinetId = texte(f, "cabinetId");
   const patientId = texte(f, "patientId");
   const cabinet = await prisma.cabinet.findUnique({ where: { id: cabinetId } });
@@ -91,14 +93,17 @@ async function marquer(f: FormData, statut: "OCCUPE" | "IGNORE") {
 }
 
 export async function marquerEvenementOccupe(f: FormData) {
+  await exigerSession();
   await marquer(f, "OCCUPE");
 }
 
 export async function ignorerEvenementGoogle(f: FormData) {
+  await exigerSession();
   await marquer(f, "IGNORE");
 }
 
 export async function synchroniserMaintenant() {
+  await exigerSession();
   await synchroniser();
   rafraichir();
 }
@@ -110,6 +115,7 @@ export async function synchroniserMaintenant() {
  * séance qu'ils portent et renoués sans doublon.
  */
 export async function deconnecterGoogle() {
+  await exigerSession();
   const c = await prisma.googleConnexion.findUnique({ where: { id: "global" } });
   if (c) {
     try {
@@ -128,3 +134,4 @@ export async function deconnecterGoogle() {
   ]);
   rafraichir();
 }
+

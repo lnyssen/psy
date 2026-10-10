@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { SITE } from "@/lib/site";
 import { euros, fmtJourMoisAn, formatDuree, pourPdf } from "@/lib/format";
 import { PDF_COULEUR, PDF_CONTENU, PDF_HAUTEUR, PDF_LARGEUR, PDF_MARGE } from "@/lib/pdf";
+import { refusSansSession } from "@/lib/garde";
 
 const MOIS_LABEL = new Intl.DateTimeFormat("fr-BE", {
   month: "long",
@@ -24,6 +25,8 @@ const MOIS_LABEL = new Intl.DateTimeFormat("fr-BE", {
  * qu'on connaît déjà.
  */
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const refus = await refusSansSession();
+  if (refus) return refus;
   const { id } = await params;
   const facture = await prisma.factureEtablissement.findUnique({
     where: { id },

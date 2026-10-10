@@ -10,6 +10,7 @@ import {
   pourPdf,
 } from "@/lib/format";
 import { PDF_COULEUR, PDF_CONTENU, PDF_HAUTEUR, PDF_LARGEUR, PDF_MARGE } from "@/lib/pdf";
+import { refusSansSession } from "@/lib/garde";
 
 /**
  * Reçu d'honoraires, en PDF.
@@ -27,6 +28,8 @@ import { PDF_COULEUR, PDF_CONTENU, PDF_HAUTEUR, PDF_LARGEUR, PDF_MARGE } from "@
  * sortent visiblement du même outil.
  */
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const refus = await refusSansSession();
+  if (refus) return refus;
   const { id } = await params;
   const seance = await prisma.session.findUnique({
     where: { id },
