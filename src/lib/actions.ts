@@ -4,7 +4,7 @@ import { synchroniserApres } from "@/lib/google-sync";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
-import { JOURS_OUVRES, instantBruxelles, partiesJour } from "@/lib/format";
+import { JOURS_OUVRES, instantBruxelles, numeroNational, partiesJour } from "@/lib/format";
 import { parametres } from "@/lib/parametres";
 import { PALETTE_CABINETS } from "@/lib/palette";
 import { exigerSession } from "@/lib/garde";
@@ -85,6 +85,10 @@ export async function enregistrerPatient(f: FormData) {
 
   const cabinetId = texte(f, "cabinetId") || null;
 
+  const nnSaisi = texte(f, "nationalNumber");
+  const nationalNumber = nnSaisi ? numeroNational(nnSaisi) : null;
+  if (nnSaisi && !nationalNumber) return;
+
   await prisma.patient.update({
     where: { id },
     data: {
@@ -92,6 +96,11 @@ export async function enregistrerPatient(f: FormData) {
       lastName,
       email: email || null,
       phone: texte(f, "phone") || null,
+      phoneMother: texte(f, "phoneMother") || null,
+      phoneFather: texte(f, "phoneFather") || null,
+      emailMother: texte(f, "emailMother") || null,
+      emailFather: texte(f, "emailFather") || null,
+      nationalNumber,
       addressLine: texte(f, "addressLine") || null,
       postalCode: texte(f, "postalCode") || null,
       city: texte(f, "city") || null,
@@ -296,12 +305,21 @@ export async function creerPatient(f: FormData) {
   const birthDate = birthSaisie ? new Date(birthSaisie) : null;
   const cabinetId = texte(f, "cabinetId") || null;
 
+  const nnSaisi = texte(f, "nationalNumber");
+  const nationalNumber = nnSaisi ? numeroNational(nnSaisi) : null;
+  if (nnSaisi && !nationalNumber) return;
+
   const patient = await prisma.patient.create({
     data: {
       firstName,
       lastName,
       email: email || null,
       phone: texte(f, "phone") || null,
+      phoneMother: texte(f, "phoneMother") || null,
+      phoneFather: texte(f, "phoneFather") || null,
+      emailMother: texte(f, "emailMother") || null,
+      emailFather: texte(f, "emailFather") || null,
+      nationalNumber,
       addressLine: texte(f, "addressLine") || null,
       postalCode: texte(f, "postalCode") || null,
       city: texte(f, "city") || null,

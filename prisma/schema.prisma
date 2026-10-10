@@ -224,6 +224,14 @@ model Patient {
   lastName  String     @map("last_name")
   email     String?
   phone     String?
+  /// Numéros des parents, pour les patients mineurs : c'est souvent eux
+  /// qu'on appelle pour déplacer une séance.
+  phoneMother String? @map("phone_mother")
+  phoneFather String? @map("phone_father")
+  emailMother String? @map("email_mother")
+  emailFather String? @map("email_father")
+  /// Numéro de registre national, au format AAMMJJ-XXX.CC (clé vérifiée).
+  nationalNumber String? @map("national_number")
   /// Adresse postale, en champs séparés : un reçu doit pouvoir la composer
   /// proprement, ce qu'une chaîne unique ne permet pas.
   addressLine String?  @map("address_line")

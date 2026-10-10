@@ -6,15 +6,17 @@ import { prisma } from "@/lib/db";
 import { dechiffrer } from "@/lib/chiffrement";
 import { demoOuverte } from "@/lib/demo";
 import { GoogleErreur, jetonAcces, listerEvenements, revoquer } from "@/lib/google-api";
-import { synchroniser, synchroniserApres } from "@/lib/google-sync";
+import { rattacherEvenement, synchroniser, synchroniserApres } from "@/lib/google-sync";
 import { exigerSession } from "@/lib/garde";
 
 /**
  * Actions de l'interface pour la synchronisation Google Agenda.
  *
- * Les événements créés dans Google arrivent « à rattacher » : trois issues,
- * toutes décidées par Amandine — une séance (avec son patient, ou un lieu
- * facturé à l'heure comme l'école), un simple créneau occupé, ou rien.
+ * Les événements créés dans Google arrivent « à rattacher » — sauf ceux titrés
+ * du nom d'un patient, que la synchronisation rattache d'elle-même. Pour les
+ * autres, trois issues, toutes décidées par Amandine : une séance (avec son
+ * patient, ou un lieu facturé à l'heure comme l'école), un simple créneau
+ * occupé, ou rien.
  */
 
 function texte(f: FormData, cle: string) {
@@ -59,28 +61,8 @@ export async function rattacherEvenementGoogle(f: FormData) {
   }
 
   for (const ev of await cibles(f)) {
-    const duree = Math.min(480, Math.max(5, Math.round((ev.fin.getTime() - ev.debut.getTime()) / 60_000)));
-    try {
-      await prisma.$transaction([
-        prisma.session.create({
-          data: {
-            patientId: patient?.id ?? null,
-            cabinetId: cabinet.id,
-            startsAt: ev.debut,
-            durationMin: duree,
-            // Le lien est posé tout de suite : la prochaine lecture reconnaît
-            // l'événement comme une séance, pas comme un nouvel inconnu. Pas
-            // d'empreinte — la séance repart vers Google pour y prendre son
-            // titre normalisé (nom du patient, lieu).
-            googleEventId: ev.googleId,
-            googleEtag: ev.etag,
-          },
-        }),
-        prisma.evenementGoogle.delete({ where: { id: ev.id } }),
-      ]);
-    } catch {
-      // Déjà rattaché entre-temps (double clic) : rien à faire.
-    }
+    // Faux si déjà rattaché entre-temps (double clic) : rien à faire.
+    await rattacherEvenement(ev, { patientId: patient?.id ?? null, cabinetId: cabinet.id });
   }
 
   rafraichir();

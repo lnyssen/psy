@@ -69,6 +69,8 @@ export default async function FichePatient({ params }: { params: Promise<{ id: s
 
   const coordonnees = [
     { t: "Téléphone", v: patient.phone, mono: true },
+    { t: "Mère", v: [patient.phoneMother, patient.emailMother].filter(Boolean).join(" · ") },
+    { t: "Père", v: [patient.phoneFather, patient.emailFather].filter(Boolean).join(" · ") },
     { t: "E-mail", v: patient.email },
     {
       t: "Adresse",
@@ -81,6 +83,7 @@ export default async function FichePatient({ params }: { params: Promise<{ id: s
       v: patient.birthDate ? `${fmtJourMoisAn.format(patient.birthDate)} (${age(patient.birthDate)} ans)` : null,
       mono: true,
     },
+    { t: "N° national", v: patient.nationalNumber, mono: true },
     { t: "Tarif", v: patient.feeCents ? `${euros(patient.feeCents)} la séance` : "tarif INAMI", mono: true },
   ];
 
@@ -185,7 +188,43 @@ export default async function FichePatient({ params }: { params: Promise<{ id: s
             </label>
             <label>
               <span className={libelleChamp}>Téléphone</span>
-              <input name="phone" defaultValue={patient.phone ?? ""} className={`mt-1 ${champ}`} />
+              <input name="phone" type="tel" defaultValue={patient.phone ?? ""} className={`mt-1 ${champ}`} />
+            </label>
+            <label>
+              <span className={libelleChamp}>Téléphone de la mère</span>
+              <input
+                name="phoneMother"
+                type="tel"
+                defaultValue={patient.phoneMother ?? ""}
+                className={`mt-1 ${champ}`}
+              />
+            </label>
+            <label>
+              <span className={libelleChamp}>Téléphone du père</span>
+              <input
+                name="phoneFather"
+                type="tel"
+                defaultValue={patient.phoneFather ?? ""}
+                className={`mt-1 ${champ}`}
+              />
+            </label>
+            <label>
+              <span className={libelleChamp}>E-mail de la mère</span>
+              <input
+                name="emailMother"
+                type="email"
+                defaultValue={patient.emailMother ?? ""}
+                className={`mt-1 ${champ}`}
+              />
+            </label>
+            <label>
+              <span className={libelleChamp}>E-mail du père</span>
+              <input
+                name="emailFather"
+                type="email"
+                defaultValue={patient.emailFather ?? ""}
+                className={`mt-1 ${champ}`}
+              />
             </label>
             <label>
               <span className={libelleChamp}>E-mail</span>
@@ -202,6 +241,18 @@ export default async function FichePatient({ params }: { params: Promise<{ id: s
                 name="birthDate"
                 type="date"
                 defaultValue={patient.birthDate ? patient.birthDate.toISOString().slice(0, 10) : ""}
+                className={`mt-1 ${champ}`}
+              />
+            </label>
+            <label>
+              <span className={libelleChamp}>Numéro national</span>
+              <input
+                name="nationalNumber"
+                pattern="\d{2}\.?\d{2}\.?\d{2}(-| )?\d{3}\.?\d{2}"
+                placeholder="AAMMJJ-XXX.CC"
+                title="Numéro national belge : AAMMJJ-XXX.CC"
+                inputMode="numeric"
+                defaultValue={patient.nationalNumber ?? ""}
                 className={`mt-1 ${champ}`}
               />
             </label>

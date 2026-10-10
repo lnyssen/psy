@@ -63,8 +63,9 @@ export async function GoogleAgenda({ retour }: { retour?: string }) {
         <TitreSection>Google Agenda</TitreSection>
         <p className="mt-1 text-sm text-ink-muted">
           Les séances d’ici apparaissent dans ton Google Agenda, sous le nom du patient et du lieu.
-          Ce que tu y ajoutes arrive ici « à rattacher ». Un déplacement ou une suppression faite
-          d’un côté est reprise de l’autre.
+          Ce que tu y ajoutes arrive ici « à rattacher ». Un rendez-vous titré du prénom et du
+          nom d’un patient devient automatiquement sa séance. Un déplacement ou une suppression
+          faite d’un côté est reprise de l’autre.
         </p>
       </div>
 

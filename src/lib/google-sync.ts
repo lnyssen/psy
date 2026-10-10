@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import { after } from "next/server";
+import type { EvenementGoogle } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { demoOuverte } from "@/lib/demo";
 import { chiffrer, dechiffrer } from "@/lib/chiffrement";
@@ -15,16 +16,19 @@ import {
   type CorpsEvenement,
   type EvenementDistant,
 } from "@/lib/google-api";
+import { cabinetAutorise, cabinetDesLieux, patientDuTitre } from "@/lib/google-correspondance";
 
 /**
  * Synchronisation dans les deux sens avec le Google Agenda d'Amandine.
  *
  * Deux flux, toujours dans cet ordre — lire, puis écrire :
  *
- * - Google → app. Un événement créé dans Google arrive « à rattacher » : ce
- *   n'est pas à l'outil de deviner s'il s'agit d'un patient. Un événement qui
- *   est déjà une séance de l'app (déplacé ou supprimé dans Google) répercute
- *   le changement sur la séance.
+ * - Google → app. Un événement créé dans Google arrive « à rattacher ». S'il
+ *   est titré exactement du prénom et du nom d'un seul patient, il devient sa
+ *   séance de lui-même (règles dans lib/google-correspondance.ts) ; sinon,
+ *   c'est à Amandine de décider. Un événement qui est déjà une séance de
+ *   l'app (déplacé ou supprimé dans Google) répercute le changement sur la
+ *   séance.
  * - app → Google. Chaque séance à venir devient un événement titré du nom du
  *   patient et du lieu. Rien n'est envoyé si rien n'a changé : l'empreinte de
  *   ce qui est parti sert de mémoire.
@@ -50,6 +54,8 @@ export type ResultatSynchro = {
   ignoree?: "non-configure" | "non-connecte" | "demo" | "recent" | "en-cours";
   erreur?: string;
   importes: number;
+  /** Événements « à rattacher » devenus des séances d'eux-mêmes. */
+  rattaches: number;
   envoyes: number;
   supprimes: number;
   annulees: number;
@@ -59,6 +65,7 @@ export type ResultatSynchro = {
 const vide = (): ResultatSynchro => ({
   ok: true,
   importes: 0,
+  rattaches: 0,
   envoyes: 0,
   supprimes: 0,
   annulees: 0,
@@ -327,6 +334,104 @@ async function lire(
   return null;
 }
 
+// --- Rattachement -----------------------------------------------------------
+
+/**
+ * Fait d'un événement « à rattacher » une séance, et l'efface, d'un seul
+ * tenant. Commun au rattachement manuel et automatique. Faux si l'événement
+ * était déjà rattaché entre-temps (double clic, synchronisation concurrente).
+ */
+export async function rattacherEvenement(
+  ev: Pick<EvenementGoogle, "id" | "googleId" | "etag" | "debut" | "fin">,
+  cible: { patientId: string | null; cabinetId: string },
+) {
+  const duree = Math.min(480, Math.max(5, Math.round((ev.fin.getTime() - ev.debut.getTime()) / 60_000)));
+  try {
+    await prisma.$transaction([
+      prisma.session.create({
+        data: {
+          patientId: cible.patientId,
+          cabinetId: cible.cabinetId,
+          startsAt: ev.debut,
+          durationMin: duree,
+          // Le lien est posé tout de suite : la prochaine lecture reconnaît
+          // l'événement comme une séance, pas comme un nouvel inconnu. Pas
+          // d'empreinte — la séance repart vers Google pour y prendre son
+          // titre normalisé (nom du patient, lieu).
+          googleEventId: ev.googleId,
+          googleEtag: ev.etag,
+        },
+      }),
+      prisma.evenementGoogle.delete({ where: { id: ev.id } }),
+    ]);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Rattache d'eux-mêmes les événements à venir, encore « à rattacher », dont le
+ * titre désigne un patient sans ambiguïté — règles dans
+ * lib/google-correspondance.ts. Passe après la lecture, donc sur les nouveaux
+ * venus comme sur ceux déjà en base, et avant l'écriture, qui donne aussitôt
+ * à l'événement son titre normalisé. Un événement marqué « occupé » ou
+ * « ignoré » n'est jamais repris : c'était une décision.
+ */
+async function rattacherAutomatiquement(ctx: Contexte, bilan: ResultatSynchro) {
+  const evenements = await prisma.evenementGoogle.findMany({
+    where: { statut: "A_RATTACHER", debut: { gt: ctx.maintenant } },
+    orderBy: { debut: "asc" },
+  });
+  if (evenements.length === 0) return;
+
+  const [patients, cabinets] = await Promise.all([
+    prisma.patient.findMany({
+      where: { active: true },
+      select: { id: true, firstName: true, lastName: true, cabinetId: true },
+    }),
+    prisma.cabinet.findMany({
+      select: {
+        id: true,
+        nom: true,
+        addressLine: true,
+        postalCode: true,
+        city: true,
+        actif: true,
+        factureInstitution: true,
+      },
+    }),
+  ]);
+  const parId = new Map(cabinets.map((c) => [c.id, c]));
+
+  for (const ev of evenements) {
+    const trouve = patientDuTitre(ev.titre, patients);
+    if (!trouve) continue;
+
+    let cabinetId: string | null = null;
+    const duLieu = cabinetDesLieux([trouve.lieu, ev.lieu], cabinets);
+    if (duLieu === "refuse") continue;
+    if (duLieu) {
+      cabinetId = duLieu.cabinet.id;
+    } else {
+      const derniere = await prisma.session.findFirst({
+        where: {
+          patientId: trouve.patient.id,
+          startsAt: { lt: ev.debut },
+          cabinet: { actif: true, factureInstitution: false },
+        },
+        orderBy: { startsAt: "desc" },
+        select: { cabinetId: true },
+      });
+      const habituel = trouve.patient.cabinetId ? parId.get(trouve.patient.cabinetId) : undefined;
+      cabinetId = derniere?.cabinetId ?? (habituel && cabinetAutorise(habituel) ? habituel.id : null);
+    }
+    if (!cabinetId) continue;
+
+    if (await rattacherEvenement(ev, { patientId: trouve.patient.id, cabinetId })) bilan.rattaches++;
+  }
+}
+
 // --- app → Google -----------------------------------------------------------
 
 const ACTIFS = ["SCHEDULED", "ATTENDED", "NO_SHOW"] as const;
@@ -449,6 +554,7 @@ export async function synchroniser(opts: { maxAgeMs?: number } = {}): Promise<Re
     };
 
     const syncToken = await lire(jeton, connexion, ctx, bilan);
+    await rattacherAutomatiquement(ctx, bilan);
     await ecrire(jeton, connexion, ctx, bilan);
 
     await prisma.googleConnexion.update({

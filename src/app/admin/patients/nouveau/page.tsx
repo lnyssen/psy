@@ -51,7 +51,23 @@ export default async function NouveauPatient() {
         </label>
         <label>
           <span className={libelleChamp}>Téléphone</span>
-          <input name="phone" className={`mt-1 ${champ}`} />
+          <input name="phone" type="tel" className={`mt-1 ${champ}`} />
+        </label>
+        <label>
+          <span className={libelleChamp}>Téléphone de la mère</span>
+          <input name="phoneMother" type="tel" className={`mt-1 ${champ}`} />
+        </label>
+        <label>
+          <span className={libelleChamp}>Téléphone du père</span>
+          <input name="phoneFather" type="tel" className={`mt-1 ${champ}`} />
+        </label>
+        <label>
+          <span className={libelleChamp}>E-mail de la mère</span>
+          <input name="emailMother" type="email" className={`mt-1 ${champ}`} />
+        </label>
+        <label>
+          <span className={libelleChamp}>E-mail du père</span>
+          <input name="emailFather" type="email" className={`mt-1 ${champ}`} />
         </label>
         <label>
           <span className={libelleChamp}>E-mail</span>
@@ -60,6 +76,17 @@ export default async function NouveauPatient() {
         <label>
           <span className={libelleChamp}>Naissance</span>
           <input name="birthDate" type="date" className={`mt-1 ${champ}`} />
+        </label>
+        <label>
+          <span className={libelleChamp}>Numéro national</span>
+          <input
+            name="nationalNumber"
+            pattern="\d{2}\.?\d{2}\.?\d{2}(-| )?\d{3}\.?\d{2}"
+            placeholder="AAMMJJ-XXX.CC"
+            title="Numéro national belge : AAMMJJ-XXX.CC"
+            inputMode="numeric"
+            className={`mt-1 ${champ}`}
+          />
         </label>
         <label className="sm:col-span-2">
           <span className={libelleChamp}>Rue et numéro</span>

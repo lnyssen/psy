@@ -360,3 +360,20 @@ export function lundiDe(d: Date) {
   reference.setUTCDate(reference.getUTCDate() - ((reference.getUTCDay() + 6) % 7));
   return minuit(reference.getUTCFullYear(), reference.getUTCMonth() + 1, reference.getUTCDate());
 }
+
+/**
+ * Numéro national belge, remis au format AAMMJJ-XXX.CC. Accepte la saisie
+ * avec ou sans séparateurs (y compris celle de la carte, AA.MM.JJ-XXX.CC).
+ * Rend null si la clé ne correspond pas : 97 moins le reste de la division
+ * par 97 des neuf premiers chiffres, précédés d'un 2 pour les naissances
+ * depuis 2000.
+ */
+export function numeroNational(saisie: string): string | null {
+  const chiffres = saisie.replace(/[\s.\-]/g, "");
+  if (!/^\d{11}$/.test(chiffres)) return null;
+  const base = chiffres.slice(0, 9);
+  const cle = Number(chiffres.slice(9));
+  const valide = [base, `2${base}`].some((b) => 97 - (Number(b) % 97) === cle);
+  if (!valide) return null;
+  return `${chiffres.slice(0, 6)}-${chiffres.slice(6, 9)}.${chiffres.slice(9)}`;
+}
