@@ -5,6 +5,8 @@ import { parametres } from "@/lib/parametres";
 import { demoOuverte } from "@/lib/demo";
 import { adresseCabinet } from "@/lib/format";
 import { SITE } from "@/lib/site";
+import { BoutonHaut } from "@/components/BoutonHaut";
+import { CurseurRond } from "@/components/CurseurRond";
 import { EnteteSite } from "@/components/EnteteSite";
 
 export const metadata: Metadata = {
@@ -37,6 +39,8 @@ export default async function SiteLayout({
         d'aplats pleine largeur, impossible dans un conteneur unique centré.
       */}
       <main className="flex-1">{children}</main>
+      <BoutonHaut />
+      <CurseurRond />
 
       <footer className="bg-bande-navy px-6 py-10 text-white">
         <div className="mx-auto flex max-w-5xl flex-col gap-6 text-sm">

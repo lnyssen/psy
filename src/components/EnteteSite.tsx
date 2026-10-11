@@ -63,7 +63,7 @@ export function EnteteSite() {
       et une hauteur variable aurait laissé un liseré.
     */
     <header className="sticky top-0 z-40 h-[var(--entete)] px-3 pt-4 md:px-6">
-      <div className="mx-auto flex h-full max-w-[69rem] items-center gap-2 rounded-full bg-paper/72 px-7 ring-1 ring-line/70 ring-inset backdrop-blur-2xl max-[359px]:px-4 md:gap-4 md:px-10">
+      <div className="mx-auto flex h-full max-w-[69rem] items-center gap-2 rounded-full bg-paper/72 px-7 ring-1 ring-line/70 ring-inset backdrop-blur-2xl max-[359px]:px-4 max-md:pr-3.5 md:gap-4 md:px-10">
         <Link href="/" className="flex shrink-0 flex-col">
           <span className="font-display text-[17px] leading-[1.15] tracking-tight md:text-[20px]">
             Amandine Monsel
@@ -83,7 +83,7 @@ export function EnteteSite() {
           au-dessus du ciel clair, sous le seuil. La transparence voulue se paie
           quelque part : ici, sur la couleur du texte plutôt que sur le verre.
         */}
-        <nav aria-label="Navigation du site" className="ml-8 hidden items-center gap-1 md:flex">
+        <nav aria-label="Navigation du site" className="ml-auto hidden items-center gap-1 md:flex">
           {PAGES.map((p) => (
             <Link
               key={p.href}
@@ -102,7 +102,7 @@ export function EnteteSite() {
 
         <Link
           href="/rendez-vous"
-          className="ml-auto flex min-h-11 shrink-0 items-center rounded-full bg-accent px-3.5 text-[11px] font-semibold whitespace-nowrap text-accent-contrast transition-colors hover:bg-accent-hover max-[359px]:hidden md:min-h-0 md:px-5 md:py-2.5 md:text-sm"
+          className="ml-auto flex min-h-11 shrink-0 items-center rounded-full bg-accent px-3.5 md:ml-3 text-[11px] font-semibold whitespace-nowrap text-accent-contrast transition-colors hover:bg-accent-hover max-[359px]:hidden md:min-h-0 md:px-5 md:py-2.5 md:text-sm"
         >
           <span className="md:hidden">Rendez-vous</span>
           <span className="hidden md:inline">Prendre rendez-vous</span>

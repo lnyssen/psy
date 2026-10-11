@@ -463,3 +463,19 @@ time,
     display: none !important;
   }
 }
+
+/*
+ * Le disque du site public remplace la flèche. Il n'est actif que si le script
+ * l'a confirmé (pointeur précis, animations autorisées) : sans lui, la flèche
+ * reste. Les champs de saisie gardent leur curseur, pour voir où l'on écrit.
+ */
+html[data-curseur-rond],
+html[data-curseur-rond] * {
+  cursor: none;
+}
+
+html[data-curseur-rond] input,
+html[data-curseur-rond] textarea,
+html[data-curseur-rond] select {
+  cursor: auto;
+}

@@ -29,7 +29,13 @@ export const dynamic = "force-dynamic";
  *
  *  Une seule couleur pour tous les titres du site, le bleu nuit — sauf sur les
  *  aplats sombres, où elle serait illisible et où le blanc prend le relais. */
-function Titre({ children, surAplat }: { children: React.ReactNode; surAplat?: boolean }) {
+function Titre({
+  children,
+  surAplat,
+}: {
+  children: React.ReactNode;
+  surAplat?: boolean;
+}) {
   return (
     <h2
       className={`font-display text-[2rem] leading-[1.05] tracking-tight md:text-[3rem] ${
@@ -103,32 +109,40 @@ export default async function Accueil() {
           aria-hidden="true"
           className="absolute inset-x-0 bottom-0 -z-10 hidden h-2/3 md:block"
           style={{
-            background: "linear-gradient(to top, rgba(24,18,50,0.5) 0%, rgba(24,18,50,0) 100%)",
+            background:
+              "linear-gradient(to top, rgba(24,18,50,0.5) 0%, rgba(24,18,50,0) 100%)",
           }}
         />
 
         {/* Le haut du bloc réserve la hauteur de la pastille : sur téléphone le
             texte dépasse la hauteur minimale de la section et remontait sinon
             sous l'en-tête, qui coupait le sur-titre. */}
-        <div className="hero-cascade mx-auto w-full max-w-5xl pt-[calc(var(--entete)+2rem)] pb-16 text-white md:pt-[calc(var(--entete)+3rem)] md:pb-24">
-          <p className="text-[11px] font-bold tracking-[0.2em] text-white/85 uppercase">
+        <div className="hero-cascade mx-auto w-full max-w-5xl pt-[calc(var(--entete)+2rem)] pb-16 text-white md:grid md:grid-cols-[1fr_auto] md:gap-x-10 md:pt-[calc(var(--entete)+3rem)] md:pb-24">
+          <p className="text-[11px] font-bold tracking-[0.2em] text-white/85 uppercase md:col-start-1">
             {SITE.titre}
           </p>
-          <h1 className="mt-5 max-w-3xl font-display text-[3.25rem] leading-[0.95] tracking-[-0.03em] md:text-[5.5rem]">
+          <h1 className="mt-5 max-w-3xl font-display md:col-start-1 text-[3.25rem] leading-[0.95] tracking-[-0.03em] md:text-[5.5rem]">
             Amandine
             <br />
             Monsel
           </h1>
-          <p className="mt-8 flex flex-wrap items-center gap-x-5 gap-y-2 text-lg font-semibold sm:gap-x-3">
+          <p className="mt-8 flex flex-wrap items-center gap-x-5 gap-y-2 text-lg font-semibold sm:gap-x-3 md:col-start-1">
             {SITE.publics.map((p, i) => (
               <span key={p} className="flex items-center gap-3">
-                {i > 0 && <span aria-hidden="true" className="hidden h-1 w-1 rounded-full bg-white/60 sm:block" />}
+                {i > 0 && (
+                  <span
+                    aria-hidden="true"
+                    className="hidden h-1 w-1 rounded-full bg-white/60 sm:block"
+                  />
+                )}
                 {p}
               </span>
             ))}
           </p>
-          <p className="mt-5 max-w-lg text-lg leading-relaxed text-white/90">{SITE.accroche}</p>
-          <div className="mt-9 flex flex-wrap items-center gap-3">
+          <p className="mt-5 max-w-lg text-lg leading-relaxed text-white/90 md:col-start-1">
+            {SITE.accroche}
+          </p>
+          <div className="mt-9 flex flex-wrap items-center justify-end gap-3 md:col-start-2 md:row-start-1 md:row-span-4 md:mt-0 md:flex-col md:items-end md:justify-end md:self-end">
             <Link
               href="/rendez-vous"
               className="rounded-full bg-accent px-7 py-3.5 text-sm font-semibold text-accent-contrast transition-colors hover:bg-accent-hover"
@@ -146,19 +160,15 @@ export default async function Accueil() {
         </div>
       </section>
 
-      {/* En bref : trois faits qui répondent d'emblée à « est-ce pour moi ? ». */}
-      <section aria-label="En bref" className="bg-bande-violette px-6 py-9 text-nuit">
-        <Reveal className="mx-auto grid max-w-5xl gap-6 sm:grid-cols-3">
-          {[
-            ["20 ans", "d’expérience clinique"],
-            ["FR · EN", "consultations en français et en anglais"],
-            [`${cabinets.length} cabinets`, cabinets.map((c) => c.nom).join(" et ")],
-          ].map(([gros, petit]) => (
-            <p key={gros} className="flex flex-col">
-              <span className="font-display text-[2rem] leading-tight">{gros}</span>
-              <span className="text-[15px] text-nuit/80">{petit}</span>
-            </p>
-          ))}
+      <section
+        aria-label="En bref"
+        className="bg-bande-violette px-6 py-12 text-nuit md:py-14"
+      >
+        <Reveal className="mx-auto max-w-5xl">
+          <p className="max-w-3xl font-display text-[1.6rem] leading-snug tracking-tight md:text-[2.25rem]">
+            Des consultations en français et en anglais, à{" "}
+            {cabinets.map((c) => c.nom).join(" et ")}.
+          </p>
         </Reveal>
       </section>
 
@@ -167,13 +177,35 @@ export default async function Accueil() {
           <Titre>Pour qui ?</Titre>
           <div className="mt-10 grid gap-5 md:grid-cols-3">
             {SITE.publicsDetail.map((p) => (
-              <article key={p.nom} className="flex flex-col gap-3 rounded-[24px] bg-surface px-8 py-8">
-                <span className="text-sm font-semibold text-accent-text">{p.repere}</span>
-                <h3 className="font-display text-[2rem] leading-tight">{p.nom}</h3>
+              <article
+                key={p.nom}
+                className="flex flex-col gap-3 rounded-[24px] bg-surface px-8 py-8"
+              >
+                <span className="text-sm font-semibold text-ink-muted">
+                  {p.repere}
+                </span>
+                <h3 className="font-display text-[2rem] leading-tight">
+                  {p.nom}
+                </h3>
                 <p className="text-ink-muted">{p.texte}</p>
               </article>
             ))}
           </div>
+
+          <h3 className="mt-16 font-display text-[1.6rem] leading-tight text-titre">
+            Motifs de consultation
+          </h3>
+          <ul className="mt-6 grid gap-x-14 gap-y-3 md:grid-cols-2">
+            {SITE.problematiques.map((p) => (
+              <li key={p} className="flex gap-3 leading-snug">
+                <span
+                  aria-hidden="true"
+                  className="mt-[0.5rem] h-1.5 w-1.5 shrink-0 rounded-full bg-accent"
+                />
+                {p}
+              </li>
+            ))}
+          </ul>
         </Reveal>
       </section>
 
@@ -192,21 +224,27 @@ export default async function Accueil() {
                 Toutes les questions →
               </Link>
             </div>
-            <ol className="grid flex-1 gap-8 sm:grid-cols-3">
+            <ul className="grid flex-1 gap-8 sm:grid-cols-3">
               {[
                 ["On fait connaissance", "On prend le temps, sans pression."],
-                ["Vous racontez", "Ce qui vous amène, à votre rythme, sans avoir à tout dire d’emblée."],
-                ["On décide ensemble", "S’il y a lieu de continuer, et à quel rythme."],
-              ].map(([titre, texte], i) => (
-                <li key={titre} className="flex flex-col gap-2.5 border-t border-white/20 pt-5">
-                  <span className="font-display text-[2.5rem] leading-none text-bande-violette" aria-hidden="true">
-                    {i + 1}
-                  </span>
+                [
+                  "Vous racontez",
+                  "Ce qui vous amène, à votre rythme, sans avoir à tout dire d’emblée.",
+                ],
+                [
+                  "On décide ensemble",
+                  "S’il y a lieu de continuer, et à quel rythme.",
+                ],
+              ].map(([titre, texte]) => (
+                <li
+                  key={titre}
+                  className="flex flex-col gap-2.5 border-t border-white/20 pt-5"
+                >
                   <strong className="font-semibold">{titre}</strong>
                   <span className="text-white/80">{texte}</span>
                 </li>
               ))}
-            </ol>
+            </ul>
           </div>
         </Reveal>
       </section>
@@ -231,64 +269,63 @@ export default async function Accueil() {
             <div className="flex max-w-2xl flex-col gap-5">
               <Titre>Mon approche</Titre>
               <p className="mt-3 text-xl leading-relaxed">{SITE.parcours[0]}</p>
-              <p className="leading-relaxed text-ink-muted">{SITE.parcours[1]}</p>
+              <p className="leading-relaxed text-ink-muted">
+                {SITE.parcours[1]}
+              </p>
             </div>
 
-            <div className="grid gap-12 border-t border-line-strong/70 pt-10 md:grid-cols-2 md:gap-14">
-              <div>
-                <h3 className="text-[11px] font-semibold tracking-[0.12em] text-accent-text uppercase">
-                  Ce que j’accompagne
-                </h3>
-                <ul className="mt-5 flex flex-col gap-3">
-                  {SITE.problematiques.map((p) => (
-                    <li key={p} className="flex gap-3 leading-snug">
-                      <span aria-hidden="true" className="mt-[0.5rem] h-1.5 w-1.5 shrink-0 rounded-full bg-accent" />
-                      {p}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              <div>
-                <h3 className="text-[11px] font-semibold tracking-[0.12em] text-accent-text uppercase">
-                  Parcours
-                </h3>
-                <ol className="mt-5 flex flex-col">
-                  {SITE.chronologie.map((c) => (
-                    <li key={c.periode + c.intitule} className="border-t border-line-strong/70 py-3 first:border-t-0 first:pt-0">
-                      <span className="block text-sm text-ink-muted" data-numeric>
-                        {c.periode}
-                      </span>
-                      <span className="leading-snug">{c.intitule}</span>
-                    </li>
-                  ))}
-                </ol>
-              </div>
+            <div className="border-t border-line-strong/70 pt-10">
+              <h3 className="font-display text-[1.6rem] leading-tight text-titre">
+                Parcours
+              </h3>
+              <dl className="mt-5 grid grid-cols-[7.5rem_1fr] sm:grid-cols-[9rem_1fr]">
+                {SITE.chronologie.map((c) => (
+                  <div key={c.periode + c.intitule} className="contents">
+                    <dt
+                      className="border-t border-line-strong/70 py-3.5 text-[15px] text-ink-muted first:border-t-0"
+                      data-numeric
+                    >
+                      {c.periode}
+                    </dt>
+                    <dd className="border-t border-line-strong/70 py-3.5 leading-snug">
+                      {c.intitule}
+                    </dd>
+                  </div>
+                ))}
+              </dl>
             </div>
           </div>
         </Reveal>
       </section>
 
-      <section id="pratique" className="px-6 pt-20 pb-10 md:pt-28">
+      <section id="pratique" className="px-6 pt-14 pb-6 md:pt-20">
         <Reveal className="mx-auto max-w-5xl">
-          <Titre>En pratique</Titre>
-          <div className="mt-10 grid gap-5 md:grid-cols-3">
+          <h2 className="font-display text-[1.75rem] leading-tight tracking-tight text-titre md:text-[2.25rem]">
+            En pratique
+          </h2>
+          <dl className="mt-6 border-b border-line-strong/70">
             {[
               ["Durée d’une séance", `${reglages.dureeSeanceMin} minutes`],
               ["Tarif", "Communiqué au premier contact"],
               ["Remboursement", "Mutuelle · convention INAMI"],
             ].map(([k, v]) => (
-              <div key={k} className="flex flex-col gap-1.5 rounded-[20px] bg-surface px-7 py-7">
-                <span className="text-[15px] text-ink-muted">{k}</span>
-                <span className="font-display text-[1.75rem] leading-tight">{v}</span>
+              <div
+                key={k}
+                className="flex flex-col gap-1 border-t border-line-strong/70 py-3.5 sm:flex-row sm:items-baseline sm:gap-10"
+              >
+                <dt className="text-ink-muted sm:w-56 sm:shrink-0">{k}</dt>
+                <dd className="font-display text-[1.25rem] leading-tight">
+                  {v}
+                </dd>
               </div>
             ))}
-          </div>
-          <p className="mt-6 flex flex-wrap gap-x-8 gap-y-1 font-semibold">
-            <Link href="/questions" className="text-accent-text hover:underline">
-              Questions fréquentes →
-            </Link>
-          </p>
+          </dl>
+          <Link
+            href="/questions"
+            className="mt-6 inline-flex min-h-11 items-center rounded-full border border-ink/35 px-6 text-sm font-semibold transition-colors hover:border-ink"
+          >
+            Questions fréquentes →
+          </Link>
         </Reveal>
       </section>
 
@@ -298,8 +335,13 @@ export default async function Accueil() {
           <div className="mt-10 grid gap-5 md:grid-cols-2">
             {cabinets.map((c) => {
               return (
-                <article key={c.id} className="flex flex-col gap-3 rounded-[24px] bg-surface px-8 py-8">
-                  <h3 className="font-display text-[1.9rem] leading-tight">{c.nom}</h3>
+                <article
+                  key={c.id}
+                  className="flex flex-col gap-3 rounded-[24px] bg-surface px-8 py-8"
+                >
+                  <h3 className="font-display text-[1.9rem] leading-tight">
+                    {c.nom}
+                  </h3>
                   <p>{adresseCabinet(c)}</p>
                   <a
                     href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(adresseCabinet(c))}`}
@@ -320,7 +362,8 @@ export default async function Accueil() {
                 Les créneaux libres sont en ligne.
               </p>
               <p className="mt-2 text-sm text-white/90">
-                Une demande reçoit une réponse rapide, pour confirmer ou proposer un autre créneau.
+                Une demande reçoit une réponse rapide, pour confirmer ou
+                proposer un autre créneau.
               </p>
             </div>
             <Link
