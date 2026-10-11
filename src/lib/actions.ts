@@ -9,6 +9,7 @@ import { parametres } from "@/lib/parametres";
 import { montantSeanceCents, payeurDe } from "@/lib/tarifs";
 import { PALETTE_CABINETS } from "@/lib/palette";
 import { exigerSession } from "@/lib/garde";
+import { seancesARetablir } from "@/lib/factures-etablissement";
 
 /**
  * Déplace une séance sur un autre créneau, depuis le glisser-déposer de la
@@ -1000,6 +1001,39 @@ export async function annulerFactureEtablissement(f: FormData) {
       data: { factureId: null, amountCents: null },
     }),
   ]);
+
+  revalidatePath("/admin/etablissements");
+  revalidatePath("/admin/finance");
+}
+
+/**
+ * Rétablit une facture annulée par erreur : elle reprend son numéro (jamais
+ * réattribué, la numérotation reste continue) et redevient due. Une facture
+ * calculée reprend ses séances, au même tarif horaire qu'à l'émission — si
+ * elles ne correspondent plus exactement, rien ne bouge (voir
+ * seancesARetablir).
+ */
+export async function retablirFactureEtablissement(f: FormData) {
+  await exigerSession();
+  const id = texte(f, "id");
+
+  await prisma.$transaction(async (tx) => {
+    const facture = await tx.factureEtablissement.findUnique({ where: { id } });
+    if (!facture) return;
+    const seances = await seancesARetablir(facture, tx);
+    if (!seances) return;
+
+    await tx.factureEtablissement.update({ where: { id }, data: { annuleeLe: null } });
+    for (const s of seances) {
+      await tx.session.update({
+        where: { id: s.id },
+        data: {
+          factureId: id,
+          amountCents: Math.round((s.durationMin / 60) * facture.tarifHoraireCents!),
+        },
+      });
+    }
+  });
 
   revalidatePath("/admin/etablissements");
   revalidatePath("/admin/finance");

@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { TitreSection } from "@/components/tags";
 import {
   annulerFactureEtablissement,
+  retablirFactureEtablissement,
   emettreFactureEtablissement,
   enregistrerFactureEtablissementManuelle,
   marquerFacturePayee,
@@ -12,6 +13,7 @@ import { heuresFacturablesSemaine } from "@/lib/quotas";
 import { IconChevronDroite, IconChevronGauche } from "@/components/icons";
 import { BoutonEnregistrer } from "@/components/BoutonEnregistrer";
 import { OngletsFacturation } from "@/components/OngletsFacturation";
+import { seancesARetablir } from "@/lib/factures-etablissement";
 
 export const dynamic = "force-dynamic";
 
@@ -72,6 +74,17 @@ export default async function Etablissements({
       orderBy: [{ annee: "desc" }, { numero: "desc" }],
     }),
   ]);
+
+  // Factures annulées qu'on peut encore rétablir sans facturer deux fois.
+  const retablissables = new Set(
+    (
+      await Promise.all(
+        factures
+          .filter((f) => f.annuleeLe && !f.payeeLe)
+          .map(async (f) => ((await seancesARetablir(f)) ? f.id : null)),
+      )
+    ).filter((id): id is string => id !== null),
+  );
 
   const aFacturer = await Promise.all(
     cabinets.map(async (c) => {
@@ -391,6 +404,25 @@ export default async function Etablissements({
                         annuler
                       </button>
                     </form>
+                  )}
+                  {retablissables.has(f.id) && (
+                    <form action={retablirFactureEtablissement}>
+                      <input type="hidden" name="id" value={f.id} />
+                      <button
+                        type="submit"
+                        className="rounded-full border border-line-strong px-2.5 py-0.5 text-[11px] font-medium transition-colors hover:border-accent hover:text-accent-text"
+                      >
+                        rétablir
+                      </button>
+                    </form>
+                  )}
+                  {f.annuleeLe && !f.payeeLe && !retablissables.has(f.id) && (
+                    <span
+                      className="text-[11px] text-ink-muted"
+                      title="Ses séances ont été refacturées ou modifiées depuis l’annulation : la rétablir facturerait deux fois."
+                    >
+                      non rétablissable
+                    </span>
                   )}
                 </div>
 
