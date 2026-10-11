@@ -22,6 +22,7 @@ import {
   fmtJourMois,
   fmtJourMoisAn,
   fmtNomJour,
+  fmtMoisCourt,
   formatDuree,
   heuresTotales,
   isBillable,
@@ -94,6 +95,7 @@ export default async function Semaine({ searchParams }: { searchParams: Promise<
       iso: d.toISOString(),
       nom: fmtNomJour.format(d).replace(".", ""),
       numero: String(partiesJour(d).jour),
+      mois: fmtMoisCourt.format(d),
       // Un tiret plutôt qu'un « 0 min » : une journée dont la seule séance est
       // annulée à temps n'a pas zéro heure de travail, elle n'en a pas.
       total: heuresTotales(duJour) > 0 ? formatDuree(heuresTotales(duJour)) : "—",

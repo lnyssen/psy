@@ -34,7 +34,7 @@ export type SeanceGrille = {
   externe?: "A_RATTACHER" | "OCCUPE";
 };
 
-export type JourGrille = { iso: string; nom: string; numero: string; total: string; aujourdhui: boolean };
+export type JourGrille = { iso: string; nom: string; numero: string; mois: string; total: string; aujourdhui: boolean };
 
 // 92 px l'heure : à 68, un bloc de 45 minutes ne laissait pas assez de hauteur
 // au nom du patient, que le flex écrasait à zéro sous la pastille de paiement.
@@ -323,7 +323,7 @@ export function GrilleSemaine({
                   <span
                     className={`font-mono text-sm font-semibold ${j.aujourdhui ? "text-accent-text" : ""}`}
                   >
-                    {j.nom} {j.numero}
+                    {j.nom} {j.numero} {j.mois}
                   </span>
                   <span className="font-mono text-[11px] text-ink-muted" data-numeric>
                     {j.total}

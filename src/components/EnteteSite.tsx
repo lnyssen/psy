@@ -62,8 +62,8 @@ export function EnteteSite() {
       l'accueil s'en sert en marge négative pour faire passer la photo derrière,
       et une hauteur variable aurait laissé un liseré.
     */
-    <header className="sticky top-0 z-40 h-[var(--entete)] px-3 pt-4 md:px-6">
-      <div className="mx-auto flex h-full max-w-[69rem] items-center gap-2 rounded-full bg-paper/72 px-7 ring-1 ring-line/70 ring-inset backdrop-blur-2xl max-[359px]:px-4 max-md:pr-3.5 md:gap-4 md:px-10">
+    <header className="sticky top-0 z-40 h-[var(--entete)] px-3 pt-4 md:px-6 lg:px-4">
+      <div className="mx-auto flex h-full max-w-[calc(100rem+5rem)] items-center gap-2 rounded-full bg-paper/72 px-7 ring-1 ring-line/70 ring-inset backdrop-blur-2xl max-[359px]:px-4 max-md:pr-3.5 md:gap-4 md:px-10">
         <Link href="/" className="flex shrink-0 flex-col">
           <span className="font-display text-[17px] leading-[1.15] tracking-tight md:text-[20px]">
             Amandine Monsel
@@ -83,7 +83,10 @@ export function EnteteSite() {
           au-dessus du ciel clair, sous le seuil. La transparence voulue se paie
           quelque part : ici, sur la couleur du texte plutôt que sur le verre.
         */}
-        <nav aria-label="Navigation du site" className="ml-auto hidden items-center gap-1 md:flex">
+        <nav
+          aria-label="Navigation du site"
+          className="ml-auto hidden items-center gap-1 md:flex"
+        >
           {PAGES.map((p) => (
             <Link
               key={p.href}
@@ -115,7 +118,9 @@ export function EnteteSite() {
           aria-controls="menu-site"
           className="ml-auto flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-ink/35 text-ink transition-colors hover:border-ink min-[360px]:ml-0 md:hidden"
         >
-          <span className="sr-only">{ouvert ? "Fermer le menu" : "Ouvrir le menu"}</span>
+          <span className="sr-only">
+            {ouvert ? "Fermer le menu" : "Ouvrir le menu"}
+          </span>
           {ouvert ? <IconFermer /> : <IconMenu />}
         </button>
       </div>
@@ -148,7 +153,10 @@ export function EnteteSite() {
               : "opacity-0"
           }`}
         >
-          {[...PAGES, { href: "/rendez-vous", label: "Prendre rendez-vous" }].map((p) => (
+          {[
+            ...PAGES,
+            { href: "/rendez-vous", label: "Prendre rendez-vous" },
+          ].map((p) => (
             <Link
               key={p.href}
               href={p.href}

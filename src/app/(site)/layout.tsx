@@ -50,8 +50,8 @@ export default async function SiteLayout({
       <BoutonHaut />
       <CurseurRond />
 
-      <footer className="bg-bande-navy px-6 py-10 text-white">
-        <div className="mx-auto flex max-w-5xl flex-col gap-6 text-sm">
+      <footer className="bg-bande-navy px-6 md:px-10 lg:px-14 py-10 text-white">
+        <div className="mx-auto flex max-w-[100rem] flex-col gap-6 text-sm">
           <div className="grid gap-x-8 gap-y-6 sm:grid-cols-2 lg:grid-cols-4">
             {cabinets.map((c) => (
               <div key={c.id}>

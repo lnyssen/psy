@@ -24,10 +24,7 @@ const QUESTIONS: [string, string][] = [
     "Recevez-vous les adolescents ?",
     "Oui. Je reçois les enfants dès quatre ans, les adolescents et leurs parents, ainsi que les jeunes adultes.",
   ],
-  [
-    "Comment se règle la séance ?",
-    "Sur place, en espèces ou par Payconiq.",
-  ],
+  ["Comment se règle la séance ?", "Sur place, en espèces ou par Payconiq."],
   [
     "Faut-il une prescription médicale ?",
     "Pas pour une consultation privée : vous pouvez prendre rendez-vous directement. L’accès à la convention INAMI, lui, suit ses propres règles.",
@@ -43,8 +40,8 @@ export const metadata: Metadata = {
 export default function Questions() {
   return (
     <>
-      <section className="px-6 py-14 md:py-20">
-        <div className="mx-auto max-w-5xl">
+      <section className="px-6 md:px-10 lg:px-14 py-14 md:py-20">
+        <div className="mx-auto max-w-[100rem]">
           <h1 className="font-display text-4xl tracking-tight text-titre md:text-5xl">
             Questions fréquentes
           </h1>
@@ -54,12 +51,14 @@ export default function Questions() {
         </div>
       </section>
 
-      <section className="bg-bande-claire px-6 py-16 md:py-20">
-        <dl className="mx-auto grid max-w-5xl gap-px overflow-hidden rounded-[20px] bg-line">
+      <section className="bg-bande-claire px-6 md:px-10 lg:px-14 py-16 md:py-20">
+        <dl className="mx-auto grid max-w-[100rem] gap-px overflow-hidden rounded-[20px] bg-line">
           {QUESTIONS.map(([q, r]) => (
             <div key={q} className="bg-paper px-7 py-6">
               <dt className="text-lg font-semibold">{q}</dt>
-              <dd className="mt-2 max-w-2xl leading-relaxed text-ink-muted">{r}</dd>
+              <dd className="mt-2 max-w-2xl leading-relaxed text-ink-muted">
+                {r}
+              </dd>
             </div>
           ))}
         </dl>

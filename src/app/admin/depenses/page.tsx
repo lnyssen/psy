@@ -3,7 +3,7 @@ import { prisma } from "@/lib/db";
 import { CabinetTag } from "@/components/tags";
 import { cabinetsActifs } from "@/lib/cabinets";
 import { enregistrerDepense, supprimerDepense } from "@/lib/actions";
-import { euros, fmtDateCourte, partiesJour } from "@/lib/format";
+import { euros, fmtDateCourte, parLibelle, partiesJour } from "@/lib/format";
 import { IconChevronDroite, IconChevronGauche } from "@/components/icons";
 import { DepensePhotoOCR } from "@/components/DepensePhotoOCR";
 import { modifierDepense } from "@/lib/depense-actions";
@@ -59,7 +59,7 @@ export default async function Depenses({
       orderBy: { date: "desc" },
     }),
     cabinetsActifs(),
-    prisma.categorieDepense.findMany({ orderBy: { ordre: "asc" } }),
+    prisma.categorieDepense.findMany().then((c) => c.sort(parLibelle)),
     prisma.depense.findMany({
       where: { fournisseur: { not: null } },
       select: { fournisseur: true },

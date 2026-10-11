@@ -65,7 +65,10 @@ export default async function Accueil() {
         porte la gouttière, le bloc intérieur n'en ajoute pas. C'est ce doublon
         qui décalait le titre de vingt-quatre pixels vers la droite.
       */}
-      <section data-fond-sombre className="relative isolate -mt-[var(--entete)] flex min-h-[36rem] items-end overflow-hidden px-6 md:min-h-[44rem]">
+      <section
+        data-fond-sombre
+        className="relative isolate -mt-[var(--entete)] flex min-h-[36rem] items-end overflow-hidden px-6 md:px-10 lg:px-14 md:min-h-[44rem]"
+      >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src="/images/phare.jpg"
@@ -117,16 +120,16 @@ export default async function Accueil() {
         {/* Le haut du bloc réserve la hauteur de la pastille : sur téléphone le
             texte dépasse la hauteur minimale de la section et remontait sinon
             sous l'en-tête, qui coupait le sur-titre. */}
-        <div className="hero-cascade mx-auto w-full max-w-5xl pt-[calc(var(--entete)+2rem)] pb-16 text-white md:grid md:grid-cols-[1fr_auto] md:gap-x-10 md:pt-[calc(var(--entete)+3rem)] md:pb-24">
-          <p className="text-[11px] font-bold tracking-[0.2em] text-white/85 uppercase md:col-start-1">
+        <div className="hero-cascade mx-auto w-full max-w-[100rem] pt-[calc(var(--entete)+2rem)] pb-16 text-white md:pt-[calc(var(--entete)+3rem)] md:pb-24">
+          <p className="text-[11px] font-bold tracking-[0.2em] text-white/85 uppercase">
             {SITE.titre}
           </p>
-          <h1 className="mt-5 max-w-3xl font-display md:col-start-1 text-[3.25rem] leading-[0.95] tracking-[-0.03em] md:text-[5.5rem]">
+          <h1 className="mt-5 max-w-3xl font-display text-[3.25rem] leading-[0.95] tracking-[-0.03em] md:text-[5.5rem]">
             Amandine
             <br />
             Monsel
           </h1>
-          <p className="mt-8 flex flex-wrap items-center gap-x-5 gap-y-2 text-lg font-semibold sm:gap-x-3 md:col-start-1">
+          <p className="mt-8 flex flex-wrap items-center gap-x-5 gap-y-2 text-lg font-semibold sm:gap-x-3">
             {SITE.publics.map((p, i) => (
               <span key={p} className="flex items-center gap-3">
                 {i > 0 && (
@@ -139,10 +142,10 @@ export default async function Accueil() {
               </span>
             ))}
           </p>
-          <p className="mt-5 max-w-lg text-lg leading-relaxed text-white/90 md:col-start-1">
+          <p className="mt-5 max-w-lg text-lg leading-relaxed text-white/90">
             {SITE.accroche}
           </p>
-          <div className="mt-9 flex flex-wrap items-center justify-end gap-3 md:col-start-2 md:row-start-1 md:row-span-4 md:mt-0 md:flex-col md:items-end md:justify-end md:self-end">
+          <div className="mt-9 flex flex-wrap items-center gap-3">
             <Link
               href="/rendez-vous"
               className="rounded-full bg-accent px-7 py-3.5 text-sm font-semibold text-accent-contrast transition-colors hover:bg-accent-hover"
@@ -162,9 +165,9 @@ export default async function Accueil() {
 
       <section
         aria-label="En bref"
-        className="bg-bande-violette px-6 py-12 text-nuit md:py-14"
+        className="bg-bande-violette px-6 md:px-10 lg:px-14 py-12 text-nuit md:py-14"
       >
-        <Reveal className="mx-auto max-w-5xl">
+        <Reveal className="mx-auto max-w-[100rem]">
           <p className="max-w-3xl font-display text-[1.6rem] leading-snug tracking-tight md:text-[2.25rem]">
             Des consultations en français et en anglais, à{" "}
             {cabinets.map((c) => c.nom).join(" et ")}.
@@ -172,8 +175,8 @@ export default async function Accueil() {
         </Reveal>
       </section>
 
-      <section id="pour-qui" className="px-6 py-20 md:py-28">
-        <Reveal className="mx-auto max-w-5xl">
+      <section id="pour-qui" className="px-6 md:px-10 lg:px-14 py-20 md:py-28">
+        <Reveal className="mx-auto max-w-[100rem]">
           <Titre>Pour qui ?</Titre>
           <div className="mt-10 grid gap-5 md:grid-cols-3">
             {SITE.publicsDetail.map((p) => (
@@ -209,8 +212,8 @@ export default async function Accueil() {
         </Reveal>
       </section>
 
-      <section id="seance" className="px-6 pb-20 md:pb-28">
-        <Reveal className="mx-auto max-w-5xl">
+      <section id="seance" className="px-6 md:px-10 lg:px-14 pb-20 md:pb-28">
+        <Reveal className="mx-auto max-w-[100rem]">
           <div className="flex flex-col gap-12 rounded-[32px] bg-bande-navy px-8 py-12 text-white md:flex-row md:gap-14 md:px-14 md:py-16">
             <div className="flex flex-col items-start gap-4 md:w-1/3">
               <h2 className="font-display text-[2rem] leading-[1.05] tracking-tight md:text-[3rem]">
@@ -254,8 +257,11 @@ export default async function Accueil() {
         d'elle à la première personne. Servi à 500 px pour un affichage qui ne
         dépasse pas 260, pour ne pas l'agrandir au-delà du fichier d'origine.
       */}
-      <section id="approche" className="bg-bande-claire px-6 py-20 md:py-28">
-        <Reveal className="mx-auto grid max-w-5xl gap-12 lg:grid-cols-[16rem_1fr] lg:gap-16">
+      <section
+        id="approche"
+        className="bg-bande-claire px-6 md:px-10 lg:px-14 py-20 md:py-28"
+      >
+        <Reveal className="mx-auto grid max-w-[100rem] gap-12 lg:grid-cols-[16rem_1fr] lg:gap-16">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/images/amandine.jpg"
@@ -298,8 +304,11 @@ export default async function Accueil() {
         </Reveal>
       </section>
 
-      <section id="pratique" className="px-6 pt-14 pb-6 md:pt-20">
-        <Reveal className="mx-auto max-w-5xl">
+      <section
+        id="pratique"
+        className="px-6 md:px-10 lg:px-14 pt-14 pb-6 md:pt-20"
+      >
+        <Reveal className="mx-auto max-w-[100rem]">
           <h2 className="font-display text-[1.75rem] leading-tight tracking-tight text-titre md:text-[2.25rem]">
             En pratique
           </h2>
@@ -329,8 +338,8 @@ export default async function Accueil() {
         </Reveal>
       </section>
 
-      <section id="lieux" className="px-6 py-14 md:py-20">
-        <Reveal className="mx-auto max-w-5xl">
+      <section id="lieux" className="px-6 md:px-10 lg:px-14 py-14 md:py-20">
+        <Reveal className="mx-auto max-w-[100rem]">
           <Titre>Deux cabinets</Titre>
           <div className="mt-10 grid gap-5 md:grid-cols-2">
             {cabinets.map((c) => {

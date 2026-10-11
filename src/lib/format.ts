@@ -183,6 +183,7 @@ export const fmtJourCourt = new Intl.DateTimeFormat(LOCALE, {
   timeZone: FUSEAU,
 });
 export const fmtNomJour = new Intl.DateTimeFormat(LOCALE, { weekday: "short", timeZone: FUSEAU });
+export const fmtMoisCourt = new Intl.DateTimeFormat(LOCALE, { month: "short", timeZone: FUSEAU });
 export const fmtJourMois = new Intl.DateTimeFormat(LOCALE, {
   day: "numeric",
   month: "short",
@@ -376,3 +377,9 @@ export function numeroNational(saisie: string): string | null {
   if (!valide) return null;
   return `${chiffres.slice(0, 6)}-${chiffres.slice(6, 9)}.${chiffres.slice(9)}`;
 }
+
+// Ordre alphabétique français : « Électricité » se range avec les E, et la
+// casse ne compte pas.
+const collationFr = new Intl.Collator("fr", { sensitivity: "base", numeric: true });
+export const parLibelle = (a: { libelle: string }, b: { libelle: string }) =>
+  collationFr.compare(a.libelle, b.libelle);

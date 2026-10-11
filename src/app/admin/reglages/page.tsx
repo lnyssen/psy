@@ -9,7 +9,7 @@ import {
   supprimerCategorieDepense,
   supprimerTarif,
 } from "@/lib/actions";
-import { euros } from "@/lib/format";
+import { euros, parLibelle } from "@/lib/format";
 import { Horaires } from "@/components/Horaires";
 import {
   Identite,
@@ -43,7 +43,7 @@ export default async function Reglages({
   ] = await Promise.all([
     prisma.cabinet.findMany({ orderBy: { ordre: "asc" } }),
     prisma.tarif.findMany({ orderBy: { ordre: "asc" } }),
-    prisma.categorieDepense.findMany({ orderBy: { ordre: "asc" } }),
+    prisma.categorieDepense.findMany().then((c) => c.sort(parLibelle)),
     prisma.session.groupBy({ by: ["cabinetId"], _count: { _all: true } }),
     prisma.depense.groupBy({ by: ["categorieId"], _count: { _all: true } }),
     prisma.disponibilite.findMany(),
