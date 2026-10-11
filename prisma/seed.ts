@@ -21,6 +21,23 @@ loadEnv({ path: ".env" });
 
 const connectionString = process.env.DIRECT_URL ?? process.env.DATABASE_URL;
 if (!connectionString) throw new Error("DIRECT_URL ou DATABASE_URL est requise.");
+
+// Ce script commence par vider toutes les tables. Il ne tourne donc que sur
+// une base locale, et seulement sur demande explicite :
+//   SEED_DEMO=1 npx tsx prisma/seed.ts
+const hote = (() => {
+  try {
+    return new URL(connectionString).hostname;
+  } catch {
+    return "";
+  }
+})();
+if (process.env.SEED_DEMO !== "1" || !["localhost", "127.0.0.1", "::1", ""].includes(hote)) {
+  throw new Error(
+    "Seed de démonstration refusé : il efface toutes les données. " +
+      "Réservé à une base locale, avec SEED_DEMO=1.",
+  );
+}
 const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString }) });
 
 const DUREE = 45;
