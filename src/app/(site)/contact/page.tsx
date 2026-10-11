@@ -25,7 +25,7 @@ export default async function Contact() {
         <h1 className="font-display text-4xl tracking-tight text-titre">Contact</h1>
         <p className="mt-4 max-w-2xl text-lg leading-relaxed text-ink-muted">
           Pour une demande de rendez-vous, la{" "}
-          <Link href="/rendez-vous" className="text-accent-text hover:underline">
+          <Link href="/rendez-vous" className="text-accent-text underline underline-offset-4">
             page dédiée
           </Link>{" "}
           est plus rapide : vous y voyez les créneaux libres. Pour tout le reste, écrivez ou

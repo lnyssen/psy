@@ -31,6 +31,12 @@ export default async function SiteLayout({
 
   return (
     <div className="grain flex min-h-screen flex-col">
+      <a
+        href="#contenu"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[70] focus:rounded-full focus:bg-paper focus:px-5 focus:py-3 focus:text-sm focus:font-semibold focus:text-ink focus:ring-2 focus:ring-accent"
+      >
+        Aller au contenu
+      </a>
       <EnteteSite />
 
       {/*
@@ -38,7 +44,9 @@ export default async function SiteLayout({
         largeur et sa propre bande de couleur. C'est ce qui permet l'alternance
         d'aplats pleine largeur, impossible dans un conteneur unique centré.
       */}
-      <main className="flex-1">{children}</main>
+      <main id="contenu" tabIndex={-1} className="flex-1 outline-none">
+        {children}
+      </main>
       <BoutonHaut />
       <CurseurRond />
 
@@ -48,7 +56,18 @@ export default async function SiteLayout({
             {cabinets.map((c) => (
               <div key={c.id}>
                 <p className="font-semibold">{c.nom}</p>
-                <p className="mt-1 text-white/70">{adresseCabinet(c)}</p>
+                <a
+                  href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(adresseCabinet(c))}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-1 inline-block py-1.5 text-white/70 underline underline-offset-4 hover:text-white"
+                >
+                  {adresseCabinet(c)}
+                  <span className="sr-only">
+                    {" "}
+                    (ouvre Google Maps dans un nouvel onglet)
+                  </span>
+                </a>
               </div>
             ))}
             <div>
@@ -56,7 +75,7 @@ export default async function SiteLayout({
               <p className="mt-1">
                 <a
                   href={`tel:${SITE.telephoneLien}`}
-                  className="-my-2 inline-block py-2 text-white/70 hover:text-white"
+                  className="inline-block py-1.5 text-white/70 hover:text-white"
                   data-numeric
                 >
                   {SITE.telephone}
@@ -65,7 +84,7 @@ export default async function SiteLayout({
               <p>
                 <a
                   href={`mailto:${SITE.email}`}
-                  className="-my-2 inline-block py-2 text-white/70 hover:text-white"
+                  className="inline-block py-1.5 text-white/70 hover:text-white"
                 >
                   {SITE.email}
                 </a>
@@ -75,7 +94,7 @@ export default async function SiteLayout({
                   href={SITE.psybru}
                   target="_blank"
                   rel="noreferrer"
-                  className="-my-2 inline-block py-2 text-white/70 underline underline-offset-4 hover:text-white"
+                  className="inline-block py-1.5 text-white/70 underline underline-offset-4 hover:text-white"
                 >
                   Ma fiche sur PsyBru
                 </a>
@@ -89,7 +108,7 @@ export default async function SiteLayout({
                     {n.nom}{" "}
                     <a
                       href={`tel:${n.lien}`}
-                      className="-my-1 inline-block min-w-11 py-2.5 font-medium text-white hover:underline"
+                      className="inline-block min-w-11 py-1.5 font-medium text-white hover:underline"
                       data-numeric
                     >
                       {n.affichage}

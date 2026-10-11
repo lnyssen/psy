@@ -338,6 +338,17 @@ time,
 }
 
 /*
+ * Sur un fond sombre ou mauve, le contour de focus mauve disparaît (moins de
+ * 3:1). Il passe au blanc dans le bandeau d'ouverture, les aplats bleu nuit
+ * (première séance, pied de page) et les aplats mauves.
+ */
+[data-fond-sombre] :focus-visible,
+.bg-bande-navy :focus-visible,
+.bg-accent :focus-visible {
+  outline-color: #ffffff;
+}
+
+/*
  * Couleurs de cabinet. Elles viennent de la base et arrivent en propriétés
  * personnalisées plutôt qu'en styles figés : le thème sombre peut ainsi les
  * réinterpréter, là où un style en ligne se serait imposé aux deux thèmes.

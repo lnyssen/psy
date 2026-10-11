@@ -620,6 +620,7 @@ export async function enregistrerDisponibilite(f: FormData) {
   }
   rafraichirTout();
   revalidatePath("/rendez-vous");
+  revalidatePath("/");
 }
 
 export async function supprimerDisponibilite(f: FormData) {
@@ -629,6 +630,7 @@ export async function supprimerDisponibilite(f: FormData) {
   await prisma.disponibilite.delete({ where: { id } });
   rafraichirTout();
   revalidatePath("/rendez-vous");
+  revalidatePath("/");
 }
 
 /** Congés et absences. Se soustraient des créneaux proposés. */
@@ -675,22 +677,36 @@ export async function enregistrerParametres(f: FormData) {
     return Number.isFinite(n) && n >= min && n <= max ? Math.round(n) : defaut;
   };
 
-  const data = {
-    dureeSeanceMin: entier("dureeSeanceMin", 15, 240, 45),
-    battementMin: entier("battementMin", 0, 120, 0),
-    trajetMin: entier("trajetMin", 0, 180, 30),
-    pasMin: entier("pasMin", 5, 120, 15),
-    horizonSemaines: entier("horizonSemaines", 1, 26, 4),
-    chainerSeances: f.get("chainerSeances") === "on",
-    numeroEntreprise: texte(f, "numeroEntreprise") || null,
-    numeroInami: texte(f, "numeroInami") || null,
-    numeroVisa: texte(f, "numeroVisa") || null,
-    numeroCommission: texte(f, "numeroCommission") || null,
-    iban: texte(f, "iban") || null,
-    delaiPaiementJours: entier("delaiPaiementJours", 0, 180, 30),
-    adresseSiege: texte(f, "adresseSiege") || null,
-    mentionLegale: texte(f, "mentionLegale") || null,
-  };
+  // La page de réglages compte plusieurs formulaires (rythme, identité,
+  // rendez-vous en ligne) qui écrivent dans la même ligne : chacun annonce son
+  // groupe et n'écrit que ses propres champs, sans jamais remettre à zéro ceux
+  // d'un autre.
+  const groupe = texte(f, "groupe");
+  const data: Record<string, unknown> =
+    groupe === "rdv"
+      ? {
+          rdvEnLigne: f.get("rdvEnLigne") === "on",
+          rdvMessage: texte(f, "rdvMessage") || null,
+        }
+      : groupe === "identite"
+        ? {
+            numeroEntreprise: texte(f, "numeroEntreprise") || null,
+            numeroInami: texte(f, "numeroInami") || null,
+            numeroVisa: texte(f, "numeroVisa") || null,
+            numeroCommission: texte(f, "numeroCommission") || null,
+            iban: texte(f, "iban") || null,
+            delaiPaiementJours: entier("delaiPaiementJours", 0, 180, 30),
+            adresseSiege: texte(f, "adresseSiege") || null,
+            mentionLegale: texte(f, "mentionLegale") || null,
+          }
+        : {
+            dureeSeanceMin: entier("dureeSeanceMin", 15, 240, 45),
+            battementMin: entier("battementMin", 0, 120, 0),
+            trajetMin: entier("trajetMin", 0, 180, 30),
+            pasMin: entier("pasMin", 5, 120, 15),
+            horizonSemaines: entier("horizonSemaines", 1, 26, 4),
+            chainerSeances: f.get("chainerSeances") === "on",
+          };
 
   await prisma.parametres.upsert({
     where: { id: "global" },

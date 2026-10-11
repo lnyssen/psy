@@ -65,7 +65,7 @@ export default async function Accueil() {
         porte la gouttière, le bloc intérieur n'en ajoute pas. C'est ce doublon
         qui décalait le titre de vingt-quatre pixels vers la droite.
       */}
-      <section className="relative isolate -mt-[var(--entete)] flex min-h-[36rem] items-end overflow-hidden px-6 md:min-h-[44rem]">
+      <section data-fond-sombre className="relative isolate -mt-[var(--entete)] flex min-h-[36rem] items-end overflow-hidden px-6 md:min-h-[44rem]">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src="/images/phare.jpg"
@@ -359,18 +359,21 @@ export default async function Accueil() {
           <div className="mt-14 flex flex-col items-start gap-6 rounded-[32px] bg-accent px-8 py-10 text-accent-contrast md:flex-row md:items-center md:justify-between md:px-14">
             <div>
               <p className="font-display text-2xl leading-tight md:text-3xl">
-                Les créneaux libres sont en ligne.
+                {reglages.rdvEnLigne
+                  ? "Les créneaux libres sont en ligne."
+                  : "Les rendez-vous en ligne sont fermés."}
               </p>
               <p className="mt-2 text-sm text-white/90">
-                Une demande reçoit une réponse rapide, pour confirmer ou
-                proposer un autre créneau.
+                {reglages.rdvEnLigne
+                  ? "Une demande reçoit une réponse rapide, pour confirmer ou proposer un autre créneau."
+                  : "Vous pouvez joindre le cabinet par téléphone ou par e-mail."}
               </p>
             </div>
             <Link
-              href="/rendez-vous"
+              href={reglages.rdvEnLigne ? "/rendez-vous" : "/contact"}
               className="shrink-0 rounded-full bg-white px-7 py-3.5 text-sm font-semibold text-accent transition-opacity hover:opacity-90"
             >
-              Prendre rendez-vous
+              {reglages.rdvEnLigne ? "Prendre rendez-vous" : "Nous contacter"}
             </Link>
           </div>
         </Reveal>

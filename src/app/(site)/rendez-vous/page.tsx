@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { prisma } from "@/lib/db";
 import { creneauxDisponibles } from "@/lib/creneaux";
 import { parametres } from "@/lib/parametres";
+import { SITE } from "@/lib/site";
 import { debutDeJour } from "@/lib/format";
 import { synchroniser } from "@/lib/google-sync";
 import { PriseRdv } from "@/components/PriseRdv";
@@ -29,6 +30,39 @@ export default async function RendezVous({
     synchroniser({ maxAgeMs: 120_000 }).catch(() => null),
     new Promise((r) => setTimeout(r, 3000)),
   ]);
+
+  const reglagesRdv = await parametres();
+  if (!reglagesRdv.rdvEnLigne) {
+    return (
+      <div className="px-6 py-14 md:py-20">
+        <div className="mx-auto max-w-3xl">
+          <h1 className="font-display text-4xl tracking-tight text-titre">Prendre rendez-vous</h1>
+          <p className="mt-6 max-w-2xl text-lg leading-relaxed">
+            {reglagesRdv.rdvMessage ||
+              "La prise de rendez-vous en ligne est fermée pour le moment."}
+          </p>
+          <p className="mt-4 max-w-2xl leading-relaxed text-ink-muted">
+            Vous pouvez joindre le cabinet par téléphone ou par e-mail.
+          </p>
+          <div className="mt-8 flex flex-wrap gap-3">
+            <a
+              href={`tel:${SITE.telephoneLien}`}
+              className="rounded-full bg-accent px-7 py-3.5 text-sm font-semibold text-accent-contrast transition-colors hover:bg-accent-hover"
+              data-numeric
+            >
+              {SITE.telephone}
+            </a>
+            <a
+              href={`mailto:${SITE.email}`}
+              className="rounded-full border border-ink/35 px-7 py-3.5 text-sm font-semibold transition-colors hover:border-ink"
+            >
+              {SITE.email}
+            </a>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const cabinets = await prisma.cabinet.findMany({
     where: { actif: true, publie: true },

@@ -89,7 +89,7 @@ export function PriseRdv({
                 }`}
               >
                 <span className="font-semibold">{c.nom}</span>
-                <span className="mt-0.5 text-xs opacity-80">{c.adresse}</span>
+                <span className="mt-0.5 text-xs opacity-90">{c.adresse}</span>
               </Link>
             );
           })}
@@ -122,15 +122,16 @@ export function PriseRdv({
               Vos coordonnées
             </h2>
             <div className="grid gap-3 sm:grid-cols-2">
-              <input name="firstName" placeholder="Prénom" required className={champ} />
-              <input name="lastName" placeholder="Nom" required className={champ} />
-              <input name="email" type="email" placeholder="Adresse électronique (facultatif)" className={champ} />
-              <input name="phone" type="tel" placeholder="Téléphone" required className={champ} />
+              <input name="firstName" placeholder="Prénom" aria-label="Prénom" autoComplete="given-name" required className={champ} />
+              <input name="lastName" placeholder="Nom" aria-label="Nom" autoComplete="family-name" required className={champ} />
+              <input name="email" type="email" placeholder="Adresse électronique (facultatif)" aria-label="Adresse électronique (facultatif)" autoComplete="email" className={champ} />
+              <input name="phone" type="tel" placeholder="Téléphone" aria-label="Téléphone" autoComplete="tel" required className={champ} />
             </div>
             <textarea
               name="message"
               rows={3}
               placeholder="Un mot, si vous le souhaitez (facultatif)"
+              aria-label="Un mot, si vous le souhaitez (facultatif)"
               className="w-full resize-y rounded-[14px] border border-line bg-surface px-4 py-3 text-sm"
             />
             <p className="text-xs leading-relaxed text-ink-muted">

@@ -1,13 +1,17 @@
 import Link from "next/link";
-import { ChampNumeroNational } from "@/components/ChampNumeroNational";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
-import { CabinetTag, EtatPaiement, RegimeTag, StatutSeance } from "@/components/tags";
+import {
+  CabinetTag,
+  EtatPaiement,
+  RegimeTag,
+  StatutSeance,
+} from "@/components/tags";
 import { BoutonEnregistrer } from "@/components/BoutonEnregistrer";
 import { Notes } from "@/components/Notes";
 import { Encaisser } from "@/components/Encaisser";
 import { RecuInami } from "@/components/RecuInami";
-import { RegimeEtTarif } from "@/components/RegimeEtTarif";
+import { FormulairePatient } from "@/components/FormulairePatient";
 import { montantSeanceCents, payeurDe } from "@/lib/tarifs";
 import { AnnulerAbsence } from "@/components/AnnulerAbsence";
 import { AnnulerSeance } from "@/components/AnnulerSeance";
@@ -31,7 +35,8 @@ export const dynamic = "force-dynamic";
 
 const champ =
   "w-full rounded-full border border-line bg-surface px-3.5 py-2 text-sm placeholder:text-ink-muted/60";
-const libelleChamp = "block text-[11px] font-semibold tracking-[0.1em] text-ink-muted uppercase";
+const libelleChamp =
+  "block text-[11px] font-semibold tracking-[0.1em] text-ink-muted uppercase";
 
 function age(naissance: Date | null) {
   if (!naissance) return null;
@@ -39,7 +44,11 @@ function age(naissance: Date | null) {
   return Math.floor(diff / (365.25 * 24 * 3600 * 1000));
 }
 
-export default async function FichePatient({ params }: { params: Promise<{ id: string }> }) {
+export default async function FichePatient({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
   const { id } = await params;
   const patient = await prisma.patient.findUnique({
     where: { id },
@@ -57,7 +66,13 @@ export default async function FichePatient({ params }: { params: Promise<{ id: s
   const tarifs = await prisma.tarif.findMany({
     where: { OR: [{ actif: true }, { id: patient.tarifId ?? "aucun" }] },
     orderBy: { ordre: "asc" },
-    select: { id: true, libelle: true, amountCents: true, regime: true, parDefaut: true },
+    select: {
+      id: true,
+      libelle: true,
+      amountCents: true,
+      regime: true,
+      parDefaut: true,
+    },
   });
   const montant = montantSeanceCents(patient);
   const payeur = payeurDe(patient.scheme);
@@ -72,17 +87,27 @@ export default async function FichePatient({ params }: { params: Promise<{ id: s
   const facturables = patient.sessions.filter((s) => isBillable(s.status));
   // Le montant d'une séance impayée n'est figé qu'à l'encaissement : d'ici là, c'est
   // le tarif de la fiche qui le dit.
-  const valeur = (s: { amountCents: number | null }) => s.amountCents ?? montant ?? 0;
-  const du = facturables.filter((s) => s.paymentStatus !== "PAID").reduce((n, s) => n + valeur(s), 0);
-  const encaisse = facturables.filter((s) => s.paymentStatus === "PAID").reduce((n, s) => n + valeur(s), 0);
+  const valeur = (s: { amountCents: number | null }) =>
+    s.amountCents ?? montant ?? 0;
+  const du = facturables
+    .filter((s) => s.paymentStatus !== "PAID")
+    .reduce((n, s) => n + valeur(s), 0);
+  const encaisse = facturables
+    .filter((s) => s.paymentStatus === "PAID")
+    .reduce((n, s) => n + valeur(s), 0);
 
   // Plafond INAMI de la convention de première ligne : huit séances par
   // année civile, vingt pour les 16-25 ans. Ne s'affiche que pour un patient
   // conventionné — un patient privé n'y est pas soumis.
   const anneeCourante = new Date().getFullYear();
-  const plafondInami = patient.scheme === "CONVENTIONNE" ? plafondConventionne(patient.birthDate) : null;
+  const plafondInami =
+    patient.scheme === "CONVENTIONNE"
+      ? plafondConventionne(patient.birthDate)
+      : null;
   const utiliseesInami =
-    plafondInami !== null ? seancesConventionneAnnee(patient.sessions, anneeCourante) : null;
+    plafondInami !== null
+      ? seancesConventionneAnnee(patient.sessions, anneeCourante)
+      : null;
   // L'alerte se lève avant de créer la séance de trop, pas après : on compte
   // aussi les rendez-vous déjà posés pour le reste de l'année.
   const maintenant = new Date();
@@ -95,7 +120,8 @@ export default async function FichePatient({ params }: { params: Promise<{ id: s
         ).length
       : 0;
   const quotaAtteint =
-    plafondInami !== null && (utiliseesInami ?? 0) + prevuesInami >= plafondInami;
+    plafondInami !== null &&
+    (utiliseesInami ?? 0) + prevuesInami >= plafondInami;
 
   // Notes de séance : déchiffrées ici, côté serveur, pour ne jamais faire
   // voyager la clé. Une note illisible (clé changée) n'empêche pas la page de
@@ -105,7 +131,10 @@ export default async function FichePatient({ params }: { params: Promise<{ id: s
   for (const s of patient.sessions) {
     if (!s.note) continue;
     try {
-      notesSeances.set(s.id, notesDisponibles ? dechiffrer(s.note, "NOTES_KEY") : null);
+      notesSeances.set(
+        s.id,
+        notesDisponibles ? dechiffrer(s.note, "NOTES_KEY") : null,
+      );
     } catch {
       notesSeances.set(s.id, null);
     }
@@ -113,8 +142,14 @@ export default async function FichePatient({ params }: { params: Promise<{ id: s
 
   const coordonnees = [
     { t: "Téléphone", v: patient.phone, mono: true },
-    { t: "Mère", v: [patient.phoneMother, patient.emailMother].filter(Boolean).join(" · ") },
-    { t: "Père", v: [patient.phoneFather, patient.emailFather].filter(Boolean).join(" · ") },
+    {
+      t: "Mère",
+      v: [patient.phoneMother, patient.emailMother].filter(Boolean).join(" · "),
+    },
+    {
+      t: "Père",
+      v: [patient.phoneFather, patient.emailFather].filter(Boolean).join(" · "),
+    },
     { t: "E-mail", v: patient.email },
     {
       t: "Adresse",
@@ -124,7 +159,9 @@ export default async function FichePatient({ params }: { params: Promise<{ id: s
     },
     {
       t: "Naissance",
-      v: patient.birthDate ? `${fmtJourMoisAn.format(patient.birthDate)} (${age(patient.birthDate)} ans)` : null,
+      v: patient.birthDate
+        ? `${fmtJourMoisAn.format(patient.birthDate)} (${age(patient.birthDate)} ans)`
+        : null,
       mono: true,
     },
     { t: "N° national", v: patient.nationalNumber, mono: true },
@@ -142,13 +179,18 @@ export default async function FichePatient({ params }: { params: Promise<{ id: s
 
   return (
     <div className="flex flex-col gap-8">
-      <Link href="/admin/patients" className="text-sm text-ink-muted transition-colors hover:text-accent-text">
+      <Link
+        href="/admin/patients"
+        className="text-sm text-ink-muted transition-colors hover:text-accent-text"
+      >
         ← Tous les patients
       </Link>
 
       <header className="flex flex-wrap items-center gap-x-5 gap-y-3">
         <div className="flex-1">
-          <h1 className="font-display text-3xl tracking-tight">{nomComplet(patient)}</h1>
+          <h1 className="font-display text-3xl tracking-tight">
+            {nomComplet(patient)}
+          </h1>
           <p className="mt-2 flex flex-wrap items-center gap-2">
             <RegimeTag scheme={patient.scheme} />
             {patient.cabinet && <CabinetTag cabinet={patient.cabinet} />}
@@ -167,7 +209,12 @@ export default async function FichePatient({ params }: { params: Promise<{ id: s
           <input type="hidden" name="patientId" value={patient.id} />
           <label>
             <span className={libelleChamp}>Cabinet</span>
-            <select name="cabinetId" required defaultValue={patient.cabinetId ?? ""} className={`mt-1 ${champ}`}>
+            <select
+              name="cabinetId"
+              required
+              defaultValue={patient.cabinetId ?? ""}
+              className={`mt-1 ${champ}`}
+            >
               <option value="" disabled>
                 Choisir…
               </option>
@@ -180,11 +227,22 @@ export default async function FichePatient({ params }: { params: Promise<{ id: s
           </label>
           <label>
             <span className={libelleChamp}>Date</span>
-            <input name="date" type="date" required className={`mt-1 ${champ}`} />
+            <input
+              name="date"
+              type="date"
+              required
+              className={`mt-1 ${champ}`}
+            />
           </label>
           <label>
             <span className={libelleChamp}>Heure</span>
-            <input name="heure" type="time" required defaultValue="09:00" className={`mt-1 ${champ}`} />
+            <input
+              name="heure"
+              type="time"
+              required
+              defaultValue="09:00"
+              className={`mt-1 ${champ}`}
+            />
           </label>
           <label>
             <span className={libelleChamp}>Jusqu’au (optionnel)</span>
@@ -197,8 +255,9 @@ export default async function FichePatient({ params }: { params: Promise<{ id: s
           {quotaAtteint && (
             <p className="rounded-[10px] border border-due/40 bg-due-soft px-4 py-2.5 text-sm text-due sm:col-span-2 lg:col-span-4">
               Plafond INAMI {anneeCourante} atteint : {utiliseesInami} séance
-              {(utiliseesInami ?? 0) > 1 ? "s" : ""} faite{(utiliseesInami ?? 0) > 1 ? "s" : ""} et{" "}
-              {prevuesInami} prévue{prevuesInami > 1 ? "s" : ""}, pour {plafondInami} remboursées.
+              {(utiliseesInami ?? 0) > 1 ? "s" : ""} faite
+              {(utiliseesInami ?? 0) > 1 ? "s" : ""} et {prevuesInami} prévue
+              {prevuesInami > 1 ? "s" : ""}, pour {plafondInami} remboursées.
               Une séance de plus ne sera pas prise en charge par la convention.
             </p>
           )}
@@ -214,7 +273,10 @@ export default async function FichePatient({ params }: { params: Promise<{ id: s
                 <dt className="text-[11px] font-semibold tracking-[0.1em] text-ink-muted uppercase">
                   {c.t}
                 </dt>
-                <dd className={`mt-0.5 text-sm ${c.mono ? "font-mono" : ""}`} data-numeric>
+                <dd
+                  className={`mt-0.5 text-sm ${c.mono ? "font-mono" : ""}`}
+                  data-numeric
+                >
                   {c.v || <span className="text-ink-muted">—</span>}
                 </dd>
               </div>
@@ -222,126 +284,19 @@ export default async function FichePatient({ params }: { params: Promise<{ id: s
           </dl>
         </div>
 
-        <details className="mt-4 border-t border-line pt-3">
-          <summary className="w-fit cursor-pointer text-sm font-medium text-ink-muted transition-colors hover:text-accent-text">
+        <details className="mt-4 border-t border-line pt-4">
+          <summary className="w-fit cursor-pointer list-none rounded-full border border-line-strong px-5 py-2 text-sm font-medium transition-colors hover:border-accent hover:text-accent-text">
             Modifier la fiche
           </summary>
-          <form
-            action={enregistrerPatient}
-            className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3"
-          >
-            <input type="hidden" name="id" value={patient.id} />
-            <label>
-              <span className={libelleChamp}>Prénom</span>
-              <input name="firstName" defaultValue={patient.firstName} required className={`mt-1 ${champ}`} />
-            </label>
-            <label>
-              <span className={libelleChamp}>Nom</span>
-              <input name="lastName" defaultValue={patient.lastName} required className={`mt-1 ${champ}`} />
-            </label>
-            <RegimeEtTarif
+          <div className="mt-5">
+            <FormulairePatient
+              action={enregistrerPatient}
+              patient={patient}
               tarifs={tarifs}
-              regimeInitial={patient.scheme}
-              tarifInitial={patient.tarifId}
-              ancienMontantCents={patient.feeCents}
+              cabinets={cabinets}
+              libelleBouton="Enregistrer la fiche"
             />
-            <label>
-              <span className={libelleChamp}>Téléphone</span>
-              <input name="phone" type="tel" defaultValue={patient.phone ?? ""} className={`mt-1 ${champ}`} />
-            </label>
-            <label>
-              <span className={libelleChamp}>Téléphone de la mère</span>
-              <input
-                name="phoneMother"
-                type="tel"
-                defaultValue={patient.phoneMother ?? ""}
-                className={`mt-1 ${champ}`}
-              />
-            </label>
-            <label>
-              <span className={libelleChamp}>Téléphone du père</span>
-              <input
-                name="phoneFather"
-                type="tel"
-                defaultValue={patient.phoneFather ?? ""}
-                className={`mt-1 ${champ}`}
-              />
-            </label>
-            <label>
-              <span className={libelleChamp}>E-mail de la mère</span>
-              <input
-                name="emailMother"
-                type="email"
-                defaultValue={patient.emailMother ?? ""}
-                className={`mt-1 ${champ}`}
-              />
-            </label>
-            <label>
-              <span className={libelleChamp}>E-mail du père</span>
-              <input
-                name="emailFather"
-                type="email"
-                defaultValue={patient.emailFather ?? ""}
-                className={`mt-1 ${champ}`}
-              />
-            </label>
-            <label>
-              <span className={libelleChamp}>E-mail</span>
-              <input
-                name="email"
-                type="email"
-                defaultValue={patient.email ?? ""}
-                className={`mt-1 ${champ}`}
-              />
-            </label>
-            <label>
-              <span className={libelleChamp}>Naissance</span>
-              <input
-                name="birthDate"
-                type="date"
-                defaultValue={patient.birthDate ? patient.birthDate.toISOString().slice(0, 10) : ""}
-                className={`mt-1 ${champ}`}
-              />
-            </label>
-            <label>
-              <span className={libelleChamp}>Numéro national</span>
-              <ChampNumeroNational defaultValue={patient.nationalNumber ?? ""} className={`mt-1 ${champ}`} />
-            </label>
-            <label className="sm:col-span-2">
-              <span className={libelleChamp}>Rue et numéro</span>
-              <input
-                name="addressLine"
-                defaultValue={patient.addressLine ?? ""}
-                className={`mt-1 ${champ}`}
-              />
-            </label>
-            <div className="grid grid-cols-[6rem_1fr] gap-2">
-              <label>
-                <span className={libelleChamp}>Code</span>
-                <input
-                  name="postalCode"
-                  defaultValue={patient.postalCode ?? ""}
-                  className={`mt-1 ${champ}`}
-                />
-              </label>
-              <label>
-                <span className={libelleChamp}>Commune</span>
-                <input name="city" defaultValue={patient.city ?? ""} className={`mt-1 ${champ}`} />
-              </label>
-            </div>
-            <label>
-              <span className={libelleChamp}>Cabinet habituel</span>
-              <select name="cabinetId" defaultValue={patient.cabinetId ?? ""} className={`mt-1 ${champ}`}>
-                <option value="">Aucun</option>
-                {cabinets.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.nom}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <BoutonEnregistrer />
-          </form>
+          </div>
         </details>
       </section>
 
@@ -351,7 +306,10 @@ export default async function FichePatient({ params }: { params: Promise<{ id: s
           { t: "Heures", v: formatDuree(heuresTotales(patient.sessions)) },
           // En conventionné, l'argent qui compte vient de l'INAMI : le patient, lui,
           // ne doit jamais rien.
-          { t: payeur === "INAMI" ? "Reçu de l’INAMI" : "Encaissé", v: euros(encaisse) },
+          {
+            t: payeur === "INAMI" ? "Reçu de l’INAMI" : "Encaissé",
+            v: euros(encaisse),
+          },
           {
             t: payeur === "INAMI" ? "À recevoir de l’INAMI" : "Dû",
             v: du > 0 ? euros(du) : "—",
@@ -367,7 +325,10 @@ export default async function FichePatient({ params }: { params: Promise<{ id: s
               ]
             : []),
         ].map((c) => (
-          <div key={c.t} className="rounded-[14px] border border-line bg-surface px-5 py-4">
+          <div
+            key={c.t}
+            className="rounded-[14px] border border-line bg-surface px-5 py-4"
+          >
             <dt className="text-[11px] font-semibold tracking-[0.1em] text-ink-muted uppercase">
               {c.t}
             </dt>
@@ -395,7 +356,8 @@ export default async function FichePatient({ params }: { params: Promise<{ id: s
                 className="flex flex-wrap items-center gap-x-5 gap-y-2 border-b border-line px-5 py-3.5 last:border-b-0"
               >
                 <time className="w-36 shrink-0 font-mono text-xs" data-numeric>
-                  {fmtDateCourte.format(s.startsAt)} · {fmtHeure.format(s.startsAt)}
+                  {fmtDateCourte.format(s.startsAt)} ·{" "}
+                  {fmtHeure.format(s.startsAt)}
                 </time>
                 <CabinetTag cabinet={s.cabinet} />
                 <span className="flex-1">
@@ -414,10 +376,18 @@ export default async function FichePatient({ params }: { params: Promise<{ id: s
                 />
                 {isBillable(s.status) &&
                   s.paymentStatus !== "PAID" &&
-                  (payeur === "INAMI" ? <RecuInami id={s.id} /> : <Encaisser id={s.id} />)}
+                  (payeur === "INAMI" ? (
+                    <RecuInami id={s.id} />
+                  ) : (
+                    <Encaisser id={s.id} />
+                  ))}
                 {s.status === "NO_SHOW" && <AnnulerAbsence id={s.id} />}
                 {s.status === "SCHEDULED" &&
-                  (s.startsAt <= maintenant ? <StatuerSeance ids={[s.id]} /> : <AnnulerSeance id={s.id} />)}
+                  (s.startsAt <= maintenant ? (
+                    <StatuerSeance ids={[s.id]} />
+                  ) : (
+                    <AnnulerSeance id={s.id} />
+                  ))}
                 {s.paymentStatus === "PAID" && payeur === "PATIENT" && (
                   <a
                     href={`/api/recu/${s.id}`}
@@ -430,7 +400,10 @@ export default async function FichePatient({ params }: { params: Promise<{ id: s
                   <NoteSeance
                     id={s.id}
                     note={notesSeances.get(s.id) ?? null}
-                    disponible={notesDisponibles && !(s.note && notesSeances.get(s.id) === null)}
+                    disponible={
+                      notesDisponibles &&
+                      !(s.note && notesSeances.get(s.id) === null)
+                    }
                   />
                 )}
               </li>
@@ -445,8 +418,9 @@ export default async function FichePatient({ params }: { params: Promise<{ id: s
             Lien personnel de réservation
           </h2>
           <p className="mt-2 text-sm text-ink-muted">
-            À transmettre au patient : il lui permet de réserver un créneau libre sans passer par
-            une demande à confirmer. Ce lien vaut reconnaissance — ne le diffusez pas ailleurs.
+            À transmettre au patient : il lui permet de réserver un créneau
+            libre sans passer par une demande à confirmer. Ce lien vaut
+            reconnaissance — ne le diffusez pas ailleurs.
           </p>
           <code className="mt-2 block overflow-x-auto rounded-[10px] bg-sunken px-4 py-2 text-xs">
             /rendez-vous?p={patient.jetonRdv}

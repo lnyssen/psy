@@ -392,6 +392,13 @@ model Parametres {
   /// N° d'inscription à la Commission des psychologues. Distinct du visa, et
   /// renouvelé chaque année : il est affiché tel quel, sans date.
   numeroCommission   String? @map("numero_commission")
+  /// Interrupteur des rendez-vous en ligne. Fermé : la page publique de
+  /// réservation affiche un message au lieu des créneaux, et aucune demande
+  /// n'est acceptée, même par un formulaire envoyé à la main.
+  rdvEnLigne         Boolean @default(true) @map("rdv_en_ligne")
+  /// Message affiché quand les rendez-vous sont fermés (facultatif : un texte
+  /// par défaut sert à défaut).
+  rdvMessage         String? @map("rdv_message")
   iban               String?
   /// Délai de paiement en jours, pour calculer l'échéance à l'émission.
   delaiPaiementJours Int     @default(30) @map("delai_paiement_jours")

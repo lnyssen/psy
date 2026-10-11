@@ -3,6 +3,24 @@
 import { useEffect, useRef } from "react";
 
 /**
+ * Vrai si le fond opaque le plus proche sous le pointeur est mauve. On remonte
+ * jusqu'au premier fond plein plutôt que de chercher une classe : un bouton
+ * blanc posé sur un aplat mauve est blanc, pas mauve, et le disque doit alors
+ * rester mauve pour se lire.
+ */
+function surMauve(depart: Element | null) {
+  for (let n: Element | null = depart; n; n = n.parentElement) {
+    const m = getComputedStyle(n).backgroundColor.match(/[\d.]+/g);
+    if (!m) continue;
+    const [r, g, b] = m.map(Number);
+    const alpha = m.length > 3 ? Number(m[3]) : 1;
+    if (alpha < 0.6) continue;
+    return b > 180 && g < 90 && r > 80 && r < 190;
+  }
+  return false;
+}
+
+/**
  * Un disque plein, mauve, qui suit la souris — même geste que sur
  * laurentnyssen.be, sans les étiquettes.
  *
@@ -34,6 +52,7 @@ export function CurseurRond() {
     const cible = { x: 0, y: 0 };
     const actuel = { x: 0, y: 0 };
     let vu = false;
+    let dernier: Element | null = null;
     let frame = 0;
 
     // Constante de temps de 120 ms : le disque rattrape le pointeur en
@@ -69,9 +88,10 @@ export function CurseurRond() {
       )
         ? "oui"
         : "non";
-      el.dataset.mauve = cibleEl?.closest('[class~="bg-accent"]')
-        ? "oui"
-        : "non";
+      if (cibleEl !== dernier) {
+        dernier = cibleEl;
+        el.dataset.mauve = surMauve(cibleEl) ? "oui" : "non";
+      }
     };
     const sort = () => {
       el.style.opacity = "0";

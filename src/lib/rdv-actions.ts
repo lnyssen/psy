@@ -80,6 +80,15 @@ async function tropDeDemandes(phone: string) {
 export type ResultatRdv = { ok: boolean; message: string } | null;
 
 export async function reserverOuDemander(_etat: ResultatRdv, f: FormData): Promise<ResultatRdv> {
+  // Fermé depuis les réglages : aucune demande n'est prise, même si la page
+  // d'un visiteur était restée ouverte ou si le formulaire est envoyé à la main.
+  if (!(await parametres()).rdvEnLigne) {
+    return {
+      ok: false,
+      message: "Les rendez-vous en ligne sont fermés pour le moment. Contactez le cabinet par téléphone.",
+    };
+  }
+
   const cabinetId = texte(f, "cabinetId");
   const iso = texte(f, "creneau");
   const jeton = texte(f, "jeton");
