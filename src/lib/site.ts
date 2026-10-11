@@ -26,16 +26,33 @@ export const SITE = {
     "Je suis psychologue clinicienne, diplômée de l’ULB, et psychothérapeute formée à l’IFISAM. Depuis plus de vingt ans, je travaille et continue de me former pour offrir un accompagnement fondé sur les orientations analytique et systémique.",
     "Parallèlement à ma pratique privée, j’exerce depuis une dizaine d’années comme psychologue en milieu scolaire. Cette expérience m’a permis d’intervenir à tous les niveaux d’enseignement et auprès de publics issus de différents milieux socio-économiques.",
   ],
-  /** Diplômes et fonctions, tels qu'ils figurent sur sa fiche publique. */
-  formation: [
-    { periode: "2001–2006", intitule: "Master en psychologie clinique de l’enfant et de l’adolescent", lieu: "ULB" },
-    { periode: "2010–2013", intitule: "3ᵉ cycle en psychothérapie de l’enfant et de l’adolescent", lieu: "IFISAM" },
+  /** Formation et fonctions, dans l'ordre des dates, telles qu'elles figurent
+   *  sur sa fiche publique. */
+  chronologie: [
+    { periode: "2001–2006", intitule: "Master en psychologie clinique de l’enfant et de l’adolescent, ULB" },
+    { periode: "2009–2019", intitule: "Psychologue en centre PMS" },
+    { periode: "2010–2013", intitule: "3ᵉ cycle en psychothérapie de l’enfant et de l’adolescent, IFISAM" },
+    { periode: "2014", intitule: "Psychologue de liaison, Hôpital d’Ixelles" },
+    { periode: "2019–2020", intitule: "Psychologue, Bru-Stars" },
+    { periode: "Depuis 2020", intitule: "Psychologue scolaire, De l’Autre Côté de l’École" },
   ],
-  fonctions: [
-    "Psychologue en centre PMS (2009–2019)",
-    "Psychologue de liaison, Hôpital d’Ixelles (2014)",
-    "Psychologue, Bru-Stars (2019–2020)",
-    "Psychologue scolaire, De l’Autre Côté de l’École (depuis 2020)",
+  /** Les trois publics reçus. */
+  publicsDetail: [
+    {
+      nom: "Enfants",
+      repere: "Dès 4 ans",
+      texte: "Avec leurs parents, pour les difficultés de comportement, de développement ou scolaires.",
+    },
+    {
+      nom: "Adolescents",
+      repere: "Et leurs parents",
+      texte: "Un espace à soi pour les questions adolescentes et identitaires, le harcèlement, l’anxiété.",
+    },
+    {
+      nom: "Jeunes adultes",
+      repere: "En français ou en anglais",
+      texte: "Pour les questions existentielles, les problèmes relationnels, les périodes de déprime.",
+    },
   ],
   pourQui:
     "Je reçois les enfants dès quatre ans, les adolescents et leurs parents, ainsi que les jeunes adultes.",

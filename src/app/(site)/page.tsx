@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { adresseCabinet } from "@/lib/format";
 import { SITE } from "@/lib/site";
 import { Reveal } from "@/components/Reveal";
+import { parametres } from "@/lib/parametres";
 
 export const dynamic = "force-dynamic";
 
@@ -45,6 +46,7 @@ export default async function Accueil() {
     where: { actif: true, publie: true },
     orderBy: { ordre: "asc" },
   });
+  const reglages = await parametres();
 
   return (
     <>
@@ -144,145 +146,175 @@ export default async function Accueil() {
         </div>
       </section>
 
-      <section className="bg-bande-violette px-6 py-16 text-nuit md:py-20">
+      {/* En bref : trois faits qui répondent d'emblée à « est-ce pour moi ? ». */}
+      <section aria-label="En bref" className="bg-bande-violette px-6 py-9 text-nuit">
+        <Reveal className="mx-auto grid max-w-5xl gap-6 sm:grid-cols-3">
+          {[
+            ["20 ans", "d’expérience clinique"],
+            ["FR · EN", "consultations en français et en anglais"],
+            [`${cabinets.length} cabinets`, cabinets.map((c) => c.nom).join(" et ")],
+          ].map(([gros, petit]) => (
+            <p key={gros} className="flex flex-col">
+              <span className="font-display text-[2rem] leading-tight">{gros}</span>
+              <span className="text-[15px] text-nuit/80">{petit}</span>
+            </p>
+          ))}
+        </Reveal>
+      </section>
+
+      <section id="pour-qui" className="px-6 py-20 md:py-28">
         <Reveal className="mx-auto max-w-5xl">
-          <p className="max-w-3xl font-display text-[1.6rem] leading-snug tracking-tight md:text-[2.25rem]">
-            Je reçois les enfants dès quatre ans, les adolescents et leurs parents, ainsi que les
-            jeunes adultes.
-          </p>
-          <p className="mt-6 text-lg font-semibold text-nuit">{SITE.langues}</p>
+          <Titre>Pour qui ?</Titre>
+          <div className="mt-10 grid gap-5 md:grid-cols-3">
+            {SITE.publicsDetail.map((p) => (
+              <article key={p.nom} className="flex flex-col gap-3 rounded-[24px] bg-surface px-8 py-8">
+                <span className="text-sm font-semibold text-accent-text">{p.repere}</span>
+                <h3 className="font-display text-[2rem] leading-tight">{p.nom}</h3>
+                <p className="text-ink-muted">{p.texte}</p>
+              </article>
+            ))}
+          </div>
+        </Reveal>
+      </section>
+
+      <section id="seance" className="px-6 pb-20 md:pb-28">
+        <Reveal className="mx-auto max-w-5xl">
+          <div className="flex flex-col gap-12 rounded-[32px] bg-bande-navy px-8 py-12 text-white md:flex-row md:gap-14 md:px-14 md:py-16">
+            <div className="flex flex-col items-start gap-4 md:w-1/3">
+              <h2 className="font-display text-[2rem] leading-[1.05] tracking-tight md:text-[3rem]">
+                La première séance
+              </h2>
+              <p className="text-white/80">Rien ne vous engage au-delà.</p>
+              <Link
+                href="/questions"
+                className="mt-2 inline-flex min-h-11 items-center rounded-full border border-white/40 px-5 text-sm font-semibold transition-colors hover:border-white"
+              >
+                Toutes les questions →
+              </Link>
+            </div>
+            <ol className="grid flex-1 gap-8 sm:grid-cols-3">
+              {[
+                ["On fait connaissance", "On prend le temps, sans pression."],
+                ["Vous racontez", "Ce qui vous amène, à votre rythme, sans avoir à tout dire d’emblée."],
+                ["On décide ensemble", "S’il y a lieu de continuer, et à quel rythme."],
+              ].map(([titre, texte], i) => (
+                <li key={titre} className="flex flex-col gap-2.5 border-t border-white/20 pt-5">
+                  <span className="font-display text-[2.5rem] leading-none text-bande-violette" aria-hidden="true">
+                    {i + 1}
+                  </span>
+                  <strong className="font-semibold">{titre}</strong>
+                  <span className="text-white/80">{texte}</span>
+                </li>
+              ))}
+            </ol>
+          </div>
         </Reveal>
       </section>
 
       {/*
-        Le portrait entre ici et pas dans la bannière : au-dessus, il aurait
-        disputé la place au nom et au phare ; ici il arrive au moment où le
-        texte dit « je », et c'est le seul endroit de la page où l'on parle
-        d'elle à la première personne.
-
-        Il est servi à 500 px pour un affichage qui ne dépasse pas 260 : le
-        fichier d'origine ne fait pas plus, et l'agrandir l'aurait rendu mou
-        sur un écran à haute densité.
+        Le portrait entre ici : c'est le seul endroit de la page où l'on parle
+        d'elle à la première personne. Servi à 500 px pour un affichage qui ne
+        dépasse pas 260, pour ne pas l'agrandir au-delà du fichier d'origine.
       */}
-      <section className="px-6 py-20 md:py-28">
-        <Reveal className="mx-auto grid max-w-5xl gap-10 md:grid-cols-[16rem_1fr] md:gap-14">
-          <div className="order-1 md:order-none">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/images/amandine.jpg"
-              width={500}
-              height={500}
-              alt="Portrait d’Amandine Monsel"
-              className="w-40 rounded-full object-cover sm:w-52 md:w-full md:max-w-[16rem] md:rounded-[28px]"
-            />
-          </div>
+      <section id="approche" className="bg-bande-claire px-6 py-20 md:py-28">
+        <Reveal className="mx-auto grid max-w-5xl gap-12 lg:grid-cols-[16rem_1fr] lg:gap-16">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/images/amandine.jpg"
+            width={500}
+            height={500}
+            alt="Portrait d’Amandine Monsel"
+            className="h-40 w-40 rounded-[28px] object-cover sm:h-52 sm:w-52 lg:h-auto lg:w-full"
+          />
 
-          <div>
-            <Titre>Mon approche et mon parcours</Titre>
-            <div className="mt-8 flex flex-col gap-6">
-              {SITE.parcours.map((p) => (
-                <p key={p.slice(0, 24)} className="text-lg leading-relaxed text-ink">
-                  {p}
-                </p>
-              ))}
+          <div className="flex flex-col gap-12">
+            <div className="flex max-w-2xl flex-col gap-5">
+              <Titre>Mon approche</Titre>
+              <p className="mt-3 text-xl leading-relaxed">{SITE.parcours[0]}</p>
+              <p className="leading-relaxed text-ink-muted">{SITE.parcours[1]}</p>
             </div>
-            <div className="mt-10 grid gap-8 border-t border-line pt-8 sm:grid-cols-2">
+
+            <div className="grid gap-12 border-t border-line-strong/70 pt-10 md:grid-cols-2 md:gap-14">
               <div>
-                <p className="text-[11px] font-semibold tracking-[0.12em] text-titre uppercase">Formation</p>
-                <ul className="mt-3 flex flex-col gap-3 text-[15px] leading-snug">
-                  {SITE.formation.map((f) => (
-                    <li key={f.intitule} className="flex gap-3">
-                      <span aria-hidden="true" className="mt-[0.55rem] h-1.5 w-1.5 shrink-0 rounded-full bg-accent" />
-                      <span>
-                        <span className="block text-ink">{f.intitule}</span>
-                        <span className="text-ink-muted">
-                          {f.lieu}, {f.periode}
-                        </span>
+                <h3 className="text-[11px] font-semibold tracking-[0.12em] text-accent-text uppercase">
+                  Ce que j’accompagne
+                </h3>
+                <ul className="mt-5 flex flex-col gap-3">
+                  {SITE.problematiques.map((p) => (
+                    <li key={p} className="flex gap-3 leading-snug">
+                      <span aria-hidden="true" className="mt-[0.5rem] h-1.5 w-1.5 shrink-0 rounded-full bg-accent" />
+                      {p}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <div>
+                <h3 className="text-[11px] font-semibold tracking-[0.12em] text-accent-text uppercase">
+                  Parcours
+                </h3>
+                <ol className="mt-5 flex flex-col">
+                  {SITE.chronologie.map((c) => (
+                    <li key={c.periode + c.intitule} className="border-t border-line-strong/70 py-3 first:border-t-0 first:pt-0">
+                      <span className="block text-sm text-ink-muted" data-numeric>
+                        {c.periode}
                       </span>
+                      <span className="leading-snug">{c.intitule}</span>
                     </li>
                   ))}
-                </ul>
-              </div>
-              <div>
-                <p className="text-[11px] font-semibold tracking-[0.12em] text-titre uppercase">Parcours</p>
-                <ul className="mt-3 flex flex-col gap-3 text-[15px] leading-snug text-ink">
-                  {SITE.fonctions.map((f) => (
-                    <li key={f} className="flex gap-3">
-                      <span aria-hidden="true" className="mt-[0.55rem] h-1.5 w-1.5 shrink-0 rounded-full bg-accent" />
-                      <span>{f}</span>
-                    </li>
-                  ))}
-                </ul>
+                </ol>
               </div>
             </div>
           </div>
         </Reveal>
       </section>
 
-      <section className="bg-bande-claire px-6 py-20 md:py-28">
+      <section id="pratique" className="px-6 pt-20 pb-10 md:pt-28">
         <Reveal className="mx-auto max-w-5xl">
-          <Titre>Ce que j’accompagne</Titre>
-          <p className="mt-8 max-w-2xl text-lg leading-relaxed text-ink">
-            Je propose un espace de parole et d’accompagnement pour de nombreuses problématiques.
+          <Titre>En pratique</Titre>
+          <div className="mt-10 grid gap-5 md:grid-cols-3">
+            {[
+              ["Durée d’une séance", `${reglages.dureeSeanceMin} minutes`],
+              ["Tarif", "Communiqué au premier contact"],
+              ["Remboursement", "Mutuelle · convention INAMI"],
+            ].map(([k, v]) => (
+              <div key={k} className="flex flex-col gap-1.5 rounded-[20px] bg-surface px-7 py-7">
+                <span className="text-[15px] text-ink-muted">{k}</span>
+                <span className="font-display text-[1.75rem] leading-tight">{v}</span>
+              </div>
+            ))}
+          </div>
+          <p className="mt-6 flex flex-wrap gap-x-8 gap-y-1 font-semibold">
+            <Link href="/questions" className="text-accent-text hover:underline">
+              Questions fréquentes →
+            </Link>
           </p>
-          <ul className="mt-10 grid gap-px overflow-hidden rounded-[24px] bg-line-strong/50 sm:grid-cols-2">
-            {SITE.problematiques.map((p) => (
-              <li key={p} className="flex items-start gap-4 bg-paper px-7 py-7">
-                <span
-                  aria-hidden="true"
-                  className="mt-2.5 h-1.5 w-1.5 shrink-0 rounded-full bg-accent"
-                />
-                <span className="text-[17px] leading-snug">{p}</span>
-              </li>
-            ))}
-          </ul>
         </Reveal>
       </section>
 
-      <section className="bg-bande-violette px-6 py-20 text-nuit md:py-28">
+      <section id="lieux" className="px-6 py-14 md:py-20">
         <Reveal className="mx-auto max-w-5xl">
-          <Titre>La première séance</Titre>
-          <div className="mt-10 grid gap-8 md:grid-cols-2 md:gap-14">
-            <p className="text-lg leading-relaxed text-nuit/80">
-              On prend le temps de faire connaissance. Vous racontez ce qui vous amène, à votre
-              rythme, sans avoir à tout dire d’emblée.
-            </p>
-            <div className="flex flex-col items-start gap-6">
-              <p className="text-lg leading-relaxed text-nuit/80">
-                À la fin, nous décidons ensemble s’il y a lieu de continuer, et à quel rythme. Rien
-                ne vous engage au-delà.
-              </p>
-              <Link
-                href="/questions"
-                className="rounded-full border border-nuit/30 px-6 py-3 text-sm font-semibold transition-colors hover:border-nuit"
-              >
-                Toutes les questions
-              </Link>
-            </div>
-          </div>
-        </Reveal>
-      </section>
-
-      <section className="px-6 py-20 md:py-28">
-        <Reveal className="mx-auto max-w-5xl">
-          <Titre>Où me trouver</Titre>
-          {/* Cartes neutres, à dessein. Le code couleur des lieux sert à les
-              distinguer d'un coup d'œil dans l'agenda, où ils se croisent vingt
-              fois par semaine. Un visiteur, lui, voit deux adresses : la couleur
-              n'y apporte rien et fait bariolé. Elle reste dans l'outil. */}
-          <div className="mt-10 grid gap-4 sm:grid-cols-2">
-            {cabinets.map((c) => (
-              <div
-                key={c.id}
-                className="rounded-[24px] bg-sunken px-8 py-8 transition-transform duration-300 ease-out hover:-translate-y-1"
-              >
-                <p className="font-display text-2xl">{c.nom}</p>
-                <p className="mt-2 text-sm text-ink-muted">{adresseCabinet(c)}</p>
-              </div>
-            ))}
+          <Titre>Deux cabinets</Titre>
+          <div className="mt-10 grid gap-5 md:grid-cols-2">
+            {cabinets.map((c) => {
+              return (
+                <article key={c.id} className="flex flex-col gap-3 rounded-[24px] bg-surface px-8 py-8">
+                  <h3 className="font-display text-[1.9rem] leading-tight">{c.nom}</h3>
+                  <p>{adresseCabinet(c)}</p>
+                  <a
+                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(adresseCabinet(c))}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="mt-1 inline-block w-fit py-2 font-semibold text-accent-text hover:underline"
+                  >
+                    Itinéraire →
+                  </a>
+                </article>
+              );
+            })}
           </div>
 
-          <div className="mt-14 flex flex-col items-start gap-6 rounded-[24px] bg-accent px-8 py-10 text-accent-contrast md:flex-row md:items-center md:justify-between md:px-12">
+          <div className="mt-14 flex flex-col items-start gap-6 rounded-[32px] bg-accent px-8 py-10 text-accent-contrast md:flex-row md:items-center md:justify-between md:px-14">
             <div>
               <p className="font-display text-2xl leading-tight md:text-3xl">
                 Les créneaux libres sont en ligne.

@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { IconFermer, IconMenu } from "@/components/icons";
 
 const PAGES = [
+  { href: "/#approche", label: "Approche" },
   { href: "/en-pratique", label: "En pratique" },
   { href: "/questions", label: "Questions fréquentes" },
   { href: "/contact", label: "Contact" },
