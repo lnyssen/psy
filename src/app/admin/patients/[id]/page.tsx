@@ -11,6 +11,9 @@ import { RegimeEtTarif } from "@/components/RegimeEtTarif";
 import { montantSeanceCents, payeurDe } from "@/lib/tarifs";
 import { AnnulerAbsence } from "@/components/AnnulerAbsence";
 import { AnnulerSeance } from "@/components/AnnulerSeance";
+import { StatuerSeance } from "@/components/StatuerSeance";
+import { NoteSeance } from "@/components/NoteSeance";
+import { cleNotesPresente, dechiffrer } from "@/lib/chiffrement";
 import { creerSeanceDepuisFormulaire, enregistrerPatient } from "@/lib/actions";
 import { plafondConventionne, seancesConventionneAnnee } from "@/lib/quotas";
 import {
@@ -80,6 +83,33 @@ export default async function FichePatient({ params }: { params: Promise<{ id: s
   const plafondInami = patient.scheme === "CONVENTIONNE" ? plafondConventionne(patient.birthDate) : null;
   const utiliseesInami =
     plafondInami !== null ? seancesConventionneAnnee(patient.sessions, anneeCourante) : null;
+  // L'alerte se lève avant de créer la séance de trop, pas après : on compte
+  // aussi les rendez-vous déjà posés pour le reste de l'année.
+  const maintenant = new Date();
+  const prevuesInami =
+    plafondInami !== null
+      ? patient.sessions.filter(
+          (s) =>
+            s.status === "SCHEDULED" &&
+            s.startsAt.getFullYear() === anneeCourante,
+        ).length
+      : 0;
+  const quotaAtteint =
+    plafondInami !== null && (utiliseesInami ?? 0) + prevuesInami >= plafondInami;
+
+  // Notes de séance : déchiffrées ici, côté serveur, pour ne jamais faire
+  // voyager la clé. Une note illisible (clé changée) n'empêche pas la page de
+  // s'afficher : elle est signalée sur sa ligne.
+  const notesDisponibles = cleNotesPresente();
+  const notesSeances = new Map<string, string | null>();
+  for (const s of patient.sessions) {
+    if (!s.note) continue;
+    try {
+      notesSeances.set(s.id, notesDisponibles ? dechiffrer(s.note, "NOTES_KEY") : null);
+    } catch {
+      notesSeances.set(s.id, null);
+    }
+  }
 
   const coordonnees = [
     { t: "Téléphone", v: patient.phone, mono: true },
@@ -164,6 +194,14 @@ export default async function FichePatient({ params }: { params: Promise<{ id: s
             </span>
           </label>
           <BoutonEnregistrer className="self-end">Créer</BoutonEnregistrer>
+          {quotaAtteint && (
+            <p className="rounded-[10px] border border-due/40 bg-due-soft px-4 py-2.5 text-sm text-due sm:col-span-2 lg:col-span-4">
+              Plafond INAMI {anneeCourante} atteint : {utiliseesInami} séance
+              {(utiliseesInami ?? 0) > 1 ? "s" : ""} faite{(utiliseesInami ?? 0) > 1 ? "s" : ""} et{" "}
+              {prevuesInami} prévue{prevuesInami > 1 ? "s" : ""}, pour {plafondInami} remboursées.
+              Une séance de plus ne sera pas prise en charge par la convention.
+            </p>
+          )}
         </form>
       </details>
 
@@ -378,7 +416,8 @@ export default async function FichePatient({ params }: { params: Promise<{ id: s
                   s.paymentStatus !== "PAID" &&
                   (payeur === "INAMI" ? <RecuInami id={s.id} /> : <Encaisser id={s.id} />)}
                 {s.status === "NO_SHOW" && <AnnulerAbsence id={s.id} />}
-                {s.status === "SCHEDULED" && <AnnulerSeance id={s.id} />}
+                {s.status === "SCHEDULED" &&
+                  (s.startsAt <= maintenant ? <StatuerSeance ids={[s.id]} /> : <AnnulerSeance id={s.id} />)}
                 {s.paymentStatus === "PAID" && payeur === "PATIENT" && (
                   <a
                     href={`/api/recu/${s.id}`}
@@ -386,6 +425,13 @@ export default async function FichePatient({ params }: { params: Promise<{ id: s
                   >
                     reçu PDF
                   </a>
+                )}
+                {(s.status === "ATTENDED" || s.note) && (
+                  <NoteSeance
+                    id={s.id}
+                    note={notesSeances.get(s.id) ?? null}
+                    disponible={notesDisponibles && !(s.note && notesSeances.get(s.id) === null)}
+                  />
                 )}
               </li>
             ))}

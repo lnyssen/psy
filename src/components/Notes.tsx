@@ -58,8 +58,8 @@ export function Notes({
         />
         <div className="flex flex-wrap items-center justify-between gap-3">
           <p className="text-xs text-ink-muted">
-            Notes administratives seulement. Le chiffrement des contenus cliniques n’est pas
-            encore en place.
+            Notes administratives seulement, non chiffrées. Le contenu clinique va dans la note
+            de chaque séance, qui l’est.
           </p>
           <button
             type="submit"

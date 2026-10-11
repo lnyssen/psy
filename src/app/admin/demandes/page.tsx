@@ -2,6 +2,7 @@ import { prisma } from "@/lib/db";
 import { CabinetTag } from "@/components/tags";
 import { traiterDemande } from "@/lib/rdv-actions";
 import { fmtHeure, fmtJourLong } from "@/lib/format";
+import { courrielConfigure } from "@/lib/courriel";
 
 export const dynamic = "force-dynamic";
 
@@ -12,6 +13,7 @@ export default async function Demandes() {
   });
   const enAttente = demandes.filter((d) => d.statut === "EN_ATTENTE");
   const traitees = demandes.filter((d) => d.statut !== "EN_ATTENTE");
+  const courriel = courrielConfigure();
 
   return (
     <div className="flex flex-col gap-8">
@@ -19,8 +21,8 @@ export default async function Demandes() {
         <h1 className="font-display text-3xl tracking-tight">Demandes</h1>
         <p className="mt-2 text-sm text-ink-muted">
           Rendez-vous demandés depuis le site par des personnes que l’outil ne connaît pas encore.
-          Confirmer crée le dossier et la séance ; décliner ne crée rien. Dans les deux cas,
-          personne n’est prévenu automatiquement — un appel ou un message reste à faire.
+          Confirmer crée le dossier et la séance ; décliner ne crée rien. Le demandeur qui a
+          laissé son adresse reçoit la réponse par e-mail ; les autres sont à appeler.
         </p>
       </header>
 
@@ -69,6 +71,11 @@ export default async function Demandes() {
                   Décliner
                 </button>
               </form>
+              <p className="mt-2 text-xs text-ink-muted">
+                {d.email && courriel
+                  ? `Dans les deux cas, un e-mail part à ${d.email}.`
+                  : "Pas d’e-mail automatique pour cette demande : prévenez par téléphone."}
+              </p>
             </li>
           ))}
         </ul>

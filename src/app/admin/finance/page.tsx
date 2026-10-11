@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { CabinetTag } from "@/components/tags";
+import { montantSeanceCents } from "@/lib/tarifs";
 import type { Params } from "@/components/filtres";
 import {
   FUSEAU,
@@ -53,7 +54,13 @@ const cumuler = (a: Case_, b: Case_): Case_ => ({
 export default async function Finance({ searchParams }: { searchParams: Promise<Params> }) {
   const params = await searchParams;
 
-  const toutes = await prisma.session.findMany({ include: { patient: true, cabinet: true } });
+  const toutes = await prisma.session.findMany({
+    include: { patient: { include: { tarif: true } }, cabinet: true },
+  });
+  // Le montant d'une séance n'est figé qu'à l'encaissement : d'ici là, c'est le
+  // tarif de la fiche qui le dit, comme en facturation. Sans ce repli, toute
+  // séance non payée comptait pour zéro et le « reste dû » mentait.
+  const valeur = (s: (typeof toutes)[number]) => s.amountCents ?? montantSeanceCents(s.patient) ?? 0;
   const seances = toutes.filter((s) => isBillable(s.status));
 
   const anneesConnues = [...new Set(seances.map((s) => partiesJour(s.startsAt).annee))].sort(
@@ -84,7 +91,7 @@ export default async function Finance({ searchParams }: { searchParams: Promise<
     const colonne = grille[s.cabinetId];
     if (!colonne) continue;
     const m = partiesJour(s.startsAt).mois - 1;
-    const montant = s.amountCents ?? 0;
+    const montant = valeur(s);
     const k = colonne[m];
     k.facture += montant;
     k.actes += 1;
@@ -106,10 +113,10 @@ export default async function Finance({ searchParams }: { searchParams: Promise<
     parts.reduce(
       (acc, s) =>
         cumuler(acc, {
-          facture: s.amountCents ?? 0,
-          encaisse: s.paymentStatus === "PAID" ? (s.amountCents ?? 0) : 0,
-          du: s.paymentStatus === "DUE" ? (s.amountCents ?? 0) : 0,
-          retard: s.paymentStatus === "OVERDUE" ? (s.amountCents ?? 0) : 0,
+          facture: valeur(s),
+          encaisse: s.paymentStatus === "PAID" ? valeur(s) : 0,
+          du: s.paymentStatus === "DUE" ? valeur(s) : 0,
+          retard: s.paymentStatus === "OVERDUE" ? valeur(s) : 0,
           actes: 1,
         }),
       vide(),
@@ -128,6 +135,49 @@ export default async function Finance({ searchParams }: { searchParams: Promise<
       total: cumulerCas(delAnnee.filter((s) => !s.patient)),
     },
   ];
+
+  // Résultat : ce qui est facturé (séances des patients et factures aux
+  // établissements) moins les dépenses, mois par mois. Les blocs d'un
+  // établissement n'ont pas de montant de séance (voir valeur) : ils ne
+  // comptent qu'une fois, par leur facture, au mois qu'elle couvre. Une facture
+  // annulée ne compte pas.
+  const [factures, depenses] = await Promise.all([
+    prisma.factureEtablissement.findMany({
+      where: { annee, annuleeLe: null },
+      select: { mois: true, montantCents: true },
+    }),
+    prisma.depense.findMany({
+      where: {
+        date: {
+          gte: new Date(Date.UTC(annee - 1, 11, 31)),
+          lt: new Date(Date.UTC(annee + 1, 0, 2)),
+        },
+      },
+      select: { date: true, amountCents: true },
+    }),
+  ]);
+  const facturesParMois = Array.from({ length: 12 }, () => 0);
+  for (const f of factures) facturesParMois[f.mois - 1] += f.montantCents;
+  const depensesParMois = Array.from({ length: 12 }, () => 0);
+  for (const d of depenses) {
+    const { annee: a, mois } = partiesJour(d.date);
+    if (a === annee) depensesParMois[mois - 1] += d.amountCents;
+  }
+  const resultat = parMois.map((m, i) => ({
+    seances: m.facture,
+    factures: facturesParMois[i],
+    depenses: depensesParMois[i],
+    net: m.facture + facturesParMois[i] - depensesParMois[i],
+  }));
+  const resultatAnnee = resultat.reduce(
+    (a, r) => ({
+      seances: a.seances + r.seances,
+      factures: a.factures + r.factures,
+      depenses: a.depenses + r.depenses,
+      net: a.net + r.net,
+    }),
+    { seances: 0, factures: 0, depenses: 0, net: 0 },
+  );
 
   const plafond = Math.max(1, ...parMois.map((m) => m.facture));
   const moisAvecActes = parMois.filter((m) => m.actes > 0).length;
@@ -154,6 +204,13 @@ export default async function Finance({ searchParams }: { searchParams: Promise<
           </p>
         </div>
 
+        <div className="flex flex-wrap items-center gap-3">
+        <Link
+          href="/admin/statistiques"
+          className="rounded-full border border-line-strong px-4 py-2 text-sm font-medium transition-colors hover:border-accent hover:text-accent-text"
+        >
+          Statistiques d’activité
+        </Link>
         <nav aria-label="Année" className="flex items-center gap-1 rounded-full bg-sunken p-1">
           {anneesConnues.map((a) => (
             <Link
@@ -171,6 +228,7 @@ export default async function Finance({ searchParams }: { searchParams: Promise<
             </Link>
           ))}
         </nav>
+        </div>
       </header>
 
       <dl className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
@@ -429,10 +487,12 @@ export default async function Finance({ searchParams }: { searchParams: Promise<
         />
       </div>
 
+      <ResultatNet annee={annee} lignes={resultat} total={resultatAnnee} />
+
       <p className="text-xs text-ink-muted">
-        Les séances conventionnées n’ont pas de montant tant que le circuit de facturation au
-        réseau n’est pas établi : elles comptent dans les actes, pas dans les euros. Le fuseau
-        retenu est {FUSEAU} — une séance de fin de soirée reste dans son mois.
+        Une séance pas encore payée compte au tarif de la fiche du patient ; une séance
+        conventionnée, au montant versé par l’INAMI. Le fuseau retenu est {FUSEAU} — une séance
+        de fin de soirée reste dans son mois.
       </p>
     </div>
   );
@@ -486,6 +546,102 @@ function Repartition({
           );
         })}
       </ul>
+    </section>
+  );
+}
+
+type LigneResultat = { seances: number; factures: number; depenses: number; net: number };
+
+/** Recettes moins dépenses, mois par mois : la vue que demande le comptable.
+ *  Les recettes sont celles facturées (pas seulement encaissées), en
+ *  séparant les séances des patients des factures aux établissements. */
+function ResultatNet({
+  annee,
+  lignes,
+  total,
+}: {
+  annee: number;
+  lignes: LigneResultat[];
+  total: LigneResultat;
+}) {
+  const montant = (n: number) => (n === 0 ? "—" : euros(n));
+  const colonnes: { cle: keyof LigneResultat; titre: string; ton?: string }[] = [
+    { cle: "seances", titre: "Séances" },
+    { cle: "factures", titre: "Établissements" },
+    { cle: "depenses", titre: "Dépenses" },
+    { cle: "net", titre: "Résultat" },
+  ];
+  return (
+    <section className="rounded-[14px] border border-line bg-surface">
+      <div className="flex flex-wrap items-baseline justify-between gap-3 px-5 pt-5">
+        <h2 className="text-[11px] font-semibold tracking-[0.1em] text-ink-muted uppercase">
+          Résultat {annee} : recettes facturées moins dépenses
+        </h2>
+        <p className={`font-mono text-xl font-semibold ${total.net < 0 ? "text-overdue" : ""}`} data-numeric>
+          {euros(total.net)}
+        </p>
+      </div>
+      <div className="mt-3 overflow-x-auto">
+        <table className="w-full border-collapse text-sm">
+          <caption className="sr-only">Résultat mensuel {annee}</caption>
+          <thead>
+            <tr className="border-y border-line bg-sunken text-[11px] tracking-[0.1em] text-ink-muted uppercase">
+              <th scope="col" className="px-5 py-2.5 text-left font-semibold">
+                Mois
+              </th>
+              {colonnes.map((c) => (
+                <th key={c.cle} scope="col" className="px-3 py-2.5 text-right font-semibold last:pr-5">
+                  {c.titre}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {lignes.map((l, i) => {
+              const vide = l.seances === 0 && l.factures === 0 && l.depenses === 0;
+              return (
+                <tr
+                  key={i}
+                  className={`border-b border-line ${vide ? "text-ink-muted/60" : "hover:bg-sunken/60"}`}
+                >
+                  <th scope="row" className="px-5 py-2 text-left font-medium capitalize">
+                    {MOIS[i]}
+                  </th>
+                  {colonnes.map((c) => (
+                    <td
+                      key={c.cle}
+                      className={`px-3 py-2 text-right font-mono text-xs whitespace-nowrap last:pr-5 ${
+                        c.cle === "net" && l.net < 0 ? "text-overdue" : ""
+                      } ${c.cle === "net" ? "font-semibold" : ""}`}
+                      data-numeric
+                    >
+                      {c.cle === "depenses" && l.depenses > 0 ? `− ${euros(l.depenses)}` : montant(l[c.cle])}
+                    </td>
+                  ))}
+                </tr>
+              );
+            })}
+          </tbody>
+          <tfoot>
+            <tr className="border-t-2 border-line-strong bg-sunken font-semibold">
+              <th scope="row" className="px-5 py-3 text-left">
+                Total {annee}
+              </th>
+              {colonnes.map((c) => (
+                <td
+                  key={c.cle}
+                  className={`px-3 py-3 text-right font-mono text-xs whitespace-nowrap last:pr-5 ${
+                    c.cle === "net" && total.net < 0 ? "text-overdue" : ""
+                  }`}
+                  data-numeric
+                >
+                  {c.cle === "depenses" && total.depenses > 0 ? `− ${euros(total.depenses)}` : montant(total[c.cle])}
+                </td>
+              ))}
+            </tr>
+          </tfoot>
+        </table>
+      </div>
     </section>
   );
 }

@@ -7,11 +7,13 @@ import { parametres } from "@/lib/parametres";
 import { AlerteTrajet, CabinetTag, EtatPaiement, RegimeTag, StatutSeance } from "@/components/tags";
 import { GroupeFiltre, type Params } from "@/components/filtres";
 import { FiltresMobile } from "@/components/FiltresMobile";
+import { StatuerSeance } from "@/components/StatuerSeance";
 import { cabinetsActifs, optionsCabinet } from "@/lib/cabinets";
 import {
   conflitsDeTrajet,
   debutDeJour,
   euros,
+  fmtDateCourte,
   fmtHeure,
   fmtJourLong,
   formatDuree,
@@ -64,7 +66,14 @@ export default async function Aujourdhui({ searchParams }: { searchParams: Promi
   const reglages = await parametres();
   const conflits = conflitsDeTrajet(seances, reglages.trajetMin);
   const lieuxDuJour = [...new Map(seances.map((s) => [s.cabinetId, s.cabinet])).values()];
-  const aStatuer = seances.filter((s) => s.status === "SCHEDULED" && s.startsAt < maintenant);
+  // Toutes les séances passées encore « à venir », quel que soit leur jour : une
+  // séance oubliée hier ne doit pas sortir du radar à minuit. Tant qu'elle n'est
+  // pas statuée, elle ne se facture pas.
+  const aStatuer = await prisma.session.findMany({
+    where: { status: "SCHEDULED", startsAt: { lt: maintenant } },
+    orderBy: { startsAt: "asc" },
+    include: { patient: true, cabinet: true },
+  });
   const total = heuresTotales(seances);
 
   return (
@@ -134,12 +143,38 @@ export default async function Aujourdhui({ searchParams }: { searchParams: Promi
       )}
 
       {aStatuer.length > 0 && (
-        <p className="rounded-[14px] border border-line bg-surface px-5 py-4 text-sm">
-          <span className="font-semibold">{aStatuer.length}</span> séance
-          {aStatuer.length > 1 ? "s" : ""} passée{aStatuer.length > 1 ? "s" : ""} sans venue ni
-          absence notée{aStatuer.length > 1 ? "s" : ""} — ouvrez la fiche du patient pour trancher,
-          sinon {aStatuer.length > 1 ? "elles" : "elle"} ne pourr{aStatuer.length > 1 ? "ont" : "a"} pas se facturer.
-        </p>
+        <section className="rounded-[14px] border border-due/40 bg-surface px-5 py-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h2 className="text-sm">
+              <span className="font-semibold">{aStatuer.length}</span> séance
+              {aStatuer.length > 1 ? "s" : ""} passée{aStatuer.length > 1 ? "s" : ""} à trancher.
+              Sans statut, une séance ne se facture pas.
+            </h2>
+            {aStatuer.length > 1 && <StatuerSeance ids={aStatuer.map((s) => s.id)} groupe />}
+          </div>
+          <ul className="mt-3 flex flex-col divide-y divide-line">
+            {aStatuer.slice(0, 20).map((s) => (
+              <li key={s.id} className="flex flex-wrap items-center gap-x-4 gap-y-2 py-2">
+                <time className="w-32 shrink-0 font-mono text-xs" data-numeric>
+                  {fmtDateCourte.format(s.startsAt)} · {fmtHeure.format(s.startsAt)}
+                </time>
+                <Link
+                  href={s.patientId ? `/admin/patients/${s.patientId}` : "/admin/etablissements"}
+                  className="min-w-32 flex-1 text-sm font-medium hover:text-accent-text"
+                >
+                  {nomSeance(s)}
+                </Link>
+                <CabinetTag cabinet={s.cabinet} />
+                <StatuerSeance ids={[s.id]} />
+              </li>
+            ))}
+          </ul>
+          {aStatuer.length > 20 && (
+            <p className="mt-2 text-xs text-ink-muted">
+              Et {aStatuer.length - 20} autres, plus récentes : elles apparaîtront ici à mesure.
+            </p>
+          )}
+        </section>
       )}
 
       {seances.length === 0 ? (
@@ -193,8 +228,8 @@ export default async function Aujourdhui({ searchParams }: { searchParams: Promi
               </Link>
               {conflits.has(i) && (
                 <p className="mt-1.5 pl-5 text-xs text-overdue">
-                  Séance précédente à {seances[i - 1].cabinet.nom} : moins de trente minutes
-                  pour rejoindre {s.cabinet.nom}.
+                  Séance précédente à {seances[i - 1].cabinet.nom} : moins de{" "}
+                  {reglages.trajetMin} minutes pour rejoindre {s.cabinet.nom}.
                 </p>
               )}
             </li>

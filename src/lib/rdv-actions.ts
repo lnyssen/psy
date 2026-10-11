@@ -1,11 +1,27 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 import { synchroniserApres } from "@/lib/google-sync";
 import { prisma } from "@/lib/db";
 import { creneauEncoreLibre } from "@/lib/creneaux";
 import { parametres } from "@/lib/parametres";
 import { exigerSession } from "@/lib/garde";
+import { adresseNotifications, creneauEnClair, envoyerCourriel } from "@/lib/courriel";
+import { SITE } from "@/lib/site";
+
+/** Adresse publique de l'outil, pour les liens des e-mails. */
+const URL_SITE = process.env.SITE_URL || "https://amandinemonsel.be";
+
+/** Prévient Amandine après la réponse au visiteur : un serveur de messagerie
+ *  lent ne doit jamais faire attendre la personne qui réserve. */
+function prevenirAmandine(sujet: string, texte: string, repondreA?: string) {
+  after(() => envoyerCourriel({ a: adresseNotifications(), sujet, texte, repondreA }));
+}
+
+function lieuEnClair(c: { nom: string; addressLine: string; postalCode: string; city: string }) {
+  return `${c.nom}, ${c.addressLine}, ${c.postalCode} ${c.city}`;
+}
 
 /**
  * Prise de rendez-vous depuis le site public.
@@ -90,7 +106,7 @@ export async function reserverOuDemander(_etat: ResultatRdv, f: FormData): Promi
     if (!patient) {
       return { ok: false, message: "Ce lien personnel n’est plus valable." };
     }
-    await prisma.session.create({
+    const seance = await prisma.session.create({
       data: {
         patientId: patient.id,
         cabinetId,
@@ -98,7 +114,18 @@ export async function reserverOuDemander(_etat: ResultatRdv, f: FormData): Promi
         durationMin: (await parametres()).dureeSeanceMin,
         reserveeEnLigne: true,
       },
+      include: { cabinet: true },
     });
+    prevenirAmandine(
+      `Réservation : ${patient.firstName} ${patient.lastName}, ${creneauEnClair(debut)}`,
+      [
+        `${patient.firstName} ${patient.lastName} a réservé en ligne avec son lien personnel :`,
+        "",
+        `${creneauEnClair(debut)} à ${seance.cabinet.nom}.`,
+        "",
+        `La séance est déjà dans l’agenda : ${URL_SITE}/admin/semaine`,
+      ].join("\n"),
+    );
     revalidatePath("/admin/semaine");
     revalidatePath("/admin");
     synchroniserApres();
@@ -127,7 +154,7 @@ export async function reserverOuDemander(_etat: ResultatRdv, f: FormData): Promi
   const trop = await tropDeDemandes(phone);
   if (trop) return { ok: false, message: trop };
 
-  await prisma.demandeRdv.create({
+  const demande = await prisma.demandeRdv.create({
     data: {
       firstName,
       lastName,
@@ -137,8 +164,25 @@ export async function reserverOuDemander(_etat: ResultatRdv, f: FormData): Promi
       souhaite: debut,
       cabinetId,
     },
+    include: { cabinet: true },
   });
   revalidatePath("/admin/demandes");
+  // Le message libre du visiteur reste dans l'outil : il peut dire plus qu'il
+  // ne faudrait, et l'e-mail n'est pas le bon endroit pour le lire.
+  prevenirAmandine(
+    `Demande de rendez-vous : ${firstName} ${lastName}`,
+    [
+      `${firstName} ${lastName} demande un rendez-vous :`,
+      "",
+      `${creneauEnClair(debut)} à ${demande.cabinet.nom}.`,
+      `Téléphone : ${phone}`,
+      ...(demande.email ? [`E-mail : ${demande.email}`] : []),
+      ...(demande.message ? ["", "Un message accompagne la demande, à lire dans l’outil."] : []),
+      "",
+      `Confirmer ou décliner : ${URL_SITE}/admin/demandes`,
+    ].join("\n"),
+    demande.email ?? undefined,
+  );
 
   return {
     ok: true,
@@ -155,11 +199,30 @@ export async function traiterDemande(f: FormData) {
   const decision = texte(f, "decision");
   if (!id) return;
 
-  const demande = await prisma.demandeRdv.findUnique({ where: { id } });
+  const demande = await prisma.demandeRdv.findUnique({ where: { id }, include: { cabinet: true } });
   if (!demande || demande.statut !== "EN_ATTENTE") return;
+
+  // La réponse promise sur le site part d'elle-même quand le demandeur a
+  // laissé une adresse ; sinon, c'est au téléphone (le seul champ exigé).
+  const repondre = (sujet: string, lignes: string[]) => {
+    if (!demande.email) return;
+    const a = demande.email;
+    after(() =>
+      envoyerCourriel({
+        a,
+        sujet,
+        texte: [`Bonjour ${demande.firstName},`, "", ...lignes, "", SITE.nom, SITE.telephone].join("\n"),
+        repondreA: SITE.email,
+      }),
+    );
+  };
 
   if (decision === "refuser") {
     await prisma.demandeRdv.update({ where: { id }, data: { statut: "REFUSEE" } });
+    repondre("Votre demande de rendez-vous", [
+      `Je ne peux malheureusement pas vous recevoir le ${creneauEnClair(demande.souhaite)}.`,
+      `Vous pouvez choisir un autre créneau sur ${URL_SITE}/rendez-vous, ou me joindre au ${SITE.telephone}.`,
+    ]);
   } else {
     const tarif = await prisma.tarif.findFirst({
       where: { regime: "PRIVE", actif: true },
@@ -192,6 +255,16 @@ export async function traiterDemande(f: FormData) {
       });
     }
     await prisma.demandeRdv.update({ where: { id }, data: { statut: "CONFIRMEE" } });
+    repondre("Votre rendez-vous est confirmé", [
+      `Votre rendez-vous du ${creneauEnClair(demande.souhaite)} est confirmé.`,
+      "",
+      `Adresse : ${lieuEnClair(demande.cabinet)}`,
+      "",
+      "En cas d’empêchement, merci de me prévenir au plus tôt en répondant à ce message.",
+      ...(patient.jetonRdv
+        ? ["", `Pour vos prochains rendez-vous, ce lien personnel vous permet de réserver directement : ${URL_SITE}/rendez-vous?p=${patient.jetonRdv}`]
+        : []),
+    ]);
   }
 
   for (const c of ["/admin/demandes", "/admin", "/admin/semaine", "/admin/patients"]) {
