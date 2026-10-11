@@ -139,7 +139,7 @@ export function Parametres({ valeurs }: { valeurs: ParametresType }) {
           <h3 className="text-sm font-semibold">Mentions légales de facturation</h3>
           <p className="mt-1 text-xs text-ink-muted">
             Reprises sur toute facture émise à un établissement — une pièce comptable numérotée,
-            à la différence du reçu remis à un patient.
+            à la différence du reçu remis à un patient, qui porte le n° d’entreprise, le n° INAMI et le visa.
           </p>
           <div className="mt-3 grid gap-3 sm:grid-cols-3">
             <label>
@@ -148,6 +148,33 @@ export function Parametres({ valeurs }: { valeurs: ParametresType }) {
                 name="numeroEntreprise"
                 defaultValue={valeurs.numeroEntreprise ?? ""}
                 placeholder="BE 0000.000.000"
+                className={`mt-1 ${champ} w-full`}
+              />
+            </label>
+            <label>
+              <span className={libelleChamp}>N° INAMI</span>
+              <input
+                name="numeroInami"
+                defaultValue={valeurs.numeroInami ?? ""}
+                placeholder="000000-00"
+                className={`mt-1 ${champ} w-full`}
+              />
+            </label>
+            <label>
+              <span className={libelleChamp}>Visa SPF Santé publique</span>
+              <input
+                name="numeroVisa"
+                defaultValue={valeurs.numeroVisa ?? ""}
+                placeholder="000000"
+                className={`mt-1 ${champ} w-full`}
+              />
+            </label>
+            <label>
+              <span className={libelleChamp}>N° Commission des psychologues</span>
+              <input
+                name="numeroCommission"
+                defaultValue={valeurs.numeroCommission ?? ""}
+                placeholder="000000000"
                 className={`mt-1 ${champ} w-full`}
               />
             </label>

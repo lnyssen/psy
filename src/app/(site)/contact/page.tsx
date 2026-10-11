@@ -1,7 +1,14 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { adresseCabinet } from "@/lib/format";
 import { SITE } from "@/lib/site";
+
+export const metadata: Metadata = {
+  title: "Contact",
+  description:
+    "Téléphone, e-mail et adresses des cabinets d’Uccle et d’Auderghem, et numéros utiles en cas d’urgence.",
+};
 
 export const dynamic = "force-dynamic";
 
@@ -65,13 +72,10 @@ export default async function Contact() {
        </div>
       </section>
 
-      <section className="bg-bande-navy px-6 py-16 text-white md:py-20">
+      <section className="bg-bande-navy px-6 pt-14 pb-10 text-white md:pt-16 md:pb-12">
        <div className="mx-auto max-w-5xl">
         <h2 className="font-display text-2xl tracking-tight md:text-3xl">En cas d’urgence</h2>
         <div className="mt-4 flex max-w-2xl flex-col gap-3 leading-relaxed text-white/75">
-          <p>
-            Ce site n’est pas un service d’urgence et les messages ne sont pas relevés en continu.
-          </p>
           <p>
             Si vous traversez une crise et que vous avez besoin de parler à quelqu’un tout de
             suite, le <span className="font-semibold text-white">Centre de prévention du suicide</span>{" "}

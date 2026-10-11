@@ -8,6 +8,9 @@ export type Parametres = {
   horizonSemaines: number;
   chainerSeances: boolean;
   numeroEntreprise: string | null;
+  numeroInami: string | null;
+  numeroVisa: string | null;
+  numeroCommission: string | null;
   iban: string | null;
   delaiPaiementJours: number;
   adresseSiege: string | null;
@@ -22,6 +25,9 @@ const PAR_DEFAUT: Parametres = {
   horizonSemaines: 4,
   chainerSeances: true,
   numeroEntreprise: null,
+  numeroInami: null,
+  numeroVisa: null,
+  numeroCommission: null,
   iban: null,
   delaiPaiementJours: 30,
   adresseSiege: null,

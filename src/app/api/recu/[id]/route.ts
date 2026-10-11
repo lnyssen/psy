@@ -131,6 +131,18 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     y -= 20;
     texte(`N° d’entreprise : ${reglages.numeroEntreprise}`, M, { taille: 9.5 });
   }
+  if (reglages?.numeroInami) {
+    y -= reglages.numeroEntreprise ? 13 : 20;
+    texte(`N° INAMI : ${reglages.numeroInami}`, M, { taille: 9.5 });
+  }
+  if (reglages?.numeroVisa) {
+    y -= reglages.numeroEntreprise || reglages.numeroInami ? 13 : 20;
+    texte(`Visa SPF Santé publique : ${reglages.numeroVisa}`, M, { taille: 9.5 });
+  }
+  if (reglages?.numeroCommission) {
+    y -= reglages.numeroEntreprise || reglages.numeroInami || reglages.numeroVisa ? 13 : 20;
+    texte(`Commission des psychologues : ${reglages.numeroCommission}`, M, { taille: 9.5 });
+  }
   const yBasBloc = y - 6;
   regleV(M + 260, yBlocTiers, yBasBloc);
   y = yBasBloc - 10;

@@ -382,6 +382,16 @@ model Parametres {
   /// établissement. Un reçu au patient n'en a pas besoin — ce n'est pas une
   /// pièce comptable numérotée — mais une facture en est une.
   numeroEntreprise   String? @map("numero_entreprise")
+  /// N° INAMI de la praticienne, repris sur le reçu patient (que la mutuelle
+  /// demande pour un remboursement) et dans les mentions légales du site.
+  numeroInami        String? @map("numero_inami")
+  /// N° de visa délivré par le SPF Santé publique : il autorise le titre de
+  /// psychologue clinicien. Affiché dans le pied de page du site, les mentions
+  /// légales et le reçu patient.
+  numeroVisa         String? @map("numero_visa")
+  /// N° d'inscription à la Commission des psychologues. Distinct du visa, et
+  /// renouvelé chaque année : il est affiché tel quel, sans date.
+  numeroCommission   String? @map("numero_commission")
   iban               String?
   /// Délai de paiement en jours, pour calculer l'échéance à l'émission.
   delaiPaiementJours Int     @default(30) @map("delai_paiement_jours")

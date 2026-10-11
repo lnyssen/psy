@@ -62,12 +62,12 @@ export function EnteteSite() {
       et une hauteur variable aurait laissé un liseré.
     */
     <header className="sticky top-0 z-40 h-[var(--entete)] px-3 pt-4 md:px-6">
-      <div className="mx-auto flex h-full max-w-[69rem] items-center gap-2 rounded-full bg-paper/72 px-7 ring-1 ring-line/70 ring-inset backdrop-blur-2xl md:gap-4 md:px-10">
+      <div className="mx-auto flex h-full max-w-[69rem] items-center gap-2 rounded-full bg-paper/72 px-7 ring-1 ring-line/70 ring-inset backdrop-blur-2xl max-[359px]:px-4 md:gap-4 md:px-10">
         <Link href="/" className="flex shrink-0 flex-col">
           <span className="font-display text-[17px] leading-[1.15] tracking-tight md:text-[20px]">
             Amandine Monsel
           </span>
-          <span className="mt-0.5 text-[9px] leading-[1.4] font-semibold tracking-[0.16em] text-accent-text uppercase md:text-[10px] md:tracking-[0.2em]">
+          <span className="mt-0.5 text-[9px] leading-[1.4] max-[359px]:hidden font-semibold tracking-[0.16em] text-accent-text uppercase md:text-[10px] md:tracking-[0.2em]">
             Psychologue clinicienne
           </span>
         </Link>
@@ -101,7 +101,7 @@ export function EnteteSite() {
 
         <Link
           href="/rendez-vous"
-          className="ml-auto shrink-0 rounded-full bg-accent px-3 py-1.5 text-[11px] font-semibold whitespace-nowrap text-accent-contrast transition-colors hover:bg-accent-hover md:px-5 md:py-2.5 md:text-sm"
+          className="ml-auto flex min-h-11 shrink-0 items-center rounded-full bg-accent px-3.5 text-[11px] font-semibold whitespace-nowrap text-accent-contrast transition-colors hover:bg-accent-hover max-[359px]:hidden md:min-h-0 md:px-5 md:py-2.5 md:text-sm"
         >
           <span className="md:hidden">Rendez-vous</span>
           <span className="hidden md:inline">Prendre rendez-vous</span>
@@ -112,7 +112,7 @@ export function EnteteSite() {
           onClick={() => setOuvert((o) => !o)}
           aria-expanded={ouvert}
           aria-controls="menu-site"
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-ink/35 text-ink transition-colors hover:border-ink md:hidden"
+          className="ml-auto flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-ink/35 text-ink transition-colors hover:border-ink min-[360px]:ml-0 md:hidden"
         >
           <span className="sr-only">{ouvert ? "Fermer le menu" : "Ouvrir le menu"}</span>
           {ouvert ? <IconFermer /> : <IconMenu />}
@@ -147,14 +147,14 @@ export function EnteteSite() {
               : "opacity-0"
           }`}
         >
-          {PAGES.map((p) => (
+          {[...PAGES, { href: "/rendez-vous", label: "Prendre rendez-vous" }].map((p) => (
             <Link
               key={p.href}
               href={p.href}
               aria-current={pathname === p.href ? "page" : undefined}
               className={`border-b border-line py-3.5 text-base last:border-b-0 ${
                 pathname === p.href ? "font-semibold text-accent-text" : ""
-              }`}
+              } ${p.href === "/rendez-vous" ? "min-[360px]:hidden" : ""}`}
             >
               {p.label}
             </Link>

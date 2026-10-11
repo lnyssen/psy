@@ -114,7 +114,7 @@ export function CalendrierRdv({
             onClick={() => changerMois(-1)}
             disabled={new Date(mois.getFullYear(), mois.getMonth() - 1, 1) < moisMin}
             aria-label="Mois précédent"
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-line-strong text-ink-muted transition-colors hover:border-accent hover:text-accent-text disabled:opacity-30 disabled:hover:border-line-strong disabled:hover:text-ink-muted"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-line-strong text-ink-muted transition-colors hover:border-accent hover:text-accent-text disabled:opacity-30 disabled:hover:border-line-strong disabled:hover:text-ink-muted"
           >
             <IconChevronGauche />
           </button>
@@ -126,7 +126,7 @@ export function CalendrierRdv({
             onClick={() => changerMois(1)}
             disabled={new Date(mois.getFullYear(), mois.getMonth() + 1, 1) > moisMax}
             aria-label="Mois suivant"
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-line-strong text-ink-muted transition-colors hover:border-accent hover:text-accent-text disabled:opacity-30 disabled:hover:border-line-strong disabled:hover:text-ink-muted"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-line-strong text-ink-muted transition-colors hover:border-accent hover:text-accent-text disabled:opacity-30 disabled:hover:border-line-strong disabled:hover:text-ink-muted"
           >
             <IconChevronDroite />
           </button>

@@ -117,10 +117,10 @@ export default async function Accueil() {
             <br />
             Monsel
           </h1>
-          <p className="mt-8 flex flex-wrap items-center gap-x-3 gap-y-2 text-lg font-semibold">
+          <p className="mt-8 flex flex-wrap items-center gap-x-5 gap-y-2 text-lg font-semibold sm:gap-x-3">
             {SITE.publics.map((p, i) => (
               <span key={p} className="flex items-center gap-3">
-                {i > 0 && <span aria-hidden="true" className="h-1 w-1 rounded-full bg-white/60" />}
+                {i > 0 && <span aria-hidden="true" className="hidden h-1 w-1 rounded-full bg-white/60 sm:block" />}
                 {p}
               </span>
             ))}
@@ -178,13 +178,42 @@ export default async function Accueil() {
           </div>
 
           <div>
-            <Titre>Mon approche</Titre>
+            <Titre>Mon approche et mon parcours</Titre>
             <div className="mt-8 flex flex-col gap-6">
               {SITE.parcours.map((p) => (
                 <p key={p.slice(0, 24)} className="text-lg leading-relaxed text-ink">
                   {p}
                 </p>
               ))}
+            </div>
+            <div className="mt-10 grid gap-8 border-t border-line pt-8 sm:grid-cols-2">
+              <div>
+                <p className="text-[11px] font-semibold tracking-[0.12em] text-titre uppercase">Formation</p>
+                <ul className="mt-3 flex flex-col gap-3 text-[15px] leading-snug">
+                  {SITE.formation.map((f) => (
+                    <li key={f.intitule} className="flex gap-3">
+                      <span aria-hidden="true" className="mt-[0.55rem] h-1.5 w-1.5 shrink-0 rounded-full bg-accent" />
+                      <span>
+                        <span className="block text-ink">{f.intitule}</span>
+                        <span className="text-ink-muted">
+                          {f.lieu}, {f.periode}
+                        </span>
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div>
+                <p className="text-[11px] font-semibold tracking-[0.12em] text-titre uppercase">Parcours</p>
+                <ul className="mt-3 flex flex-col gap-3 text-[15px] leading-snug text-ink">
+                  {SITE.fonctions.map((f) => (
+                    <li key={f} className="flex gap-3">
+                      <span aria-hidden="true" className="mt-[0.55rem] h-1.5 w-1.5 shrink-0 rounded-full bg-accent" />
+                      <span>{f}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             </div>
           </div>
         </Reveal>

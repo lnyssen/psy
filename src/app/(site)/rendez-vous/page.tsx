@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { prisma } from "@/lib/db";
 import { creneauxDisponibles } from "@/lib/creneaux";
 import { parametres } from "@/lib/parametres";
@@ -5,6 +6,12 @@ import { debutDeJour } from "@/lib/format";
 import { synchroniser } from "@/lib/google-sync";
 import { PriseRdv } from "@/components/PriseRdv";
 import { adresseCabinet } from "@/lib/format";
+
+export const metadata: Metadata = {
+  title: "Prendre rendez-vous",
+  description:
+    "Choisissez un cabinet et un créneau libre pour demander un rendez-vous avec Amandine Monsel, psychologue à Uccle et Auderghem.",
+};
 
 export const dynamic = "force-dynamic";
 

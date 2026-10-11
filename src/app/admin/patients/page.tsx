@@ -64,12 +64,20 @@ export default async function Patients({ searchParams }: { searchParams: Promise
             {enrichis.length} dossier{enrichis.length > 1 ? "s" : ""}.
           </p>
         </div>
-        <Link
-          href="/admin/patients/nouveau"
-          className="rounded-full bg-accent px-5 py-2.5 text-sm font-medium text-accent-contrast transition-colors hover:bg-accent-hover"
-        >
-          Nouveau patient
-        </Link>
+        <div className="flex flex-wrap items-center gap-3">
+          <Link
+            href="/admin/patients/import"
+            className="rounded-full border border-line px-5 py-2.5 text-sm font-medium transition-colors hover:bg-sunken"
+          >
+            Importer (Excel)
+          </Link>
+          <Link
+            href="/admin/patients/nouveau"
+            className="rounded-full bg-accent px-5 py-2.5 text-sm font-medium text-accent-contrast transition-colors hover:bg-accent-hover"
+          >
+            Nouveau patient
+          </Link>
+        </div>
       </header>
 
       <FiltresMobile

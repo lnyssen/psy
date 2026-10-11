@@ -1,6 +1,13 @@
+import type { Metadata } from "next";
 import { prisma } from "@/lib/db";
 import { adresseCabinet } from "@/lib/format";
 import { SITE } from "@/lib/site";
+
+export const metadata: Metadata = {
+  title: "En pratique : cabinets, accès et remboursement",
+  description:
+    "Adresses des cabinets d’Uccle et d’Auderghem, accès en transports et plan, remboursement et convention INAMI.",
+};
 
 export const dynamic = "force-dynamic";
 
@@ -33,6 +40,14 @@ export default async function Praticalites() {
                 {c.nom}
               </p>
               <p className="mt-1 text-sm text-ink-muted">{adresseCabinet(c)}</p>
+              <a
+                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(adresseCabinet(c))}`}
+                target="_blank"
+                rel="noreferrer"
+                className="mt-2 inline-block text-sm font-medium text-accent-text underline underline-offset-4"
+              >
+                Voir sur Google Maps
+              </a>
               {/* Une ligne du champ « accès » par ligne affichée : c'est du
                   texte libre saisi dans les réglages, et le retour à la ligne
                   y a un sens — un moyen de transport par ligne. */}
@@ -60,12 +75,7 @@ export default async function Praticalites() {
                       ))}
                   </ul>
                 </>
-              ) : (
-                <p className="mt-3 text-xs text-ink-muted">
-                  <span className="font-semibold text-ink">À compléter</span> — accès en
-                  transports, stationnement, étage, accessibilité.
-                </p>
-              )}
+              ) : null}
             </div>
           ))}
         </div>
@@ -85,10 +95,6 @@ export default async function Praticalites() {
             Une partie des consultations relève par ailleurs de la{" "}
             <span className="text-ink">convention INAMI de psychologie de première ligne</span>,
             qui rend la séance nettement moins chère. L’accès en est encadré.
-          </p>
-          <p className="rounded-[14px] border border-dashed border-line-strong px-5 py-4 text-sm">
-            <span className="font-semibold text-ink">À compléter</span> — conditions exactes
-            d’accès à la convention dans son cas, et pièces à fournir à la mutuelle.
           </p>
           <p>
             Ma fiche figure également sur{" "}

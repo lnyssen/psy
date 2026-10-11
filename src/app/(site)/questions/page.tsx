@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 const QUESTIONS: [string, string][] = [
   [
     "Comment se passe une première séance ?",
@@ -21,13 +22,23 @@ const QUESTIONS: [string, string][] = [
   ],
   [
     "Recevez-vous les adolescents ?",
-    "À compléter — publics reçus, âges, et éventuelles orientations si la demande sort de son champ.",
+    "Oui. Je reçois les enfants dès quatre ans, les adolescents et leurs parents, ainsi que les jeunes adultes.",
+  ],
+  [
+    "Comment se règle la séance ?",
+    "Sur place, en espèces ou par Payconiq.",
   ],
   [
     "Faut-il une prescription médicale ?",
     "Pas pour une consultation privée : vous pouvez prendre rendez-vous directement. L’accès à la convention INAMI, lui, suit ses propres règles.",
   ],
 ];
+
+export const metadata: Metadata = {
+  title: "Questions fréquentes",
+  description:
+    "Première séance, durée, fréquence, confidentialité, annulation, règlement : les réponses aux questions que l’on se pose avant de consulter.",
+};
 
 export default function Questions() {
   return (
