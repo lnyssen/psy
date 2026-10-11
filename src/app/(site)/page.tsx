@@ -124,7 +124,7 @@ export default async function Accueil() {
           <p className="text-[11px] font-bold tracking-[0.22em] text-white/90 uppercase">
             {SITE.titre}
           </p>
-          <h1 className="mt-6 font-display text-[3.75rem] leading-[0.9] tracking-[-0.035em] sm:text-[5.5rem] lg:text-[clamp(6.5rem,9vw,10.5rem)]">
+          <h1 className="mt-6 font-display text-[3.25rem] leading-[0.9] tracking-[-0.035em] sm:text-[4.75rem] lg:text-[clamp(5.5rem,7.5vw,8.75rem)]">
             Amandine
             <br />
             Monsel
@@ -196,7 +196,7 @@ export default async function Accueil() {
           </div>
 
           <h3 className="mt-16 font-display text-[1.6rem] leading-tight text-titre">
-            Motifs de consultation
+            Pourquoi consulter ?
           </h3>
           <ul className="mt-6 grid gap-x-14 gap-y-3 md:grid-cols-2">
             {SITE.problematiques.map((p) => (

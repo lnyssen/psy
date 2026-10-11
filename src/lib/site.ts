@@ -10,7 +10,7 @@ export const SITE = {
   titre: "Psychologue clinicienne & psychothérapeute",
   publics: ["Enfants", "Adolescents", "Jeunes adultes"],
   accroche:
-    "Un accompagnement sur mesure, fort de plus de vingt ans d’expérience. Orientations analytique et systémique.",
+    "Un accompagnement attentif, fort de plus de vingt ans d’expérience. Orientations analytique et systémique.",
   langues: "Consultations en français et en anglais.",
   /** Fiche publique sur l'annuaire des psychologues bruxellois. */
   psybru: "https://psybru.be/fr/psychologue/amandine-monsel",
