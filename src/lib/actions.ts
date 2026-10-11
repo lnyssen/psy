@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { JOURS_OUVRES, instantBruxelles, numeroNational, partiesJour } from "@/lib/format";
 import { parametres } from "@/lib/parametres";
+import { montantSeanceCents, payeurDe } from "@/lib/tarifs";
 import { PALETTE_CABINETS } from "@/lib/palette";
 import { exigerSession } from "@/lib/garde";
 
@@ -73,11 +74,11 @@ export async function enregistrerPatient(f: FormData) {
   if (email && !email.includes("@")) return;
 
   const scheme = texte(f, "scheme");
-  if (!["PRIVE", "CONVENTIONNE", "INSTITUTION"].includes(scheme)) return;
+  if (!["PRIVE", "CONVENTIONNE"].includes(scheme)) return;
+  const regime = scheme as "PRIVE" | "CONVENTIONNE";
 
-  const feeSaisi = texte(f, "feeCents");
-  const feeCents = feeSaisi ? Math.round(Number(feeSaisi.replace(",", ".")) * 100) : null;
-  if (feeSaisi && !Number.isFinite(feeCents)) return;
+  const actuel = await prisma.patient.findUnique({ where: { id }, select: { feeCents: true } });
+  const { tarifId, feeCents } = await resoudreTarif(regime, texte(f, "tarifId"), actuel?.feeCents ?? null);
 
   const birthSaisie = texte(f, "birthDate");
   const birthDate = birthSaisie ? new Date(birthSaisie) : null;
@@ -105,7 +106,8 @@ export async function enregistrerPatient(f: FormData) {
       postalCode: texte(f, "postalCode") || null,
       city: texte(f, "city") || null,
       birthDate,
-      scheme: scheme as "PRIVE" | "CONVENTIONNE" | "INSTITUTION",
+      scheme: regime,
+      tarifId,
       feeCents,
       cabinetId,
     },
@@ -118,9 +120,15 @@ export async function marquerPaye(id: string, methode: "CASH" | "ELECTRONIC") {
   await exigerSession();
   const seance = await prisma.session.findUnique({
     where: { id },
-    include: { patient: true },
+    include: { patient: { include: { tarif: true } } },
   });
   if (!seance) return { ok: false as const, message: "Séance introuvable." };
+  if (seance.patient && payeurDe(seance.patient.scheme) === "INAMI") {
+    return {
+      ok: false as const,
+      message: "Séance conventionnée : le patient ne paie rien. Marquez-la « reçue de l’INAMI ».",
+    };
+  }
 
   await prisma.session.update({
     where: { id },
@@ -130,12 +138,65 @@ export async function marquerPaye(id: string, methode: "CASH" | "ELECTRONIC") {
       paymentMethod: methode,
       // Le montant se fige au moment de l'encaissement : le tarif du patient
       // peut changer ensuite sans réécrire l'historique comptable.
-      amountCents: seance.amountCents ?? seance.patient?.feeCents ?? null,
+      amountCents: seance.amountCents ?? montantSeanceCents(seance.patient),
     },
   });
   revalidatePath("/admin/facturation");
+  revalidatePath("/admin/finance");
   revalidatePath(`/admin/patients/${seance.patientId}`);
   return { ok: true as const };
+}
+
+/**
+ * Séance conventionnée (psychologue de première ligne) : l'INAMI a versé le
+ * montant du tarif conventionné. Le patient, lui, n'a rien payé — d'où une
+ * action à part, qui n'a pas de mode de paiement à choisir (c'est un virement)
+ * et qui ne s'applique jamais à un patient privé.
+ */
+export async function marquerRecuInami(id: string) {
+  await exigerSession();
+  const r = await marquerRecuInamiLot([id]);
+  return r.ok ? { ok: true as const } : r;
+}
+
+export async function marquerRecuInamiLot(ids: string[]) {
+  await exigerSession();
+  if (ids.length === 0) return { ok: false as const, message: "Aucune séance sélectionnée." };
+
+  const seances = await prisma.session.findMany({
+    where: {
+      id: { in: ids },
+      paymentStatus: { not: "PAID" },
+      status: { in: ["ATTENDED", "NO_SHOW"] },
+      patient: { scheme: "CONVENTIONNE" },
+    },
+    include: { patient: { include: { tarif: true } } },
+  });
+  if (seances.length === 0) {
+    return { ok: false as const, message: "Aucune séance conventionnée à marquer reçue." };
+  }
+
+  const maintenant = new Date();
+  await prisma.$transaction(
+    seances.map((s) =>
+      prisma.session.update({
+        where: { id: s.id },
+        data: {
+          paymentStatus: "PAID",
+          paidAt: maintenant,
+          paymentMethod: "ELECTRONIC",
+          // Figé au moment du versement, comme pour un encaissement patient : un
+          // changement ultérieur du tarif ne réécrit pas ce qui a été reçu.
+          amountCents: s.amountCents ?? montantSeanceCents(s.patient),
+        },
+      }),
+    ),
+  );
+
+  revalidatePath("/admin/facturation");
+  revalidatePath("/admin/finance");
+  for (const s of seances) revalidatePath(`/admin/patients/${s.patientId}`);
+  return { ok: true as const, n: seances.length };
 }
 
 /**
@@ -158,8 +219,11 @@ export async function marquerPayeLot(ids: string[], methode: "CASH" | "ELECTRONI
       id: { in: ids },
       paymentStatus: { not: "PAID" },
       status: { in: ["ATTENDED", "NO_SHOW"] },
+      // Une séance conventionnée n'est pas une dette du patient : elle se marque
+      // « reçue de l'INAMI », pas encaissée.
+      patient: { scheme: "PRIVE" },
     },
-    include: { patient: true },
+    include: { patient: { include: { tarif: true } } },
   });
 
   if (seances.length === 0) {
@@ -175,7 +239,7 @@ export async function marquerPayeLot(ids: string[], methode: "CASH" | "ELECTRONI
           paymentStatus: "PAID",
           paidAt: maintenant,
           paymentMethod: methode,
-          amountCents: s.amountCents ?? s.patient?.feeCents ?? null,
+          amountCents: s.amountCents ?? montantSeanceCents(s.patient),
         },
       }),
     ),
@@ -294,13 +358,10 @@ export async function creerPatient(f: FormData) {
   if (!firstName || !lastName) return;
 
   const scheme = texte(f, "scheme");
-  const schemeValide = ["PRIVE", "CONVENTIONNE", "INSTITUTION"].includes(scheme)
-    ? (scheme as "PRIVE" | "CONVENTIONNE" | "INSTITUTION")
-    : "PRIVE";
+  const schemeValide = scheme === "CONVENTIONNE" ? "CONVENTIONNE" : "PRIVE";
+  const { tarifId } = await resoudreTarif(schemeValide, texte(f, "tarifId"), null);
 
   const email = texte(f, "email");
-  const feeSaisi = texte(f, "feeCents");
-  const feeCents = feeSaisi ? Math.round(Number(feeSaisi.replace(",", ".")) * 100) : null;
   const birthSaisie = texte(f, "birthDate");
   const birthDate = birthSaisie ? new Date(birthSaisie) : null;
   const cabinetId = texte(f, "cabinetId") || null;
@@ -325,7 +386,7 @@ export async function creerPatient(f: FormData) {
       city: texte(f, "city") || null,
       birthDate: birthDate && !Number.isNaN(birthDate.getTime()) ? birthDate : null,
       scheme: schemeValide,
-      feeCents: Number.isFinite(feeCents) ? feeCents : null,
+      tarifId,
       cabinetId,
       jetonRdv: crypto.randomUUID(),
     },
@@ -354,6 +415,38 @@ function rafraichirTout() {
   ]) {
     revalidatePath(chemin);
   }
+}
+
+/**
+ * Le tarif à poser sur une fiche, d'après le choix du formulaire et le régime.
+ *
+ * Le régime commande : un tarif d'un autre régime est refusé, et on retombe sur
+ * le tarif par défaut du bon régime (en conventionné, le premier tarif actif —
+ * il n'y en a qu'un). L'ancien montant libre est conservé seulement si on le
+ * demande (« ancien »), faute de quoi il est effacé : un seul montant fait foi.
+ */
+async function resoudreTarif(
+  scheme: "PRIVE" | "CONVENTIONNE",
+  choix: string,
+  ancienFeeCents: number | null,
+): Promise<{ tarifId: string | null; feeCents: number | null }> {
+  if (choix === "ancien" && scheme === "PRIVE" && ancienFeeCents !== null) {
+    return { tarifId: null, feeCents: ancienFeeCents };
+  }
+  if (choix && choix !== "ancien") {
+    const t = await prisma.tarif.findUnique({ where: { id: choix } });
+    if (t && t.actif && t.regime === scheme) return { tarifId: t.id, feeCents: null };
+  }
+  const defaut =
+    (await prisma.tarif.findFirst({
+      where: { regime: scheme, actif: true, parDefaut: true },
+      orderBy: { ordre: "asc" },
+    })) ??
+    (await prisma.tarif.findFirst({
+      where: { regime: scheme, actif: true },
+      orderBy: { ordre: "asc" },
+    }));
+  return { tarifId: defaut?.id ?? null, feeCents: null };
 }
 
 function texte(f: FormData, cle: string) {
@@ -445,15 +538,19 @@ export async function enregistrerTarif(f: FormData) {
   const euros = Number(texte(f, "montant").replace(",", "."));
   if (!libelle || !Number.isFinite(euros) || euros < 0) return;
 
+  const regime = texte(f, "regime") === "CONVENTIONNE" ? "CONVENTIONNE" : "PRIVE";
   const donnees = {
     libelle,
+    regime: regime as "PRIVE" | "CONVENTIONNE",
     amountCents: Math.round(euros * 100),
-    parDefaut: f.get("parDefaut") === "on",
+    // Le tarif par défaut n'a de sens qu'en privé : en conventionné, il n'y en a
+    // qu'un. Et il est unique par régime.
+    parDefaut: regime === "PRIVE" && f.get("parDefaut") === "on",
     actif: f.get("actif") === "on",
   };
 
   if (donnees.parDefaut) {
-    await prisma.tarif.updateMany({ data: { parDefaut: false } });
+    await prisma.tarif.updateMany({ where: { regime }, data: { parDefaut: false } });
   }
 
   if (id) {
@@ -469,7 +566,15 @@ export async function supprimerTarif(f: FormData) {
   await exigerSession();
   const id = texte(f, "id");
   if (!id) return;
-  await prisma.tarif.delete({ where: { id } });
+  // Un tarif choisi dans des fiches se désactive plutôt que de disparaître :
+  // le supprimer ferait retomber ces patients sur « aucun montant » sans qu'on
+  // s'en aperçoive.
+  const utilise = await prisma.patient.count({ where: { tarifId: id } });
+  if (utilise > 0) {
+    await prisma.tarif.update({ where: { id }, data: { actif: false, parDefaut: false } });
+  } else {
+    await prisma.tarif.delete({ where: { id } });
+  }
   rafraichirTout();
 }
 

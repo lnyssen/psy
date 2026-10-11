@@ -44,6 +44,14 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     // reçu individuel.
     return new Response("Cette séance ne concerne aucun patient.", { status: 409 });
   }
+  if (seance.patient.scheme === "CONVENTIONNE") {
+    // Psychologue de première ligne : l'INAMI paie, le patient ne paie rien. Il n'y
+    // a donc aucun reçu d'honoraires à lui remettre.
+    return new Response(
+      "Séance conventionnée (psychologue de première ligne) : prise en charge par l’INAMI, aucun reçu patient.",
+      { status: 409 },
+    );
+  }
   if (seance.paymentStatus !== "PAID") {
     return new Response("Le reçu n’est délivré que pour une séance payée.", { status: 409 });
   }

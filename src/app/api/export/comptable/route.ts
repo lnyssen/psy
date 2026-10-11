@@ -59,6 +59,7 @@ export async function GET(req: Request) {
     { header: "Cabinet", key: "cabinet", width: 14 },
     { header: "Adresse", key: "adresse", width: 34 },
     { header: "Régime", key: "regime", width: 14 },
+    { header: "Payé par", key: "payeur", width: 14 },
     { header: "Statut", key: "statut", width: 12 },
     { header: "Montant (€)", key: "montant", width: 12 },
   ];
@@ -69,6 +70,9 @@ export async function GET(req: Request) {
       cabinet: s.cabinet.nom,
       adresse: adresseCabinet(s.cabinet),
       regime: s.patient ? SCHEME_LABEL[s.patient.scheme] : "établissement",
+      // Le montant d'une séance conventionnée est versé par l'INAMI, pas par le
+      // patient : la comptable doit pouvoir les séparer d'un coup d'œil.
+      payeur: s.patient ? (s.patient.scheme === "CONVENTIONNE" ? "INAMI" : "patient") : "établissement",
       statut: s.paymentStatus,
       montant: euros(s.amountCents),
     });

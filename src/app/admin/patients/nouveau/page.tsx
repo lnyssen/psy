@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ChampNumeroNational } from "@/components/ChampNumeroNational";
 import { prisma } from "@/lib/db";
 import { creerPatient } from "@/lib/actions";
+import { RegimeEtTarif } from "@/components/RegimeEtTarif";
 
 export const dynamic = "force-dynamic";
 
@@ -18,6 +19,12 @@ export default async function NouveauPatient() {
   const cabinets = await prisma.cabinet.findMany({
     where: { actif: true, factureInstitution: false },
     orderBy: { ordre: "asc" },
+  });
+
+  const tarifs = await prisma.tarif.findMany({
+    where: { actif: true },
+    orderBy: { ordre: "asc" },
+    select: { id: true, libelle: true, amountCents: true, regime: true, parDefaut: true },
   });
 
   return (
@@ -42,14 +49,7 @@ export default async function NouveauPatient() {
           <span className={libelleChamp}>Nom</span>
           <input name="lastName" required className={`mt-1 ${champ}`} />
         </label>
-        <label>
-          <span className={libelleChamp}>Régime</span>
-          <select name="scheme" defaultValue="PRIVE" className={`mt-1 ${champ}`}>
-            <option value="PRIVE">privé</option>
-            <option value="CONVENTIONNE">conventionné</option>
-            <option value="INSTITUTION">institution</option>
-          </select>
-        </label>
+        <RegimeEtTarif tarifs={tarifs} />
         <label>
           <span className={libelleChamp}>Téléphone</span>
           <input name="phone" type="tel" className={`mt-1 ${champ}`} />
@@ -96,10 +96,6 @@ export default async function NouveauPatient() {
             <input name="city" className={`mt-1 ${champ}`} />
           </label>
         </div>
-        <label>
-          <span className={libelleChamp}>Tarif (€ — vide si conventionné)</span>
-          <input name="feeCents" type="number" step="0.01" min="0" className={`mt-1 ${champ}`} />
-        </label>
         <label>
           <span className={libelleChamp}>Cabinet habituel</span>
           <select name="cabinetId" defaultValue="" className={`mt-1 ${champ}`}>

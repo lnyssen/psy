@@ -122,11 +122,13 @@ const CABINETS = [
   },
 ];
 
+// Grille de démonstration, calquée sur la vraie : deux tarifs privés (payés par le
+// patient) et un tarif conventionné (psychologue de première ligne : versé par
+// l'INAMI à Amandine, le patient ne paie rien).
 const TARIFS = [
-  { libelle: "Séance individuelle", amountCents: 6500, parDefaut: true, ordre: 0 },
-  { libelle: "Première consultation", amountCents: 8000, parDefaut: false, ordre: 1 },
-  { libelle: "Séance longue", amountCents: 9000, parDefaut: false, ordre: 2 },
-  { libelle: "Vacation scolaire (horaire)", amountCents: 7500, parDefaut: false, ordre: 3 },
+  { libelle: "Tarif 1", regime: CareScheme.PRIVE, amountCents: 7000, parDefaut: true, ordre: 0 },
+  { libelle: "Tarif 2", regime: CareScheme.PRIVE, amountCents: 7500, parDefaut: false, ordre: 1 },
+  { libelle: "Conventionné (INAMI)", regime: CareScheme.CONVENTIONNE, amountCents: 9113, parDefaut: false, ordre: 2 },
 ];
 
 type Semee = {
@@ -174,15 +176,16 @@ async function main() {
 
   const c: Record<string, { id: string }> = {};
   for (const data of CABINETS) c[data.nom] = await prisma.cabinet.create({ data });
-  for (const data of TARIFS) await prisma.tarif.create({ data });
+  const t: Record<string, { id: string }> = {};
+  for (const data of TARIFS) t[data.libelle] = await prisma.tarif.create({ data });
 
   const PATIENTS = [
-    { firstName: "Camille", lastName: "Dubois", scheme: CareScheme.PRIVE, feeCents: 6500, cabinetId: c["Uccle"].id, phone: "0475 12 34 56", email: "camille.dubois@example.be", addressLine: "12 rue du Doyenné", postalCode: "1180", city: "Uccle", birthDate: new Date("1988-04-17") },
-    { firstName: "Thomas", lastName: "Lefèvre", scheme: CareScheme.CONVENTIONNE, feeCents: null, cabinetId: c["Auderghem"].id, phone: "0498 76 54 32", email: "t.lefevre@example.be", addressLine: "88 chaussée de Wavre", postalCode: "1160", city: "Auderghem", birthDate: new Date("1995-11-02") },
-    { firstName: "Naïma", lastName: "Ben Salah", scheme: CareScheme.PRIVE, feeCents: 6500, cabinetId: c["Uccle"].id, phone: "0472 45 89 10", email: "naima.bensalah@example.be", addressLine: "5 avenue Brugmann", postalCode: "1190", city: "Forest", birthDate: new Date("1979-06-23") },
-    { firstName: "Jonas", lastName: "Vermeulen", scheme: CareScheme.CONVENTIONNE, feeCents: null, cabinetId: c["Auderghem"].id, phone: "0486 33 21 07", email: "jonas.vermeulen@example.be", addressLine: "40 rue Valduc", postalCode: "1160", city: "Auderghem", birthDate: new Date("2001-01-30") },
-    { firstName: "Élise", lastName: "Moreau", scheme: CareScheme.PRIVE, feeCents: 7000, cabinetId: c["Uccle"].id, phone: "0491 88 14 25", email: "elise.moreau@example.be", addressLine: "27 rue Vanderkindere", postalCode: "1180", city: "Uccle", birthDate: new Date("1992-09-08") },
-    { firstName: "Malik", lastName: "Haddad", scheme: CareScheme.PRIVE, feeCents: 6500, cabinetId: c["Auderghem"].id, phone: "0479 62 40 18", email: "malik.haddad@example.be", addressLine: "3 square des Archiducs", postalCode: "1170", city: "Watermael-Boitsfort", birthDate: new Date("1984-02-14") },
+    { firstName: "Camille", lastName: "Dubois", scheme: CareScheme.PRIVE, tarifId: t["Tarif 1"].id, cabinetId: c["Uccle"].id, phone: "0475 12 34 56", email: "camille.dubois@example.be", addressLine: "12 rue du Doyenné", postalCode: "1180", city: "Uccle", birthDate: new Date("1988-04-17") },
+    { firstName: "Thomas", lastName: "Lefèvre", scheme: CareScheme.CONVENTIONNE, tarifId: t["Conventionné (INAMI)"].id, cabinetId: c["Auderghem"].id, phone: "0498 76 54 32", email: "t.lefevre@example.be", addressLine: "88 chaussée de Wavre", postalCode: "1160", city: "Auderghem", birthDate: new Date("1995-11-02") },
+    { firstName: "Naïma", lastName: "Ben Salah", scheme: CareScheme.PRIVE, tarifId: t["Tarif 2"].id, cabinetId: c["Uccle"].id, phone: "0472 45 89 10", email: "naima.bensalah@example.be", addressLine: "5 avenue Brugmann", postalCode: "1190", city: "Forest", birthDate: new Date("1979-06-23") },
+    { firstName: "Jonas", lastName: "Vermeulen", scheme: CareScheme.CONVENTIONNE, tarifId: t["Conventionné (INAMI)"].id, cabinetId: c["Auderghem"].id, phone: "0486 33 21 07", email: "jonas.vermeulen@example.be", addressLine: "40 rue Valduc", postalCode: "1160", city: "Auderghem", birthDate: new Date("2001-01-30") },
+    { firstName: "Élise", lastName: "Moreau", scheme: CareScheme.PRIVE, tarifId: t["Tarif 1"].id, cabinetId: c["Uccle"].id, phone: "0491 88 14 25", email: "elise.moreau@example.be", addressLine: "27 rue Vanderkindere", postalCode: "1180", city: "Uccle", birthDate: new Date("1992-09-08") },
+    { firstName: "Malik", lastName: "Haddad", scheme: CareScheme.PRIVE, tarifId: t["Tarif 2"].id, cabinetId: c["Auderghem"].id, phone: "0479 62 40 18", email: "malik.haddad@example.be", addressLine: "3 square des Archiducs", postalCode: "1170", city: "Watermael-Boitsfort", birthDate: new Date("1984-02-14") },
   ];
   // L'école n'a pas de patientèle propre : ses créneaux sont des blocs
   // facturés au forfait horaire (voir Cabinet.factureInstitution), sans
@@ -208,16 +211,16 @@ async function main() {
   const base: Semee[] = [
     { who: null, jour: 0, h: 9, lieu: E, status: SessionStatus.ATTENDED, paymentStatus: PaymentStatus.DUE, amountCents: null },
     { who: null, jour: 0, h: 10, lieu: E, status: SessionStatus.ATTENDED, paymentStatus: PaymentStatus.DUE, amountCents: null },
-    { who: "Malik", jour: 0, h: 14, lieu: A, status: SessionStatus.NO_SHOW, paymentStatus: PaymentStatus.OVERDUE, amountCents: 6500 },
+    { who: "Malik", jour: 0, h: 14, lieu: A, status: SessionStatus.NO_SHOW, paymentStatus: PaymentStatus.OVERDUE, amountCents: 7500 },
     { who: "Thomas", jour: 1, h: 9, lieu: A, status: SessionStatus.ATTENDED, paymentStatus: PaymentStatus.DUE, amountCents: null },
-    { who: "Malik", jour: 1, h: 10, m: 30, lieu: A, status: SessionStatus.ATTENDED, paymentStatus: PaymentStatus.PAID, amountCents: 6500, paymentMethod: PaymentMethod.CASH },
-    { who: "Camille", jour: 1, h: 10, m: 30, lieu: U, status: SessionStatus.ATTENDED, paymentStatus: PaymentStatus.PAID, amountCents: 6500, paymentMethod: PaymentMethod.ELECTRONIC },
+    { who: "Malik", jour: 1, h: 10, m: 30, lieu: A, status: SessionStatus.ATTENDED, paymentStatus: PaymentStatus.PAID, amountCents: 7500, paymentMethod: PaymentMethod.CASH },
+    { who: "Camille", jour: 1, h: 10, m: 30, lieu: U, status: SessionStatus.ATTENDED, paymentStatus: PaymentStatus.PAID, amountCents: 7000, paymentMethod: PaymentMethod.ELECTRONIC },
     { who: null, jour: 2, h: 9, lieu: E, status: SessionStatus.ATTENDED, paymentStatus: PaymentStatus.DUE, amountCents: null },
     { who: "Jonas", jour: 2, h: 10, lieu: A, status: SessionStatus.CANCELLED_IN_TIME, paymentStatus: PaymentStatus.DUE, amountCents: null },
-    { who: "Camille", jour: 2, h: 15, lieu: U, status: SessionStatus.ATTENDED, paymentStatus: PaymentStatus.PAID, amountCents: 6500, paymentMethod: PaymentMethod.ELECTRONIC },
+    { who: "Camille", jour: 2, h: 15, lieu: U, status: SessionStatus.ATTENDED, paymentStatus: PaymentStatus.PAID, amountCents: 7000, paymentMethod: PaymentMethod.ELECTRONIC },
     { who: null, jour: 3, h: 9, lieu: E, status: SessionStatus.ATTENDED, paymentStatus: PaymentStatus.DUE, amountCents: null },
     { who: "Élise", jour: 3, h: 10, m: 30, lieu: U, status: SessionStatus.ATTENDED, paymentStatus: PaymentStatus.DUE, amountCents: 7000 },
-    { who: "Naïma", jour: 3, h: 14, lieu: U, status: SessionStatus.ATTENDED, paymentStatus: PaymentStatus.DUE, amountCents: 6500 },
+    { who: "Naïma", jour: 3, h: 14, lieu: U, status: SessionStatus.ATTENDED, paymentStatus: PaymentStatus.DUE, amountCents: 7500 },
     { who: "Élise", jour: 4, h: 9, lieu: U, status: SessionStatus.SCHEDULED, paymentStatus: PaymentStatus.DUE, amountCents: null },
     { who: "Naïma", jour: 4, h: 11, lieu: U, status: SessionStatus.SCHEDULED, paymentStatus: PaymentStatus.DUE, amountCents: null },
     { who: "Jonas", jour: 4, h: 15, m: 15, lieu: A, status: SessionStatus.SCHEDULED, paymentStatus: PaymentStatus.DUE, amountCents: null },
@@ -226,7 +229,7 @@ async function main() {
   // La journée du jour est toujours garnie. La séance de 11 h 15 est à
   // Auderghem juste après une séance à Uccle : c'est le conflit de trajet.
   const duJour: Semee[] = [
-    { who: "Camille", jour: AUJOURDHUI, h: 9, lieu: U, status: SessionStatus.ATTENDED, paymentStatus: PaymentStatus.PAID, amountCents: 6500, paymentMethod: PaymentMethod.ELECTRONIC },
+    { who: "Camille", jour: AUJOURDHUI, h: 9, lieu: U, status: SessionStatus.ATTENDED, paymentStatus: PaymentStatus.PAID, amountCents: 7000, paymentMethod: PaymentMethod.ELECTRONIC },
     { who: "Élise", jour: AUJOURDHUI, h: 10, m: 15, lieu: U, status: SessionStatus.SCHEDULED, paymentStatus: PaymentStatus.DUE, amountCents: null },
     { who: "Malik", jour: AUJOURDHUI, h: 11, m: 15, lieu: A, status: SessionStatus.SCHEDULED, paymentStatus: PaymentStatus.DUE, amountCents: null },
     { who: "Naïma", jour: AUJOURDHUI, h: 14, m: 30, lieu: U, status: SessionStatus.SCHEDULED, paymentStatus: PaymentStatus.DUE, amountCents: null },

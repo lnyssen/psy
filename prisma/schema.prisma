@@ -25,15 +25,18 @@ datasource db {
 /// Le détail exact du circuit conventionné reste à établir avec l'utilisatrice
 /// (voir RESEARCH_PLAN.md, objectif 3) — d'où l'absence, ici, de tout champ
 /// sur les quotas ou le destinataire de la facturation.
+/// Qui paie la séance. Deux régimes seulement :
+///
+/// - PRIVE : le patient paie le tarif de sa fiche ;
+/// - CONVENTIONNE : psychologue de première ligne (PPL). Amandine est payée par
+///   l'INAMI, le patient ne paie rien — le montant du tarif conventionné est ce
+///   que reçoit Amandine, pas ce que doit le patient.
+///
+/// La facturation à un établissement (l'école) n'est pas un régime de patient :
+/// elle vit au niveau du lieu (Cabinet.factureInstitution).
 enum CareScheme {
   CONVENTIONNE
   PRIVE
-  /// Prestations facturées à une institution — l'école où Amandine intervient
-  /// comme indépendante, souvent le matin. Le payeur n'est ni le patient ni
-  /// l'INAMI : c'est l'établissement. C'est bien la même question que
-  /// tranchent les deux autres valeurs — qui paie, et comment — d'où
-  /// l'ajout ici plutôt qu'un cas particulier ailleurs.
-  INSTITUTION
 }
 
 /// Statut d'une séance passée. Le brief prévoit qu'un seul geste par séance
@@ -110,7 +113,7 @@ model Cabinet {
   /// horaire d'ouverture (Disponibilite) : c'est un volume convenu avec un
   /// tiers, que l'agenda peut dépasser sans qu'aucun créneau ne le signale de
   /// lui-même.
-  quotaHebdoMin Int? @map("quota_hebdo_min")
+  quotaHebdoMin      Int?    @map("quota_hebdo_min")
   /// Vrai pour un lieu facturé à un établissement plutôt qu'au patient : la
   /// facture porte alors sur des heures, pas sur des actes individuels.
   factureInstitution Boolean @default(false) @map("facture_institution")
@@ -122,14 +125,14 @@ model Cabinet {
   /// Nom légal complet de l'établissement facturé, tel qu'il doit apparaître
   /// sur une facture — pas le nom court utilisé partout ailleurs dans
   /// l'outil (« École »). Vide : la facture reprend `nom`.
-  raisonSociale String? @map("raison_sociale")
+  raisonSociale       String? @map("raison_sociale")
   /// Mentions légales du client (TVA, RPM…), reprises telles quelles sous
   /// son adresse sur la facture. Texte libre : chaque structure les rédige à
   /// sa façon, et ce n'est pas à l'outil d'en imposer une forme.
   mentionLegaleClient String? @map("mention_legale_client") @db.Text
   /// Préfixe de la communication de paiement portée sur la facture
   /// (« FACE2026/001 » pour le préfixe « FACE »). Vide : « FACT ».
-  prefixeReference String? @map("prefixe_reference")
+  prefixeReference    String? @map("prefixe_reference")
 
   sessions       Session[]
   patients       Patient[]
@@ -144,12 +147,18 @@ model Cabinet {
 /// Grille tarifaire. Le tarif d'un patient peut s'en écarter — le sien fait
 /// foi — mais celui marqué par défaut sert à la création d'une fiche.
 model Tarif {
-  id          String  @id @default(cuid())
+  id          String     @id @default(cuid())
   libelle     String
-  amountCents Int     @map("amount_cents")
-  parDefaut   Boolean @default(false) @map("par_defaut")
-  actif       Boolean @default(true)
-  ordre       Int     @default(0)
+  /// Régime auquel ce tarif s'applique. En privé c'est ce que paie le patient ;
+  /// en conventionné c'est ce que reçoit Amandine de l'INAMI, le patient ne
+  /// paie rien.
+  regime      CareScheme @default(PRIVE)
+  amountCents Int        @map("amount_cents")
+  parDefaut   Boolean    @default(false) @map("par_defaut")
+  actif       Boolean    @default(true)
+  ordre       Int        @default(0)
+
+  patients Patient[]
 
   @@map("tarifs")
 }
@@ -174,10 +183,10 @@ model Disponibilite {
 /// Congés et absences. Se soustraient des créneaux proposés, et des heures
 /// comptées comme travaillées.
 model Indisponibilite {
-  id     String   @id @default(cuid())
-  debut  DateTime
-  fin    DateTime
-  motif  String?
+  id    String   @id @default(cuid())
+  debut DateTime
+  fin   DateTime
+  motif String?
 
   @@index([debut, fin])
   @@map("indisponibilites")
@@ -217,45 +226,50 @@ model DemandeRdv {
 }
 
 model Patient {
-  id        String     @id @default(cuid())
+  id             String     @id @default(cuid())
   /// Prénom et nom séparés : les vues d'ensemble n'affichent que les
   /// initiales (principe de discrétion), ce qui suppose de les distinguer.
-  firstName String     @map("first_name")
-  lastName  String     @map("last_name")
-  email     String?
-  phone     String?
+  firstName      String     @map("first_name")
+  lastName       String     @map("last_name")
+  email          String?
+  phone          String?
   /// Numéros des parents, pour les patients mineurs : c'est souvent eux
   /// qu'on appelle pour déplacer une séance.
-  phoneMother String? @map("phone_mother")
-  phoneFather String? @map("phone_father")
-  emailMother String? @map("email_mother")
-  emailFather String? @map("email_father")
+  phoneMother    String?    @map("phone_mother")
+  phoneFather    String?    @map("phone_father")
+  emailMother    String?    @map("email_mother")
+  emailFather    String?    @map("email_father")
   /// Numéro de registre national, au format AAMMJJ-XXX.CC (clé vérifiée).
-  nationalNumber String? @map("national_number")
+  nationalNumber String?    @map("national_number")
   /// Adresse postale, en champs séparés : un reçu doit pouvoir la composer
   /// proprement, ce qu'une chaîne unique ne permet pas.
-  addressLine String?  @map("address_line")
-  postalCode  String?  @map("postal_code")
-  city        String?
-  birthDate   DateTime? @map("birth_date")
-  scheme    CareScheme
-  /// Tarif propre au patient, en centimes pour éviter les flottants.
-  /// Null en conventionné : le tarif ne lui appartient pas.
-  feeCents  Int?       @map("fee_cents")
+  addressLine    String?    @map("address_line")
+  postalCode     String?    @map("postal_code")
+  city           String?
+  birthDate      DateTime?  @map("birth_date")
+  scheme         CareScheme
+  /// Tarif choisi dans la grille (Réglages → Tarifs) : c'est lui qui fait foi
+  /// pour le montant d'une séance.
+  tarifId        String?    @map("tarif_id")
+  tarif          Tarif?     @relation(fields: [tarifId], references: [id], onDelete: SetNull)
+  /// Ancien montant libre, en centimes, d'avant la grille. Sans tarif choisi, il
+  /// continue de servir plutôt que de faire disparaître un montant ; dès qu'un
+  /// tarif est choisi dans la fiche, il est effacé.
+  feeCents       Int?       @map("fee_cents")
   /// Cabinet habituel, simple valeur par défaut à la création d'une séance.
-  cabinetId   String?  @map("cabinet_id")
-  cabinet     Cabinet? @relation(fields: [cabinetId], references: [id], onDelete: SetNull)
-  notes     String?
-  active    Boolean    @default(true)
-  createdAt DateTime   @default(now()) @map("created_at")
-  updatedAt DateTime   @updatedAt @map("updated_at")
+  cabinetId      String?    @map("cabinet_id")
+  cabinet        Cabinet?   @relation(fields: [cabinetId], references: [id], onDelete: SetNull)
+  notes          String?
+  active         Boolean    @default(true)
+  createdAt      DateTime   @default(now()) @map("created_at")
+  updatedAt      DateTime   @updatedAt @map("updated_at")
 
   /// Jeton personnel permettant de réserver directement depuis le site, sans
   /// passer par une demande. Il est transmis par courriel, vaut reconnaissance
   /// du patient, et se régénère si besoin.
-  jetonRdv     String?  @unique @map("jeton_rdv")
+  jetonRdv String? @unique @map("jeton_rdv")
 
-  sessions Session[]
+  sessions     Session[]
   patientNotes Note[]
 
   @@index([lastName, firstName])
@@ -263,59 +277,59 @@ model Patient {
 }
 
 model Session {
-  id            String        @id @default(cuid())
+  id              String                @id @default(cuid())
   /// Nul pour un bloc facturé à un établissement (l'école) : ce temps-là
   /// n'appartient à aucun patient précis, seulement au lieu — voir
   /// Cabinet.factureInstitution. Toute séance qui reçoit quelqu'un
   /// nommément, elle, en a un.
-  patientId     String?       @map("patient_id")
-  patient       Patient?      @relation(fields: [patientId], references: [id], onDelete: Cascade)
-  startsAt      DateTime      @map("starts_at")
+  patientId       String?               @map("patient_id")
+  patient         Patient?              @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  startsAt        DateTime              @map("starts_at")
   /// Cabinet où se tient la séance. Deux séances consécutives dans des
   /// cabinets différents sans temps de trajet sont signalées à l'écran :
   /// c'est le principal risque d'agenda d'une pratique sur plusieurs sites.
-  cabinetId     String        @map("cabinet_id")
-  cabinet       Cabinet       @relation(fields: [cabinetId], references: [id], onDelete: Restrict)
+  cabinetId       String                @map("cabinet_id")
+  cabinet         Cabinet               @relation(fields: [cabinetId], references: [id], onDelete: Restrict)
   /// Durée en minutes plutôt qu'une heure de fin : c'est ainsi qu'une
   /// praticienne raisonne, et ça simplifie les séries récurrentes à venir.
   /// Quarante-cinq minutes est la durée d'une séance dans cette pratique.
-  durationMin   Int           @default(45) @map("duration_min")
-  status        SessionStatus @default(SCHEDULED)
-  paymentStatus PaymentStatus @default(DUE) @map("payment_status")
+  durationMin     Int                   @default(45) @map("duration_min")
+  status          SessionStatus         @default(SCHEDULED)
+  paymentStatus   PaymentStatus         @default(DUE) @map("payment_status")
   /// Montant figé au moment de la séance : le tarif du patient peut changer
   /// ensuite sans réécrire l'historique comptable.
-  amountCents   Int?          @map("amount_cents")
-  paidAt        DateTime?     @map("paid_at")
-  paymentMethod PaymentMethod? @map("payment_method")
+  amountCents     Int?                  @map("amount_cents")
+  paidAt          DateTime?             @map("paid_at")
+  paymentMethod   PaymentMethod?        @map("payment_method")
   /// Date d'émission du reçu, pour ne pas en délivrer deux fois sans le savoir.
-  receiptAt     DateTime?     @map("receipt_at")
+  receiptAt       DateTime?             @map("receipt_at")
   /// Facture d'établissement qui couvre cette séance, s'il y en a une. Une
   /// fois posé, ce lien fige la séance : elle ne peut plus glisser dans une
   /// autre facture, et la facture déjà émise ne bouge plus si la séance est
   /// modifiée ensuite (voir FactureEtablissement).
-  factureId     String?              @map("facture_id")
-  facture       FactureEtablissement? @relation(fields: [factureId], references: [id], onDelete: SetNull)
+  factureId       String?               @map("facture_id")
+  facture         FactureEtablissement? @relation(fields: [factureId], references: [id], onDelete: SetNull)
   /// Vrai si la séance a été prise par le patient depuis le site.
-  reserveeEnLigne Boolean     @default(false) @map("reservee_en_ligne")
+  reserveeEnLigne Boolean               @default(false) @map("reservee_en_ligne")
   /// Note clinique. Chiffrement applicatif à venir (le chiffrement de bout en
   /// bout a été écarté, voir les arbitrages du brief) : ce champ restera vide
   /// tant que ce chiffrement n'est pas en place.
-  note          String?
+  note            String?
   /// Lien avec l'événement Google Agenda correspondant, s'il y en a un.
   /// Identifiant déterministe côté Google (voir lib/google-sync.ts) : un
   /// envoi rejoué après une coupure retombe sur le même événement au lieu de
   /// le dupliquer.
-  googleEventId  String? @unique @map("google_event_id")
+  googleEventId   String?               @unique @map("google_event_id")
   /// Dernier état de l'événement connu de nous. S'il diffère de celui que
   /// Google renvoie, c'est quelqu'un d'autre qui l'a modifié.
-  googleEtag     String? @map("google_etag")
+  googleEtag      String?               @map("google_etag")
   /// Empreinte de ce que nous avons envoyé (titre, lieu, horaire) : elle
   /// remplace une date de dernière modification, et rend l'envoi idempotent
   /// quel que soit le chemin par lequel la séance a changé.
-  googleEmpreinte String? @map("google_empreinte")
+  googleEmpreinte String?               @map("google_empreinte")
 
-  createdAt     DateTime      @default(now()) @map("created_at")
-  updatedAt     DateTime      @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@index([startsAt])
   @@index([patientId, startsAt])
@@ -350,19 +364,19 @@ model Parametres {
   id String @id @default("global")
 
   /// Durée d'une séance, en minutes.
-  dureeSeanceMin   Int @default(45) @map("duree_seance_min")
+  dureeSeanceMin  Int     @default(45) @map("duree_seance_min")
   /// Battement laissé entre deux séances consécutives dans le même lieu.
-  battementMin     Int @default(0) @map("battement_min")
+  battementMin    Int     @default(0) @map("battement_min")
   /// Temps de trajet minimal entre deux lieux différents.
-  trajetMin        Int @default(30) @map("trajet_min")
+  trajetMin       Int     @default(30) @map("trajet_min")
   /// Pas de la grille des créneaux proposés.
-  pasMin           Int @default(15) @map("pas_min")
+  pasMin          Int     @default(15) @map("pas_min")
   /// Nombre de semaines ouvertes à la réservation.
-  horizonSemaines  Int @default(4) @map("horizon_semaines")
+  horizonSemaines Int     @default(4) @map("horizon_semaines")
   /// Si vrai, un créneau est aussi proposé juste après une séance existante,
   /// battement compris — l'agenda se tasse au lieu de laisser des trous que la
   /// grille seule ne saurait combler.
-  chainerSeances   Boolean @default(true) @map("chainer_seances")
+  chainerSeances  Boolean @default(true) @map("chainer_seances")
 
   /// Mentions légales de la SRL, reprises sur toute facture émise à un
   /// établissement. Un reçu au patient n'en a pas besoin — ce n'est pas une
@@ -373,10 +387,10 @@ model Parametres {
   delaiPaiementJours Int     @default(30) @map("delai_paiement_jours")
   /// Adresse du siège social, reprise en en-tête de toute facture émise à un
   /// établissement — une idée par ligne, ce n'est pas un champ structuré.
-  adresseSiege  String? @map("adresse_siege") @db.Text
+  adresseSiege       String? @map("adresse_siege") @db.Text
   /// Mention légale complémentaire de la société (RPM…), reprise sous son
   /// numéro d'entreprise sur la facture.
-  mentionLegale String? @map("mention_legale")
+  mentionLegale      String? @map("mention_legale")
 
   @@map("parametres")
 }
@@ -396,40 +410,40 @@ model Parametres {
 /// corrigée après coup. C'est la raison d'être de ce modèle plutôt qu'un
 /// simple recalcul à la volée depuis les séances.
 model FactureEtablissement {
-  id          String    @id @default(cuid())
-  cabinetId   String    @map("cabinet_id")
-  cabinet     Cabinet   @relation(fields: [cabinetId], references: [id], onDelete: Restrict)
-  annee       Int
-  numero      Int
+  id                String    @id @default(cuid())
+  cabinetId         String    @map("cabinet_id")
+  cabinet           Cabinet   @relation(fields: [cabinetId], references: [id], onDelete: Restrict)
+  annee             Int
+  numero            Int
   /// Mois couvert par la facture (1-12).
-  mois        Int
+  mois              Int
   /// Nulles pour une facture manuelle (manuelle = vrai) : un montant saisi
   /// directement n'a pas de décompte d'heures à présenter.
-  heuresTotalesMin  Int? @map("heures_totales_min")
-  tarifHoraireCents Int? @map("tarif_horaire_cents")
-  montantCents      Int  @map("montant_cents")
+  heuresTotalesMin  Int?      @map("heures_totales_min")
+  tarifHoraireCents Int?      @map("tarif_horaire_cents")
+  montantCents      Int       @map("montant_cents")
   /// Description libre, affichée sur le PDF à la place du décompte d'heures.
   /// Attendue si manuelle est vrai ; sinon dérivée automatiquement.
-  libelle     String?
+  libelle           String?
   /// Note interne, jamais imprimée sur le PDF — le contexte d'une
   /// régularisation, à l'usage de la praticienne seule.
-  commentaire String?   @db.Text
+  commentaire       String?   @db.Text
   /// Vrai si créée à la main plutôt que calculée depuis les séances de
   /// l'établissement — un supplément ponctuel, par exemple.
-  manuelle    Boolean   @default(false)
-  emiseLe     DateTime  @default(now()) @map("emise_le")
-  echeanceLe  DateTime  @map("echeance_le")
+  manuelle          Boolean   @default(false)
+  emiseLe           DateTime  @default(now()) @map("emise_le")
+  echeanceLe        DateTime  @map("echeance_le")
   /// Null tant que l'établissement n'a pas réglé.
-  payeeLe     DateTime? @map("payee_le")
+  payeeLe           DateTime? @map("payee_le")
   /// Annulée plutôt que supprimée : la numérotation légale ne tolère pas de
   /// trou, une facture qui ne doit plus valoir se marque, elle ne disparaît
   /// pas. Ses séances repartent à factureId nul, prêtes pour une prochaine
   /// facture. Seule une facture non payée peut être annulée (voir
   /// annulerFactureEtablissement) — au-delà, la correction relève de la
   /// comptable.
-  annuleeLe   DateTime? @map("annulee_le")
+  annuleeLe         DateTime? @map("annulee_le")
 
-  seances     Session[]
+  seances Session[]
 
   @@unique([annee, numero])
   @@index([cabinetId, annee, mois])
@@ -441,10 +455,10 @@ model FactureEtablissement {
 /// doit pouvoir en ajouter une (Horeca, par exemple) sans migration ni
 /// déploiement, depuis Réglages.
 model CategorieDepense {
-  id       String  @id @default(cuid())
-  libelle  String  @unique
-  actif    Boolean @default(true)
-  ordre    Int     @default(0)
+  id      String  @id @default(cuid())
+  libelle String  @unique
+  actif   Boolean @default(true)
+  ordre   Int     @default(0)
 
   depenses Depense[]
 
@@ -463,10 +477,10 @@ model CategorieDepense {
 /// plus, ça ne pèse rien, et ça évite une dépendance externe pour un premier
 /// jet. À revoir si le volume change.
 model Depense {
-  id          String   @id @default(cuid())
+  id          String           @id @default(cuid())
   date        DateTime
   libelle     String
-  categorieId String   @map("categorie_id")
+  categorieId String           @map("categorie_id")
   categorie   CategorieDepense @relation(fields: [categorieId], references: [id], onDelete: Restrict)
   fournisseur String?
   /// TTC : la praticienne n'étant pas assujettie à la TVA sur ses
@@ -484,25 +498,24 @@ model Depense {
   @@map("depenses")
 }
 
-
 /// Connexion unique au Google Agenda d'Amandine.
 ///
 /// Le jeton de rafraîchissement donne accès à son agenda : il n'est jamais
 /// stocké en clair (AES-256-GCM, clé GOOGLE_TOKEN_KEY hors base).
 model GoogleConnexion {
-  id String @id @default("global")
-  email String
-  refreshTokenChiffre String @map("refresh_token_chiffre") @db.Text
+  id                  String    @id @default("global")
+  email               String
+  refreshTokenChiffre String    @map("refresh_token_chiffre") @db.Text
   /// « primary » : l'agenda principal du compte.
-  calendrierId String @default("primary") @map("calendrier_id")
+  calendrierId        String    @default("primary") @map("calendrier_id")
   /// Curseur de synchronisation incrémentale de Google ; nul = tout relire.
-  syncToken String? @map("sync_token") @db.Text
-  derniereSynchro DateTime? @map("derniere_synchro")
-  derniereErreur String? @map("derniere_erreur") @db.Text
+  syncToken           String?   @map("sync_token") @db.Text
+  derniereSynchro     DateTime? @map("derniere_synchro")
+  derniereErreur      String?   @map("derniere_erreur") @db.Text
   /// Verrou léger : deux synchronisations simultanées dupliqueraient des
   /// événements. Expire de lui-même si une exécution meurt en route.
-  verrouJusqua DateTime? @map("verrou_jusqua")
-  creeLe DateTime @default(now()) @map("cree_le")
+  verrouJusqua        DateTime? @map("verrou_jusqua")
+  creeLe              DateTime  @default(now()) @map("cree_le")
 
   @@map("google_connexions")
 }
@@ -521,18 +534,18 @@ enum StatutEvenementGoogle {
 /// Une fois rattaché à un patient ou à un lieu, il devient une Session et
 /// cette ligne disparaît.
 model EvenementGoogle {
-  id        String   @id @default(cuid())
-  googleId  String   @unique @map("google_id")
-  etag      String?
-  titre     String
-  lieu      String?
-  debut     DateTime
-  fin       DateTime
-  statut    StatutEvenementGoogle @default(A_RATTACHER)
+  id       String                @id @default(cuid())
+  googleId String                @unique @map("google_id")
+  etag     String?
+  titre    String
+  lieu     String?
+  debut    DateTime
+  fin      DateTime
+  statut   StatutEvenementGoogle @default(A_RATTACHER)
   /// Série d'événements récurrents dont celui-ci est une occurrence : on les
   /// rattache d'un coup plutôt qu'un par un.
-  serieId   String?  @map("serie_id")
-  majLe     DateTime @updatedAt @map("maj_le")
+  serieId  String?               @map("serie_id")
+  majLe    DateTime              @updatedAt @map("maj_le")
 
   @@index([debut])
   @@index([serieId])

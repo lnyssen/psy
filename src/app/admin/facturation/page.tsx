@@ -6,6 +6,7 @@ import { TableFacturation, type LigneFacture } from "@/components/TableFacturati
 import { OngletsFacturation } from "@/components/OngletsFacturation";
 import { cabinetsActifs, optionsCabinet } from "@/lib/cabinets";
 import { euros, isBillable } from "@/lib/format";
+import { montantSeanceCents, payeurDe } from "@/lib/tarifs";
 import { Pagination, pageDe, tailleDePage } from "@/components/Pagination";
 
 export const dynamic = "force-dynamic";
@@ -25,7 +26,7 @@ export default async function Facturation({ searchParams }: { searchParams: Prom
         ? { paymentStatus: params.paiement as "DUE" | "PAID" | "OVERDUE" }
         : {}),
     },
-    include: { patient: true, cabinet: true },
+    include: { patient: { include: { tarif: true } }, cabinet: true },
   });
   const cabinets = await cabinetsActifs();
 
@@ -54,14 +55,26 @@ export default async function Facturation({ searchParams }: { searchParams: Prom
   const taille = tailleDePage(params);
   const page = Math.min(pageDe(params), Math.max(1, Math.ceil(seances.length / taille)));
 
-  const somme = (f: typeof seances) => f.reduce((n, s) => n + (s.amountCents ?? 0), 0);
+  // Deux payeurs, deux comptes : ce que doivent les patients (privé), et ce que
+  // doit encore verser l'INAMI (conventionné). Les mélanger ferait passer pour
+  // une dette de patient de l'argent qu'aucun patient ne doit.
+  const valeur = (s: (typeof seances)[number]) => s.amountCents ?? montantSeanceCents(s.patient) ?? 0;
+  const somme = (f: typeof seances) => f.reduce((n, s) => n + valeur(s), 0);
+  const prives = seances.filter((s) => payeurDe(s.patient.scheme) === "PATIENT");
+  const inami = seances.filter((s) => payeurDe(s.patient.scheme) === "INAMI");
   const cartes = [
-    { t: "Encaissé", v: euros(somme(seances.filter((s) => s.paymentStatus === "PAID"))) },
-    { t: "Dû", v: euros(somme(seances.filter((s) => s.paymentStatus === "DUE"))), ton: "text-due" },
+    { t: "Encaissé", v: euros(somme(prives.filter((s) => s.paymentStatus === "PAID"))) },
+    { t: "Dû", v: euros(somme(prives.filter((s) => s.paymentStatus === "DUE"))), ton: "text-due" },
     {
       t: "En retard",
-      v: euros(somme(seances.filter((s) => s.paymentStatus === "OVERDUE"))),
+      v: euros(somme(prives.filter((s) => s.paymentStatus === "OVERDUE"))),
       ton: "text-overdue",
+    },
+    { t: "INAMI reçu", v: euros(somme(inami.filter((s) => s.paymentStatus === "PAID"))) },
+    {
+      t: "INAMI à recevoir",
+      v: euros(somme(inami.filter((s) => s.paymentStatus !== "PAID"))),
+      ton: "text-due",
     },
     { t: "Actes", v: String(seances.length) },
   ];
@@ -84,10 +97,11 @@ export default async function Facturation({ searchParams }: { searchParams: Prom
     paymentStatus: s.paymentStatus,
     paymentMethod: s.paymentMethod,
     amountCents: s.amountCents,
-    montantPrevuCents: s.amountCents ?? s.patient.feeCents ?? 0,
-    // Une séance conventionnée n'a pas de tarif : l'encaisser ne pose aucun
-    // montant. Le signaler plutôt que de la compter pour zéro en silence.
-    montantConnu: (s.amountCents ?? s.patient.feeCents) !== null,
+    montantPrevuCents: s.amountCents ?? montantSeanceCents(s.patient) ?? 0,
+    payeur: payeurDe(s.patient.scheme),
+    // Sans tarif choisi dans la fiche, le montant est inconnu : le dire plutôt que
+    // de compter la séance pour zéro en silence.
+    montantConnu: (s.amountCents ?? montantSeanceCents(s.patient)) !== null,
   }));
   const ligneActuelles = lignes.slice((page - 1) * taille, page * taille);
 
@@ -131,7 +145,6 @@ export default async function Facturation({ searchParams }: { searchParams: Prom
               options: [
                 { valeur: "PRIVE", label: "privé" },
                 { valeur: "CONVENTIONNE", label: "conventionné" },
-                { valeur: "INSTITUTION", label: "institution" },
               ],
             },
           ]}
@@ -164,12 +177,11 @@ export default async function Facturation({ searchParams }: { searchParams: Prom
           options={[
             { valeur: "PRIVE", label: "privé" },
             { valeur: "CONVENTIONNE", label: "conventionné" },
-            { valeur: "INSTITUTION", label: "institution" },
           ]}
         />
       </div>
 
-      <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <dl className="grid grid-cols-2 gap-3 sm:grid-cols-3">
         {cartes.map((c) => (
           <div key={c.t} className="rounded-[14px] border border-line bg-surface px-5 py-4">
             <dt className="text-[11px] font-semibold tracking-[0.1em] text-ink-muted uppercase">
@@ -198,9 +210,10 @@ export default async function Facturation({ searchParams }: { searchParams: Prom
       <Pagination base="/admin/facturation" params={params} total={lignes.length} taille={taille} />
 
       <p className="text-xs text-ink-muted">
-        Les séances conventionnées n’affichent pas de montant : le circuit de facturation au
-        réseau reste à établir. Le reçu n’est pas une attestation de soins, et les prestations de
-        psychologue sont exonérées de TVA.
+        Une séance conventionnée (psychologue de première ligne) affiche ce que verse l’INAMI : le
+        patient ne paie rien, et il n’y a donc pas de reçu à lui remettre. Le reçu d’une séance
+        privée n’est pas une attestation de soins, et les prestations de psychologue sont
+        exonérées de TVA.
       </p>
     </div>
   );

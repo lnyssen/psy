@@ -119,7 +119,7 @@ export default async function Finance({ searchParams }: { searchParams: Promise<
   // elle reçoit sa propre ligne plutôt que de disparaître silencieusement du
   // total.
   const parRegime = [
-    ...(["PRIVE", "CONVENTIONNE", "INSTITUTION"] as const).map((r) => ({
+    ...(["PRIVE", "CONVENTIONNE"] as const).map((r) => ({
       label: SCHEME_LABEL[r],
       total: cumulerCas(delAnnee.filter((s) => s.patient?.scheme === r)),
     })),

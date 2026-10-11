@@ -161,7 +161,10 @@ export async function traiterDemande(f: FormData) {
   if (decision === "refuser") {
     await prisma.demandeRdv.update({ where: { id }, data: { statut: "REFUSEE" } });
   } else {
-    const tarif = await prisma.tarif.findFirst({ where: { parDefaut: true } });
+    const tarif = await prisma.tarif.findFirst({
+      where: { regime: "PRIVE", actif: true },
+      orderBy: [{ parDefaut: "desc" }, { ordre: "asc" }],
+    });
     const patient = await prisma.patient.create({
       data: {
         firstName: demande.firstName,
@@ -169,7 +172,7 @@ export async function traiterDemande(f: FormData) {
         email: demande.email,
         phone: demande.phone,
         scheme: "PRIVE",
-        feeCents: tarif?.amountCents ?? null,
+        tarifId: tarif?.id ?? null,
         cabinetId: demande.cabinetId,
         jetonRdv: crypto.randomUUID(),
       },

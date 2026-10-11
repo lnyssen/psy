@@ -23,7 +23,6 @@ export function adresseCabinet(c: Pick<CabinetVue, "addressLine" | "postalCode" 
 export const SCHEME_LABEL: Record<CareScheme, string> = {
   CONVENTIONNE: "conventionné",
   PRIVE: "privé",
-  INSTITUTION: "institution",
 };
 
 export const STATUS_LABEL: Record<SessionStatus, string> = {

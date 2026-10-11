@@ -1,3 +1,4 @@
+import { libellePaiement, type Payeur } from "@/lib/tarifs";
 import type { CareScheme, PaymentMethod, PaymentStatus, SessionStatus } from "@prisma/client";
 import {
   METHOD_LABEL,
@@ -93,10 +94,13 @@ export function EtatPaiement({
   status,
   payment,
   methode,
+  payeur = "PATIENT",
 }: {
   status: SessionStatus;
   payment: PaymentStatus;
   methode?: PaymentMethod | null;
+  /** Qui règle : le patient (« dû », « payé ») ou l'INAMI (« à recevoir », « reçu »). */
+  payeur?: Payeur;
 }) {
   if (!isBillable(status)) return <span className="text-ink-muted">—</span>;
 
@@ -109,8 +113,12 @@ export function EtatPaiement({
     <span
       className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-semibold whitespace-nowrap ${styles[payment]}`}
     >
-      {PAYMENT_LABEL[payment]}
-      {payment === "PAID" && methode ? ` · ${METHOD_LABEL[methode]}` : ""}
+      {libellePaiement(payment, payeur)}
+      {payment === "PAID" && payeur === "INAMI"
+        ? " · INAMI"
+        : payment === "PAID" && methode
+          ? ` · ${METHOD_LABEL[methode]}`
+          : ""}
     </span>
   );
 }

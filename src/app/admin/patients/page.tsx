@@ -6,6 +6,7 @@ import { EnTeteTri, GroupeFiltre, TriMobile, type Params } from "@/components/fi
 import { FiltresMobile } from "@/components/FiltresMobile";
 import { cabinetsActifs, optionsCabinet } from "@/lib/cabinets";
 import { euros, isBillable, nomComplet } from "@/lib/format";
+import { montantSeanceCents, payeurDe } from "@/lib/tarifs";
 import { Pagination, pageDe, tailleDePage } from "@/components/Pagination";
 
 export const dynamic = "force-dynamic";
@@ -18,7 +19,7 @@ export default async function Patients({ searchParams }: { searchParams: Promise
       ...(params.cabinet ? { cabinetId: params.cabinet } : {}),
       ...(params.regime ? { scheme: params.regime as CareScheme } : {}),
     },
-    include: { sessions: true, patientNotes: true, cabinet: true },
+    include: { sessions: true, patientNotes: true, cabinet: true, tarif: true },
   });
   // Un lieu facturé à un établissement (l'école) n'a pas de patientèle propre
   // depuis que ses séances ne tiennent plus à un patient : le filtrer ici
@@ -30,9 +31,13 @@ export default async function Patients({ searchParams }: { searchParams: Promise
   const enrichis = patients.map((p) => ({
     p,
     seances: p.sessions.length,
-    du: p.sessions
-      .filter((s) => isBillable(s.status) && s.paymentStatus !== "PAID")
-      .reduce((n, s) => n + (s.amountCents ?? 0), 0),
+    // Ce que DOIT le patient : jamais une séance conventionnée, que paie l'INAMI.
+    du:
+      payeurDe(p.scheme) === "INAMI"
+        ? 0
+        : p.sessions
+            .filter((s) => isBillable(s.status) && s.paymentStatus !== "PAID")
+            .reduce((n, s) => n + (s.amountCents ?? montantSeanceCents(p) ?? 0), 0),
   }));
 
   const sens = params.sens === "desc" ? -1 : 1;
@@ -84,7 +89,6 @@ export default async function Patients({ searchParams }: { searchParams: Promise
               options: [
                 { valeur: "PRIVE", label: "privé" },
                 { valeur: "CONVENTIONNE", label: "conventionné" },
-                { valeur: "INSTITUTION", label: "institution" },
               ],
             },
           ]}
@@ -106,7 +110,6 @@ export default async function Patients({ searchParams }: { searchParams: Promise
           options={[
             { valeur: "PRIVE", label: "privé" },
             { valeur: "CONVENTIONNE", label: "conventionné" },
-            { valeur: "INSTITUTION", label: "institution" },
           ]}
         />
       </div>

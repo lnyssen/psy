@@ -9,7 +9,9 @@ import { Encaisser } from "@/components/Encaisser";
 import { AnnulerAbsence } from "@/components/AnnulerAbsence";
 import { EnTeteTri, type Params } from "@/components/filtres";
 import { euros, fmtDateCourte, nomComplet, type CabinetVue } from "@/lib/format";
-import { marquerPayeLot } from "@/lib/actions";
+import { marquerPayeLot, marquerRecuInamiLot } from "@/lib/actions";
+import { RecuInami } from "@/components/RecuInami";
+import type { Payeur } from "@/lib/tarifs";
 
 export type LigneFacture = {
   id: string;
@@ -28,6 +30,9 @@ export type LigneFacture = {
   /** Faux pour une séance sans tarif — le conventionné. Elle compte pour zéro
    *  dans le total, ce qui se dit plutôt que de se deviner. */
   montantConnu: boolean;
+  /** Qui règle : le patient (privé) ou l'INAMI (conventionné, le patient ne
+   *  paie rien). Commande le libellé, le geste d'encaissement et le reçu. */
+  payeur: Payeur;
 };
 
 /**
@@ -65,6 +70,8 @@ export function TableFacturation({
     () => encaissables.filter((l) => choisis.has(l.id)),
     [encaissables, choisis],
   );
+  const retenusPrives = retenus.filter((l) => l.payeur === "PATIENT");
+  const retenusInami = retenus.filter((l) => l.payeur === "INAMI");
   const total = retenus.reduce((n, l) => n + l.montantPrevuCents, 0);
   const sansMontant = retenus.filter((l) => !l.montantConnu).length;
 
@@ -81,10 +88,22 @@ export function TableFacturation({
 
   const tousCoches = encaissables.length > 0 && retenus.length === encaissables.length;
 
+  const recuInamiLot = () =>
+    demarrer(async () => {
+      const r = await marquerRecuInamiLot(retenusInami.map((l) => l.id));
+      if (!r.ok) {
+        setErreur(r.message);
+        return;
+      }
+      setErreur(null);
+      setChoisis(new Set());
+      router.refresh();
+    });
+
   const encaisserLot = (methode: "CASH" | "ELECTRONIC") =>
     demarrer(async () => {
       const r = await marquerPayeLot(
-        retenus.map((l) => l.id),
+        retenusPrives.map((l) => l.id),
         methode,
       );
       if (!r.ok) {
@@ -127,7 +146,7 @@ export function TableFacturation({
                     {nomComplet(l.patient)}
                   </Link>
                   <span className="text-sm font-semibold whitespace-nowrap" data-numeric>
-                    {euros(l.amountCents)}
+                    {euros(l.amountCents ?? (l.montantConnu ? l.montantPrevuCents : null))}
                   </span>
                 </div>
                 <div className="mt-2 flex flex-wrap items-center gap-2">
@@ -142,17 +161,20 @@ export function TableFacturation({
                     status={l.status}
                     payment={l.paymentStatus}
                     methode={l.paymentMethod}
+                    payeur={l.payeur}
                   />
                   {l.paymentStatus === "PAID" ? (
+                    l.payeur === "INAMI" ? null : (
                     <a
                       href={`/api/recu/${l.id}`}
                       className="rounded-full border border-line-strong px-3 py-1 text-[11px] font-medium"
                     >
                       reçu PDF
                     </a>
+                    )
                   ) : (
                     <>
-                      <Encaisser id={l.id} />
+                      {l.payeur === "INAMI" ? <RecuInami id={l.id} /> : <Encaisser id={l.id} />}
                       {l.status === "NO_SHOW" && <AnnulerAbsence id={l.id} />}
                     </>
                   )}
@@ -223,7 +245,7 @@ export function TableFacturation({
                   <RegimeTag scheme={l.patient.scheme} />
                 </td>
                 <td className="px-3 py-3 text-right font-mono whitespace-nowrap" data-numeric>
-                  {euros(l.amountCents)}
+                  {euros(l.amountCents ?? (l.montantConnu ? l.montantPrevuCents : null))}
                 </td>
                 <td className="px-5 py-3">
                   <span className="flex flex-wrap items-center justify-end gap-2">
@@ -231,17 +253,20 @@ export function TableFacturation({
                       status={l.status}
                       payment={l.paymentStatus}
                       methode={l.paymentMethod}
+                      payeur={l.payeur}
                     />
                     {l.paymentStatus === "PAID" ? (
+                      l.payeur === "INAMI" ? null : (
                       <a
                         href={`/api/recu/${l.id}`}
                         className="rounded-full border border-line-strong px-2.5 py-0.5 text-[11px] font-medium transition-colors hover:border-accent hover:text-accent-text"
                       >
                         reçu PDF
                       </a>
+                      )
                     ) : (
                       <>
-                        <Encaisser id={l.id} />
+                        {l.payeur === "INAMI" ? <RecuInami id={l.id} /> : <Encaisser id={l.id} />}
                         {l.status === "NO_SHOW" && <AnnulerAbsence id={l.id} />}
                       </>
                     )}
@@ -294,22 +319,36 @@ export function TableFacturation({
               >
                 Annuler
               </button>
-              <button
-                type="button"
-                disabled={enCours}
-                onClick={() => encaisserLot("CASH")}
-                className="rounded-full border border-line-strong px-4 py-1.5 text-[12px] font-semibold transition-colors hover:border-accent hover:text-accent-text disabled:opacity-40"
-              >
-                Payé en espèces
-              </button>
-              <button
-                type="button"
-                disabled={enCours}
-                onClick={() => encaisserLot("ELECTRONIC")}
-                className="rounded-full bg-accent px-4 py-1.5 text-[12px] font-semibold text-accent-contrast transition-colors hover:bg-accent-hover disabled:opacity-40"
-              >
-                Payé par carte
-              </button>
+              {retenusInami.length > 0 && (
+                <button
+                  type="button"
+                  disabled={enCours}
+                  onClick={recuInamiLot}
+                  className="rounded-full border border-line-strong px-4 py-1.5 text-[12px] font-semibold transition-colors hover:border-accent hover:text-accent-text disabled:opacity-40"
+                >
+                  {`Reçu de l’INAMI${retenusInami.length < retenus.length ? ` (${retenusInami.length})` : ""}`}
+                </button>
+              )}
+              {retenusPrives.length > 0 && (
+                <>
+                  <button
+                    type="button"
+                    disabled={enCours}
+                    onClick={() => encaisserLot("CASH")}
+                    className="rounded-full border border-line-strong px-4 py-1.5 text-[12px] font-semibold transition-colors hover:border-accent hover:text-accent-text disabled:opacity-40"
+                  >
+                    Payé en espèces
+                  </button>
+                  <button
+                    type="button"
+                    disabled={enCours}
+                    onClick={() => encaisserLot("ELECTRONIC")}
+                    className="rounded-full bg-accent px-4 py-1.5 text-[12px] font-semibold text-accent-contrast transition-colors hover:bg-accent-hover disabled:opacity-40"
+                  >
+                    Payé par carte
+                  </button>
+                </>
+              )}
             </div>
           </div>
           {erreur && (

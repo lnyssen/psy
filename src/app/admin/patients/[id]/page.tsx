@@ -6,6 +6,9 @@ import { CabinetTag, EtatPaiement, RegimeTag, StatutSeance } from "@/components/
 import { BoutonEnregistrer } from "@/components/BoutonEnregistrer";
 import { Notes } from "@/components/Notes";
 import { Encaisser } from "@/components/Encaisser";
+import { RecuInami } from "@/components/RecuInami";
+import { RegimeEtTarif } from "@/components/RegimeEtTarif";
+import { montantSeanceCents, payeurDe } from "@/lib/tarifs";
 import { AnnulerAbsence } from "@/components/AnnulerAbsence";
 import { AnnulerSeance } from "@/components/AnnulerSeance";
 import { creerSeanceDepuisFormulaire, enregistrerPatient } from "@/lib/actions";
@@ -41,9 +44,20 @@ export default async function FichePatient({ params }: { params: Promise<{ id: s
       sessions: { orderBy: { startsAt: "desc" }, include: { cabinet: true } },
       patientNotes: { orderBy: { createdAt: "desc" } },
       cabinet: true,
+      tarif: true,
     },
   });
   if (!patient) notFound();
+
+  // Les tarifs offerts dans la fiche : ceux de la grille encore actifs, et celui
+  // déjà choisi pour ce patient même s'il a été désactivé depuis.
+  const tarifs = await prisma.tarif.findMany({
+    where: { OR: [{ actif: true }, { id: patient.tarifId ?? "aucun" }] },
+    orderBy: { ordre: "asc" },
+    select: { id: true, libelle: true, amountCents: true, regime: true, parDefaut: true },
+  });
+  const montant = montantSeanceCents(patient);
+  const payeur = payeurDe(patient.scheme);
 
   // Un lieu facturé à un établissement (l'école) n'a pas de patientèle propre
   // (voir /admin/patients) : pas la peine de le proposer ici non plus.
@@ -53,12 +67,11 @@ export default async function FichePatient({ params }: { params: Promise<{ id: s
   });
 
   const facturables = patient.sessions.filter((s) => isBillable(s.status));
-  const du = facturables
-    .filter((s) => s.paymentStatus !== "PAID")
-    .reduce((n, s) => n + (s.amountCents ?? 0), 0);
-  const encaisse = facturables
-    .filter((s) => s.paymentStatus === "PAID")
-    .reduce((n, s) => n + (s.amountCents ?? 0), 0);
+  // Le montant d'une séance impayée n'est figé qu'à l'encaissement : d'ici là, c'est
+  // le tarif de la fiche qui le dit.
+  const valeur = (s: { amountCents: number | null }) => s.amountCents ?? montant ?? 0;
+  const du = facturables.filter((s) => s.paymentStatus !== "PAID").reduce((n, s) => n + valeur(s), 0);
+  const encaisse = facturables.filter((s) => s.paymentStatus === "PAID").reduce((n, s) => n + valeur(s), 0);
 
   // Plafond INAMI de la convention de première ligne : huit séances par
   // année civile, vingt pour les 16-25 ans. Ne s'affiche que pour un patient
@@ -85,7 +98,16 @@ export default async function FichePatient({ params }: { params: Promise<{ id: s
       mono: true,
     },
     { t: "N° national", v: patient.nationalNumber, mono: true },
-    { t: "Tarif", v: patient.feeCents ? `${euros(patient.feeCents)} la séance` : "tarif INAMI", mono: true },
+    {
+      t: patient.scheme === "CONVENTIONNE" ? "Tarif conventionné" : "Tarif",
+      v:
+        montant === null
+          ? "aucun tarif choisi"
+          : patient.scheme === "CONVENTIONNE"
+            ? `${euros(montant)} reçus de l’INAMI · patient : 0 €`
+            : `${euros(montant)} la séance`,
+      mono: true,
+    },
   ];
 
   return (
@@ -179,14 +201,12 @@ export default async function FichePatient({ params }: { params: Promise<{ id: s
               <span className={libelleChamp}>Nom</span>
               <input name="lastName" defaultValue={patient.lastName} required className={`mt-1 ${champ}`} />
             </label>
-            <label>
-              <span className={libelleChamp}>Régime</span>
-              <select name="scheme" defaultValue={patient.scheme} className={`mt-1 ${champ}`}>
-                <option value="PRIVE">privé</option>
-                <option value="CONVENTIONNE">conventionné</option>
-                <option value="INSTITUTION">institution</option>
-              </select>
-            </label>
+            <RegimeEtTarif
+              tarifs={tarifs}
+              regimeInitial={patient.scheme}
+              tarifInitial={patient.tarifId}
+              ancienMontantCents={patient.feeCents}
+            />
             <label>
               <span className={libelleChamp}>Téléphone</span>
               <input name="phone" type="tel" defaultValue={patient.phone ?? ""} className={`mt-1 ${champ}`} />
@@ -272,17 +292,6 @@ export default async function FichePatient({ params }: { params: Promise<{ id: s
               </label>
             </div>
             <label>
-              <span className={libelleChamp}>Tarif (€ — vide si conventionné)</span>
-              <input
-                name="feeCents"
-                type="number"
-                step="0.01"
-                min="0"
-                defaultValue={patient.feeCents ? (patient.feeCents / 100).toFixed(2) : ""}
-                className={`mt-1 ${champ}`}
-              />
-            </label>
-            <label>
               <span className={libelleChamp}>Cabinet habituel</span>
               <select name="cabinetId" defaultValue={patient.cabinetId ?? ""} className={`mt-1 ${champ}`}>
                 <option value="">Aucun</option>
@@ -302,8 +311,14 @@ export default async function FichePatient({ params }: { params: Promise<{ id: s
         {[
           { t: "Séances", v: String(patient.sessions.length) },
           { t: "Heures", v: formatDuree(heuresTotales(patient.sessions)) },
-          { t: "Encaissé", v: euros(encaisse) },
-          { t: "Dû", v: du > 0 ? euros(du) : "—", alerte: du > 0 },
+          // En conventionné, l'argent qui compte vient de l'INAMI : le patient, lui,
+          // ne doit jamais rien.
+          { t: payeur === "INAMI" ? "Reçu de l’INAMI" : "Encaissé", v: euros(encaisse) },
+          {
+            t: payeur === "INAMI" ? "À recevoir de l’INAMI" : "Dû",
+            v: du > 0 ? euros(du) : "—",
+            alerte: payeur === "PATIENT" && du > 0,
+          },
           ...(plafondInami !== null
             ? [
                 {
@@ -350,14 +365,21 @@ export default async function FichePatient({ params }: { params: Promise<{ id: s
                 </span>
                 {isBillable(s.status) && (
                   <span className="font-mono text-sm" data-numeric>
-                    {euros(s.amountCents)}
+                    {euros(s.amountCents ?? montant)}
                   </span>
                 )}
-                <EtatPaiement status={s.status} payment={s.paymentStatus} methode={s.paymentMethod} />
-                {isBillable(s.status) && s.paymentStatus !== "PAID" && <Encaisser id={s.id} />}
+                <EtatPaiement
+                  status={s.status}
+                  payment={s.paymentStatus}
+                  methode={s.paymentMethod}
+                  payeur={payeur}
+                />
+                {isBillable(s.status) &&
+                  s.paymentStatus !== "PAID" &&
+                  (payeur === "INAMI" ? <RecuInami id={s.id} /> : <Encaisser id={s.id} />)}
                 {s.status === "NO_SHOW" && <AnnulerAbsence id={s.id} />}
                 {s.status === "SCHEDULED" && <AnnulerSeance id={s.id} />}
-                {s.paymentStatus === "PAID" && (
+                {s.paymentStatus === "PAID" && payeur === "PATIENT" && (
                   <a
                     href={`/api/recu/${s.id}`}
                     className="rounded-full border border-line-strong px-2.5 py-0.5 text-[11px] font-medium transition-colors hover:border-accent hover:text-accent-text"

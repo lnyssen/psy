@@ -38,6 +38,12 @@ export default async function Reglages({
       prisma.indisponibilite.findMany({ orderBy: { debut: "asc" } }),
     ]);
   const valeurs = await parametres();
+  const patientsParTarif = new Map(
+    (await prisma.patient.groupBy({ by: ["tarifId"], _count: { _all: true } })).map((g) => [
+      g.tarifId,
+      g._count._all,
+    ]),
+  );
   const seancesPar = new Map(comptes.map((c) => [c.cabinetId, c._count._all]));
   const depensesPar = new Map(comptesCategorie.map((c) => [c.categorieId, c._count._all]));
 
@@ -84,23 +90,108 @@ export default async function Reglages({
         conges={conges}
       />
 
-      <section id="tarifs" className="flex flex-col gap-4 scroll-mt-6">
+      <section id="tarifs" className="flex flex-col gap-6 scroll-mt-6">
         <div>
           <TitreSection>Tarifs</TitreSection>
           <p className="mt-1 text-sm text-ink-muted">
-            Grille de référence. Le tarif propre à un patient, s’il en a un, prime toujours sur
-            celle-ci.
+            Deux régimes, deux sens du même chiffre. Le tarif se choisit ensuite dans la fiche de
+            chaque patient.
           </p>
         </div>
 
-        <ul className="overflow-hidden rounded-[14px] border border-line bg-surface">
-          {tarifs.map((t) => (
-            <li key={t.id} className="border-b border-line px-5 py-3 last:border-b-0">
-              <form action={enregistrerTarif} className="flex flex-wrap items-end gap-3">
-                <input type="hidden" name="id" value={t.id} />
+        {(
+          [
+            {
+              regime: "PRIVE" as const,
+              titre: "Privé",
+              aide: "Ce que paie le patient à chaque séance. Plusieurs tarifs possibles ; celui marqué « par défaut » est proposé à la création d’une fiche.",
+              nouveau: "Nouveau tarif privé",
+              exemple: "Tarif 3",
+            },
+            {
+              regime: "CONVENTIONNE" as const,
+              titre: "Conventionné — psychologue de première ligne",
+              aide: "Ce que reçoit Amandine de l’INAMI pour une séance. Le patient ne paie rien : ce montant n’est jamais une dette de sa part.",
+              nouveau: "Nouveau tarif conventionné",
+              exemple: "Conventionné (INAMI)",
+            },
+          ]
+        ).map((groupe) => {
+          const duGroupe = tarifs.filter((t) => t.regime === groupe.regime);
+          return (
+            <div key={groupe.regime} className="flex flex-col gap-3">
+              <div>
+                <h3 className="text-sm font-semibold">{groupe.titre}</h3>
+                <p className="mt-0.5 text-xs text-ink-muted">{groupe.aide}</p>
+              </div>
+
+              <ul className="overflow-hidden rounded-[14px] border border-line bg-surface">
+                {duGroupe.length === 0 && (
+                  <li className="px-5 py-4 text-sm text-ink-muted">Aucun tarif pour l’instant.</li>
+                )}
+                {duGroupe.map((t) => {
+                  const nb = patientsParTarif.get(t.id) ?? 0;
+                  return (
+                    <li key={t.id} className="border-b border-line px-5 py-3 last:border-b-0">
+                      <form action={enregistrerTarif} className="flex flex-wrap items-end gap-3">
+                        <input type="hidden" name="id" value={t.id} />
+                        <input type="hidden" name="regime" value={t.regime} />
+                        <label className="min-w-52 flex-1">
+                          <span className={libelleChamp}>Libellé</span>
+                          <input name="libelle" defaultValue={t.libelle} required className={`mt-1 ${champ}`} />
+                        </label>
+                        <label className="w-32">
+                          <span className={libelleChamp}>Montant (€)</span>
+                          <input
+                            name="montant"
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            defaultValue={(t.amountCents / 100).toFixed(2)}
+                            required
+                            className={`mt-1 ${champ}`}
+                          />
+                        </label>
+                        {groupe.regime === "PRIVE" && (
+                          <label className="flex items-center gap-2 pb-2 text-sm">
+                            <input type="checkbox" name="parDefaut" defaultChecked={t.parDefaut} />
+                            Par défaut
+                          </label>
+                        )}
+                        <label className="flex items-center gap-2 pb-2 text-sm">
+                          <input type="checkbox" name="actif" defaultChecked={t.actif} />
+                          Actif
+                        </label>
+                        <span className="pb-2 text-xs text-ink-muted" data-numeric>
+                          {nb} patient{nb > 1 ? "s" : ""}
+                        </span>
+                        <button
+                          type="submit"
+                          className="rounded-full bg-accent px-4 py-1.5 text-sm font-medium text-accent-contrast transition-colors hover:bg-accent-hover"
+                        >
+                          Enregistrer
+                        </button>
+                        <button
+                          type="submit"
+                          formAction={supprimerTarif}
+                          className="rounded-full border border-line-strong px-4 py-1.5 text-sm font-medium text-ink-muted transition-colors hover:border-overdue hover:text-overdue"
+                        >
+                          {nb > 0 ? "Désactiver" : "Supprimer"}
+                        </button>
+                      </form>
+                    </li>
+                  );
+                })}
+              </ul>
+
+              <form
+                action={enregistrerTarif}
+                className="flex flex-wrap items-end gap-3 rounded-[14px] border border-dashed border-line-strong bg-surface px-5 py-4"
+              >
+                <input type="hidden" name="regime" value={groupe.regime} />
                 <label className="min-w-52 flex-1">
-                  <span className={libelleChamp}>Libellé</span>
-                  <input name="libelle" defaultValue={t.libelle} required className={`mt-1 ${champ}`} />
+                  <span className={libelleChamp}>{groupe.nouveau}</span>
+                  <input name="libelle" required placeholder={groupe.exemple} className={`mt-1 ${champ}`} />
                 </label>
                 <label className="w-32">
                   <span className={libelleChamp}>Montant (€)</span>
@@ -109,73 +200,28 @@ export default async function Reglages({
                     type="number"
                     step="0.01"
                     min="0"
-                    defaultValue={(t.amountCents / 100).toFixed(2)}
                     required
                     className={`mt-1 ${champ}`}
                   />
                 </label>
                 <label className="flex items-center gap-2 pb-2 text-sm">
-                  <input type="checkbox" name="parDefaut" defaultChecked={t.parDefaut} />
-                  Par défaut
-                </label>
-                <label className="flex items-center gap-2 pb-2 text-sm">
-                  <input type="checkbox" name="actif" defaultChecked={t.actif} />
+                  <input type="checkbox" name="actif" defaultChecked />
                   Actif
                 </label>
                 <button
                   type="submit"
                   className="rounded-full bg-accent px-4 py-1.5 text-sm font-medium text-accent-contrast transition-colors hover:bg-accent-hover"
                 >
-                  Enregistrer
-                </button>
-                <button
-                  type="submit"
-                  formAction={supprimerTarif}
-                  className="rounded-full border border-line-strong px-4 py-1.5 text-sm font-medium text-ink-muted transition-colors hover:border-overdue hover:text-overdue"
-                >
-                  Supprimer
+                  Ajouter
                 </button>
               </form>
-            </li>
-          ))}
-        </ul>
-
-        <form
-          action={enregistrerTarif}
-          className="flex flex-wrap items-end gap-3 rounded-[14px] border border-dashed border-line-strong bg-surface px-5 py-4"
-        >
-          <label className="min-w-52 flex-1">
-            <span className={libelleChamp}>Nouveau tarif</span>
-            <input name="libelle" required placeholder="Bilan" className={`mt-1 ${champ}`} />
-          </label>
-          <label className="w-32">
-            <span className={libelleChamp}>Montant (€)</span>
-            <input
-              name="montant"
-              type="number"
-              step="0.01"
-              min="0"
-              required
-              className={`mt-1 ${champ}`}
-            />
-          </label>
-          <label className="flex items-center gap-2 pb-2 text-sm">
-            <input type="checkbox" name="actif" defaultChecked />
-            Actif
-          </label>
-          <button
-            type="submit"
-            className="rounded-full bg-accent px-4 py-1.5 text-sm font-medium text-accent-contrast transition-colors hover:bg-accent-hover"
-          >
-            Ajouter
-          </button>
-        </form>
+            </div>
+          );
+        })}
 
         <p className="text-xs text-ink-muted">
-          Tarif par défaut actuel :{" "}
-          <span className="font-semibold" data-numeric>
-            {euros(tarifs.find((t) => t.parDefaut)?.amountCents ?? null)}
-          </span>
+          « Désactiver » remplace « Supprimer » dès qu’un tarif est choisi dans une fiche : le
+          supprimer ferait retomber ces patients sur « aucun montant ».
         </p>
       </section>
 
