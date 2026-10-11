@@ -2,10 +2,9 @@
 -- Lancé par deploy/nettoyer-demo.sh, jamais à la main : la variable executer
 -- vaut 0 (aperçu, tout est annulé à la fin) ou 1 (suppression validée).
 --
--- Chaque critère reprend exactement une valeur du seed : rien n'est supprimé
--- « par défaut ». Les deux vrais cabinets, les tarifs, les horaires
--- d'ouverture, les paramètres, les catégories et Google Agenda ne sont pas
--- touchés.
+-- Chaque critère reprend une valeur du seed. Les lieux (l'École comprise,
+-- qui est réelle), les factures, les tarifs, les horaires d'ouverture, les
+-- paramètres, les catégories et Google Agenda ne sont pas touchés.
 \set ON_ERROR_STOP on
 \pset footer off
 BEGIN;
@@ -17,22 +16,12 @@ CREATE TEMP TABLE demo_patients AS
     ('Camille', 'Dubois'), ('Thomas', 'Lefèvre'), ('Naïma', 'Ben Salah'),
     ('Jonas', 'Vermeulen'), ('Élise', 'Moreau'), ('Malik', 'Haddad'));
 
--- Le lieu « École » fictif, reconnu à sa raison sociale inventée. S'il a été
--- renommé avec de vraies coordonnées, il n'est plus reconnu et reste en place.
-CREATE TEMP TABLE demo_ecole AS
-  SELECT id FROM cabinets WHERE nom = 'École' AND raison_sociale = 'École du Verger ASBL';
-
--- Séances des patients fictifs, et blocs sans patient de l'école fictive.
--- Une séance d'un vrai patient à l'école n'est pas visée : dans ce cas la
--- suppression du lieu échoue et tout est annulé.
+-- Séances des patients fictifs, et blocs sans patient semés pour l'école
+-- (à la demande de Laurent, 2026-10-11). Une séance d'un vrai patient n'est
+-- jamais visée.
 CREATE TEMP TABLE demo_sessions AS
-  SELECT id, patient_id, cabinet_id, starts_at, status, google_event_id FROM sessions
-  WHERE patient_id IN (SELECT id FROM demo_patients)
-     OR (patient_id IS NULL AND cabinet_id IN (SELECT id FROM demo_ecole));
-
-CREATE TEMP TABLE demo_factures AS
-  SELECT id, annee, numero, mois, montant_cents, payee_le FROM factures_etablissement
-  WHERE cabinet_id IN (SELECT id FROM demo_ecole);
+  SELECT id, patient_id, cabinet_id, starts_at, status, google_event_id, facture_id FROM sessions
+  WHERE patient_id IN (SELECT id FROM demo_patients) OR patient_id IS NULL;
 
 CREATE TEMP TABLE demo_demandes AS
   SELECT id, first_name, last_name, souhaite FROM demandes_rdv
@@ -64,19 +53,21 @@ SELECT c.nom AS lieu, d.status AS statut, count(*) AS seances,
 FROM demo_sessions d JOIN cabinets c ON c.id = d.cabinet_id
 GROUP BY c.nom, d.status ORDER BY c.nom, d.status;
 
+\echo '=== Séances sans patient (blocs école), supprimées elles aussi'
+SELECT to_char(d.starts_at, 'DD/MM/YYYY HH24:MI') AS debut, c.nom AS lieu, d.status AS statut,
+       CASE WHEN d.facture_id IS NULL THEN '' ELSE 'oui' END AS sur_facture
+FROM demo_sessions d JOIN cabinets c ON c.id = d.cabinet_id
+WHERE d.patient_id IS NULL ORDER BY d.starts_at;
+
 \echo '=== Séances visées déjà envoyées dans Google Agenda (à effacer aussi côté Google)'
 SELECT count(*) AS dans_google FROM demo_sessions WHERE google_event_id IS NOT NULL;
 
-\echo '=== Lieu « École du Verger ASBL » (fictif), avec ses horaires d''ouverture'
-SELECT c.nom, c.raison_sociale, c.address_line,
-       (SELECT count(*) FROM disponibilites x WHERE x.cabinet_id = c.id) AS plages
-FROM cabinets c WHERE c.id IN (SELECT id FROM demo_ecole);
-
-\echo '=== Factures adressées à l''école fictive'
-SELECT annee || '/' || lpad(numero::text, 3, '0') AS numero, mois,
-       to_char(montant_cents / 100.0, 'FM999990.00') || ' €' AS montant,
-       CASE WHEN payee_le IS NULL THEN 'non' ELSE 'oui' END AS payee
-FROM demo_factures ORDER BY annee, numero;
+\echo '=== Factures (conservées)'
+SELECT f.annee || '/' || lpad(f.numero::text, 3, '0') AS numero, c.nom AS lieu, f.mois,
+       to_char(f.montant_cents / 100.0, 'FM999990.00') || ' €' AS montant,
+       CASE WHEN f.payee_le IS NULL THEN 'non' ELSE 'oui' END AS payee,
+       CASE WHEN f.annulee_le IS NULL THEN '' ELSE 'annulée' END AS etat
+FROM factures_etablissement f JOIN cabinets c ON c.id = f.cabinet_id ORDER BY f.annee, f.numero;
 
 \echo '=== Demande de rendez-vous fictive'
 SELECT first_name || ' ' || last_name AS demande, to_char(souhaite, 'DD/MM/YYYY HH24:MI') AS souhaitee
@@ -95,9 +86,9 @@ SELECT
   (SELECT count(*) FROM patients WHERE id NOT IN (SELECT id FROM demo_patients)) AS patients,
   (SELECT count(*) FROM sessions WHERE id NOT IN (SELECT id FROM demo_sessions)) AS seances,
   (SELECT count(*) FROM depenses WHERE id NOT IN (SELECT id FROM demo_depenses)) AS depenses,
-  (SELECT count(*) FROM factures_etablissement WHERE id NOT IN (SELECT id FROM demo_factures)) AS factures,
+  (SELECT count(*) FROM factures_etablissement) AS factures,
   (SELECT count(*) FROM demandes_rdv WHERE id NOT IN (SELECT id FROM demo_demandes)) AS demandes,
-  (SELECT count(*) FROM cabinets WHERE id NOT IN (SELECT id FROM demo_ecole)) AS lieux;
+  (SELECT count(*) FROM cabinets) AS lieux;
 
 \echo '=== Patients conservés'
 SELECT first_name || ' ' || last_name AS patient FROM patients
@@ -109,14 +100,12 @@ SELECT to_char(date, 'DD/MM/YYYY') AS date, libelle,
 FROM depenses WHERE id NOT IN (SELECT id FROM demo_depenses) ORDER BY date;
 
 -- Suppression, dans l'ordre imposé par les clés étrangères. Les notes
--- suivent leurs patients (cascade), les horaires suivent le lieu.
+-- suivent leurs patients (cascade).
 DELETE FROM sessions WHERE id IN (SELECT id FROM demo_sessions);
 DELETE FROM patients WHERE id IN (SELECT id FROM demo_patients);
-DELETE FROM factures_etablissement WHERE id IN (SELECT id FROM demo_factures);
 DELETE FROM demandes_rdv WHERE id IN (SELECT id FROM demo_demandes);
 DELETE FROM depenses WHERE id IN (SELECT id FROM demo_depenses);
 DELETE FROM indisponibilites WHERE id IN (SELECT id FROM demo_conges);
-DELETE FROM cabinets WHERE id IN (SELECT id FROM demo_ecole);
 
 \if :executer
 COMMIT;
