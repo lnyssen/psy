@@ -110,3 +110,34 @@ export function cabinetDesLieux<C extends CabinetCandidat>(
   if (designes.length !== 1) return null;
   return cabinetAutorise(designes[0]) ? { cabinet: designes[0] } : "refuse";
 }
+
+/**
+ * Suggestion de patient pour un titre qui n'a PAS de correspondance exacte —
+ * les cas que `patientDuTitre` laisse volontairement à la main : « Chloé E +
+ * parents », « Matéo », « Jeanne M ».
+ *
+ * Ce n'est jamais un rattachement : la suggestion pré-remplit le champ, et
+ * Amandine confirme d'un clic. Elle n'en propose une que s'il n'y a exactement
+ * qu'un patient actif possible :
+ *
+ * - le premier mot du titre est le prénom (au mot près, sans accents) ;
+ * - un second mot d'une seule lettre est l'initiale du nom de famille ;
+ * - le reste (« parents », « + maman »…) est ignoré.
+ *
+ * Deux enfants de même prénom, sans initiale pour les départager : aucune
+ * suggestion, plutôt qu'un risque de se tromper de dossier.
+ */
+export function suggererPatient<P extends PatientCandidat>(titre: string, patients: P[]): P | null {
+  const cle = normaliser(titre);
+  if (!cle) return null;
+  const trouves = patients.filter((p) => {
+    // Le titre commence par le prénom entier — composé ou non, c'est la
+    // normalisation qui unifie « Jean-Pierre » et « Jean Pierre ».
+    const prenom = normaliser(p.firstName);
+    if (!prenom || (cle !== prenom && !cle.startsWith(`${prenom} `))) return false;
+    const reste = cle.slice(prenom.length).trim().split(" ").filter(Boolean);
+    const initiale = reste[0] && reste[0].length === 1 ? reste[0] : null;
+    return initiale === null || normaliser(p.lastName).startsWith(initiale);
+  });
+  return trouves.length === 1 ? trouves[0] : null;
+}

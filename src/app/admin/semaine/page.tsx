@@ -11,8 +11,8 @@ import { heuresFacturablesSemaine } from "@/lib/quotas";
 import { creerSeanceDepuisFormulaire } from "@/lib/actions";
 import { BoutonEnregistrer } from "@/components/BoutonEnregistrer";
 import { SelectPatientRecherche } from "@/components/SelectPatientRecherche";
-import { EvenementsGoogle } from "@/components/EvenementsGoogle";
 import { synchroniser } from "@/lib/google-sync";
+import { compterAFaire } from "@/lib/google-afaire";
 import {
   ajouterJours,
   isoJour,
@@ -72,11 +72,7 @@ export default async function Semaine({ searchParams }: { searchParams: Promise<
     where: { statut: { in: ["A_RATTACHER", "OCCUPE"] }, debut: { gte: lundi, lt: finSemaine } },
     orderBy: { debut: "asc" },
   });
-  const aRattacher = await prisma.evenementGoogle.findMany({
-    where: { statut: "A_RATTACHER", fin: { gte: new Date() } },
-    orderBy: { debut: "asc" },
-    take: 200,
-  });
+  const aFaire = await compterAFaire();
   const patients = await prisma.patient.findMany({
     where: { active: true },
     orderBy: { lastName: "asc" },
@@ -101,7 +97,11 @@ export default async function Semaine({ searchParams }: { searchParams: Promise<
     };
   });
 
-  const pourGrille: SeanceGrille[] = seances.map((s, i) => ({
+  // Une séance annulée à temps n'est plus un rendez-vous : elle reste dans
+  // l'historique du patient, mais n'a rien à faire dans le calendrier. La laisser
+  // dessinée, comme un bloc ordinaire, donnait l'impression que l'annulation
+  // n'avait pas eu lieu. `i` reste l'indice dans `seances`, celui de `conflits`.
+  const pourGrille: SeanceGrille[] = seances.flatMap((s, i) => s.status === "CANCELLED_IN_TIME" ? [] : [{
     id: s.id,
     patientId: s.patientId,
     nom: nomSeance(s),
@@ -117,7 +117,7 @@ export default async function Semaine({ searchParams }: { searchParams: Promise<
     libellePaiement: isBillable(s.status) ? PAYMENT_LABEL[s.paymentStatus] : null,
     conflit: conflits.has(i),
     aVenir: s.status === "SCHEDULED",
-  }));
+  }]);
   // Rendez-vous Google : mêmes colonnes, mais ni séance ni facturables.
   for (const e of externes) {
     const jour = jours.findIndex((j) => memeJour(new Date(j.iso), e.debut));
@@ -276,7 +276,7 @@ export default async function Semaine({ searchParams }: { searchParams: Promise<
             Séances cette semaine
           </p>
           <p className="mt-1 text-3xl font-bold" data-numeric>
-            {seances.length}
+            {seances.filter((s) => s.status !== "CANCELLED_IN_TIME").length}
           </p>
         </div>
         <div className="rounded-[14px] border border-line bg-surface px-5 py-4">
@@ -387,11 +387,20 @@ export default async function Semaine({ searchParams }: { searchParams: Promise<
         />
       </div>
 
-      <EvenementsGoogle
-        evenements={aRattacher}
-        patients={patients}
-        cabinets={cabinets.map((c) => ({ id: c.id, nom: c.nom, factureInstitution: c.factureInstitution }))}
-      />
+      {aFaire.lignes > 0 && (
+        <Link
+          href="/admin/google"
+          className="flex flex-wrap items-center justify-between gap-3 rounded-[14px] border border-accent/40 bg-surface px-5 py-3 text-sm transition-colors hover:border-accent"
+        >
+          <span>
+            <span className="font-semibold">Google Agenda</span> —{" "}
+            <span data-numeric>
+              {aFaire.lignes} à traiter ({aFaire.rendezVous} rendez-vous)
+            </span>
+          </span>
+          <span className="font-medium text-accent-text">Traiter →</span>
+        </Link>
+      )}
 
       <GrilleSemaine
         seances={pourGrille}

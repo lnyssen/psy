@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { annulerSeance, creerSeanceDepuisFormulaire, deplacerSeance } from "@/lib/actions";
+import { retirerEvenementGoogle } from "@/lib/google-actions";
 import { IconFermer, IconFlecheBas, IconFlecheHaut, IconPlus } from "@/components/icons";
 import { SelectPatientRecherche } from "@/components/SelectPatientRecherche";
 
@@ -98,6 +99,14 @@ export function GrilleSemaine({
       const r = await deplacerSeance(id, d.toISOString());
       if (!r.ok) setErreur(r.message);
       else router.refresh();
+    });
+  }
+
+  /** Un bloc Google a pour identifiant « google-<id de la ligne> ». */
+  function retirer(idBloc: string) {
+    demarrer(async () => {
+      await retirerEvenementGoogle(idBloc.replace(/^google-/, ""));
+      router.refresh();
     });
   }
 
@@ -254,6 +263,7 @@ export function GrilleSemaine({
                       <BlocExterne
                         key={seance.id}
                         seance={seance}
+                        onRetirer={() => retirer(seance.id)}
                         style={{
                           top: ((seance.minutes - heureDebut * 60) / 60) * PX_PAR_HEURE + MARGE_HAUT,
                           height: Math.max((seance.duree / 60) * PX_PAR_HEURE - 3, 34),
@@ -353,7 +363,7 @@ export function GrilleSemaine({
                       <Link
                         href={
                           s.externe
-                            ? "/admin/semaine#google"
+                            ? `/admin/google?voir=${s.id.replace(/^google-/, "")}`
                             : s.patientId
                               ? `/admin/patients/${s.patientId}`
                               : "/admin/etablissements"
@@ -383,6 +393,16 @@ export function GrilleSemaine({
                           </span>
                         )}
                       </Link>
+                      {s.externe && (
+                        <button
+                          type="button"
+                          onClick={() => retirer(s.id)}
+                          aria-label={`Retirer « ${s.nom} » du calendrier`}
+                          className="shrink-0 rounded-full border border-line-strong p-1.5 text-ink-muted transition-colors hover:border-overdue hover:text-overdue"
+                        >
+                          <IconFermer className="h-3 w-3" />
+                        </button>
+                      )}
                       {s.aVenir && (
                         <button
                           type="button"
@@ -599,32 +619,55 @@ function CreationMobile({
 }
 
 /** Rendez-vous Google : hachuré et sans poignée, pour qu'on ne le prenne ni
- *  pour une séance ni pour quelque chose qu'on pourrait glisser. */
-function BlocExterne({ seance, style }: { seance: SeanceGrille; style: React.CSSProperties }) {
+ *  pour une séance ni pour quelque chose qu'on pourrait glisser. Le × le retire
+ *  du calendrier (sans rien supprimer chez Google) ; un clic ailleurs ouvre sa
+ *  fiche de tri. */
+function BlocExterne({
+  seance,
+  style,
+  onRetirer,
+}: {
+  seance: SeanceGrille;
+  style: React.CSSProperties;
+  onRetirer: () => void;
+}) {
   const hhmm = (m: number) =>
     `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
   const aRattacher = seance.externe === "A_RATTACHER";
   return (
-    <a
-      href="#google"
+    <div
       onClick={(e) => e.stopPropagation()}
       style={{
         ...style,
         backgroundImage:
           "repeating-linear-gradient(135deg, transparent 0 6px, rgba(95,95,128,0.10) 6px 7px)",
       }}
-      className={`absolute flex min-w-0 flex-col gap-[2px] overflow-hidden rounded-lg border border-dashed px-2 py-1.5 ${
+      className={`group absolute flex overflow-hidden rounded-lg border border-dashed ${
         aRattacher ? "border-accent bg-accent-soft/50" : "border-line-strong bg-sunken"
       }`}
     >
-      <span className="truncate text-[12px] leading-[1.25] font-bold" data-numeric>
-        {hhmm(seance.minutes)}–{hhmm(seance.minutes + seance.duree)}
-      </span>
-      <span className="truncate text-[12px] leading-tight font-medium">{seance.nom}</span>
-      <span className="truncate text-[10.5px] leading-[1.45] font-semibold text-ink-muted">
-        {aRattacher ? "Google · à rattacher" : "Google · occupé"}
-      </span>
-    </a>
+      <Link
+        href={`/admin/google?voir=${seance.id.replace(/^google-/, "")}`}
+        className="flex min-w-0 flex-1 flex-col gap-[2px] overflow-hidden px-2 py-1.5"
+      >
+        <span className="truncate text-[12px] leading-[1.25] font-bold" data-numeric>
+          {hhmm(seance.minutes)}–{hhmm(seance.minutes + seance.duree)}
+        </span>
+        <span className="truncate text-[12px] leading-tight font-medium">{seance.nom}</span>
+        <span className="truncate text-[10.5px] leading-[1.45] font-semibold text-ink-muted">
+          {aRattacher ? "Google · à rattacher" : "Google · occupé"}
+        </span>
+      </Link>
+      <button
+        type="button"
+        onClick={onRetirer}
+        aria-label={`Retirer « ${seance.nom} » du calendrier`}
+        title="Retirer du calendrier (reste dans Google)"
+        className="pointer-events-none absolute top-1 right-1 flex h-[22px] w-[22px] items-center justify-center rounded-full border border-line bg-surface text-ink-muted opacity-0 shadow-sm transition-opacity group-focus-within:pointer-events-auto group-focus-within:opacity-100 group-hover:pointer-events-auto group-hover:opacity-100 hover:border-overdue hover:text-overdue"
+      >
+        <IconFermer className="h-2.5 w-2.5" />
+      </button>
+    </div>
   );
 }
 

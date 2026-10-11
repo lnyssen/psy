@@ -1,5 +1,6 @@
 import { PDFDocument, StandardFonts } from "pdf-lib";
 import { prisma } from "@/lib/db";
+import { demoOuverte } from "@/lib/demo";
 import {
   METHOD_LABEL,
   SCHEME_LABEL,
@@ -186,7 +187,11 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   regle(1, filet);
   y -= 16;
   texte(`Amandine Monsel — AMAPSY SRL · ${adresseCabinet(seance.cabinet)}`, M, { taille: 8, couleur: gris });
-  texteDroite("Document de démonstration — données fictives.", X_DROITE, { taille: 8, couleur: gris });
+  // La mention n'a de sens que sur l'instance de démonstration : sur un reçu
+  // remis à un vrai patient, elle serait fausse et gênante.
+  if (demoOuverte()) {
+    texteDroite("Document de démonstration — données fictives.", X_DROITE, { taille: 8, couleur: gris });
+  }
 
   const octets = await pdf.save();
   const nom = `recu-${p.lastName.toLowerCase().replace(/[^a-z]/g, "")}-${seance.startsAt

@@ -24,7 +24,7 @@ function texte(f: FormData, cle: string) {
 }
 
 function rafraichir() {
-  for (const c of ["/admin", "/admin/semaine", "/admin/patients", "/admin/reglages"]) {
+  for (const c of ["/admin", "/admin/semaine", "/admin/google", "/admin/patients", "/admin/reglages"]) {
     revalidatePath(c);
   }
   revalidatePath("/rendez-vous");
@@ -60,13 +60,20 @@ export async function rattacherEvenementGoogle(f: FormData) {
     if (!patient) return;
   }
 
+  let crees = 0;
   for (const ev of await cibles(f)) {
     // Faux si déjà rattaché entre-temps (double clic) : rien à faire.
-    await rattacherEvenement(ev, { patientId: patient?.id ?? null, cabinetId: cabinet.id });
+    if (await rattacherEvenement(ev, { patientId: patient?.id ?? null, cabinetId: cabinet.id })) crees++;
   }
 
   rafraichir();
   synchroniserApres();
+  // Compte rendu sur la page de tri : combien de séances, pour qui, avec un lien
+  // vers la fiche. Sans lui, un rattachement de série ne laisse aucune trace
+  // visible de ce qui vient d'être créé.
+  const retour = new URLSearchParams({ fait: String(crees), c: cabinet.id });
+  if (patient) retour.set("p", patient.id);
+  redirect(`/admin/google?${retour}`);
 }
 
 async function marquer(f: FormData, statut: "OCCUPE" | "IGNORE") {
@@ -84,6 +91,41 @@ export async function marquerEvenementOccupe(f: FormData) {
 export async function ignorerEvenementGoogle(f: FormData) {
   await exigerSession();
   await marquer(f, "IGNORE");
+}
+
+/**
+ * Retire un rendez-vous Google du calendrier de l'outil : il n'y est plus
+ * affiché et ne bloque plus la réservation. Rien n'est supprimé chez Google —
+ * l'événement y reste, c'est dans Google qu'on l'efface pour de bon — et rien
+ * n'est perdu : il est seulement marqué « ignoré ».
+ */
+export async function retirerEvenementGoogle(id: string) {
+  await exigerSession();
+  await prisma.evenementGoogle.updateMany({
+    where: { id, statut: { in: ["A_RATTACHER", "OCCUPE"] } },
+    data: { statut: "IGNORE" },
+  });
+  rafraichir();
+}
+
+/**
+ * Traite d'un coup les événements sans titre : ils n'ont aucune chance d'être
+ * reconnus et il serait absurde de les trier un par un.
+ *
+ * Deux issues, qui n'ont pas les mêmes conséquences, d'où le choix explicite
+ * à l'écran : « occupé » les garde dans le calendrier et sur la réservation en
+ * ligne (le temps d'Amandine reste protégé) ; « ignoré » les efface des deux.
+ * Seuls les événements encore « à rattacher » sont touchés — jamais un
+ * créneau déjà décidé.
+ */
+export async function traiterSansTitre(statut: "OCCUPE" | "IGNORE") {
+  await exigerSession();
+  if (statut !== "OCCUPE" && statut !== "IGNORE") return;
+  await prisma.evenementGoogle.updateMany({
+    where: { statut: "A_RATTACHER", titre: "(sans titre)" },
+    data: { statut },
+  });
+  rafraichir();
 }
 
 export async function synchroniserMaintenant() {

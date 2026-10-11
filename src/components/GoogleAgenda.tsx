@@ -1,6 +1,7 @@
 import { TitreSection } from "@/components/tags";
 import { changerAgendaGoogle, deconnecterGoogle, synchroniserMaintenant } from "@/lib/google-actions";
 import { etatGoogle } from "@/lib/google-sync";
+import { compterAFaire } from "@/lib/google-afaire";
 
 const MESSAGES: Record<string, { ton: "ok" | "erreur"; texte: string }> = {
   ok: { ton: "ok", texte: "Google Agenda est connecté. La première synchronisation est en cours." },
@@ -55,6 +56,7 @@ const bouton =
 
 export async function GoogleAgenda({ retour }: { retour?: string }) {
   const e = await etatGoogle();
+  const aFaire = await compterAFaire();
   const message = retour ? MESSAGES[retour] : undefined;
 
   return (
@@ -79,6 +81,12 @@ export async function GoogleAgenda({ retour }: { retour?: string }) {
           {message.texte}
         </p>
       )}
+
+      <p className="rounded-[14px] bg-sunken px-5 py-3 text-sm">
+        <span className="font-semibold">À savoir avant de connecter :</span> le nom de chaque
+        patient est envoyé à Google pour titrer les événements — une donnée de santé de plus chez
+        un tiers. Le flux iCalendar d’abonnement, lui, n’en porte jamais.
+      </p>
 
       <div className="flex flex-col gap-3 rounded-[14px] border border-line bg-surface px-5 py-4 text-sm">
         {e.demo ? (
@@ -135,12 +143,12 @@ export async function GoogleAgenda({ retour }: { retour?: string }) {
             <p>
               Connecté à <span className="font-semibold">{e.email}</span> · dernière synchronisation{" "}
               <span data-numeric>{ilYa(e.derniereSynchro)}</span>
-              {e.aRattacher > 0 && (
+              {aFaire.lignes > 0 && (
                 <>
                   {" "}
                   ·{" "}
-                  <a href="/admin/semaine#google" className="font-medium text-accent-text underline">
-                    {e.aRattacher} à rattacher
+                  <a href="/admin/google" className="font-medium text-accent-text underline">
+                    {aFaire.lignes} à traiter
                   </a>
                 </>
               )}
@@ -202,10 +210,6 @@ export async function GoogleAgenda({ retour }: { retour?: string }) {
             </p>
           </>
         )}
-        <p className="text-xs text-ink-muted">
-          Le nom du patient est envoyé à Google : une donnée de santé de plus chez un tiers. Le flux
-          iCalendar d’abonnement, lui, n’en porte jamais.
-        </p>
       </div>
     </section>
   );

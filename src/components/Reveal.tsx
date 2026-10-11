@@ -26,7 +26,7 @@ export function Reveal({ children, className = "" }: { children: React.ReactNode
           observateur.disconnect();
         }
       },
-      { threshold: 0.15, rootMargin: "0px 0px -10% 0px" },
+      { threshold: 0, rootMargin: "0px 0px -4% 0px" },
     );
     observateur.observe(el);
     return () => observateur.disconnect();

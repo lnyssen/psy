@@ -1,5 +1,6 @@
 import { PDFDocument, StandardFonts } from "pdf-lib";
 import { prisma } from "@/lib/db";
+import { demoOuverte } from "@/lib/demo";
 import { SITE } from "@/lib/site";
 import { euros, fmtJourMoisAn, formatDuree, pourPdf } from "@/lib/format";
 import { PDF_COULEUR, PDF_CONTENU, PDF_HAUTEUR, PDF_LARGEUR, PDF_MARGE } from "@/lib/pdf";
@@ -211,10 +212,14 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     ? `AMAPSY SRL · ${reglages.adresseSiege.replace("\n", ", ")}`
     : "AMAPSY SRL";
   texte(gauche1, M, { taille: 8, couleur: gris });
-  texteDroite(reglages?.iban ? `IBAN ${reglages.iban}` : "Document de démonstration — données fictives.", X_DROITE, {
-    taille: 8,
-    couleur: gris,
-  });
+  // Sans IBAN saisi, le pied reste simplement vide : la mention « démonstration »
+  // n'est écrite que sur l'instance de démonstration, jamais sur une vraie facture.
+  const droite1 = reglages?.iban
+    ? `IBAN ${reglages.iban}`
+    : demoOuverte()
+      ? "Document de démonstration — données fictives."
+      : "";
+  if (droite1) texteDroite(droite1, X_DROITE, { taille: 8, couleur: gris });
   y -= 13;
   const mentions = [
     reglages?.numeroEntreprise ? `N° d’entreprise ${reglages.numeroEntreprise}` : null,

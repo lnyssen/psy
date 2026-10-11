@@ -23,7 +23,7 @@ import {
  */
 export const ENTREES = [
   { href: "/admin", label: "Aujourd’hui", Icone: IconJour },
-  { href: "/admin/semaine", label: "Semaine", Icone: IconSemaine },
+  { href: "/admin/semaine", label: "Agenda", Icone: IconSemaine },
   { href: "/admin/patients", label: "Patients", Icone: IconPatients },
   { href: "/admin/facturation", label: "Facturation", Icone: IconFacturation },
   { href: "/admin/depenses", label: "Dépenses", Icone: IconDepenses },
