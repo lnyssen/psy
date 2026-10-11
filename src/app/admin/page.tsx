@@ -4,7 +4,16 @@ import { prisma } from "@/lib/db";
 import { synchroniserApres } from "@/lib/google-sync";
 import { compterAFaire } from "@/lib/google-afaire";
 import { parametres } from "@/lib/parametres";
-import { AlerteTrajet, CabinetTag, EtatPaiement, RegimeTag, StatutSeance } from "@/components/tags";
+import {
+  AlerteTrajet,
+  CabinetTag,
+  EtatPaiement,
+  HorsQuota,
+  RegimeTag,
+  StatutSeance,
+  TagVisio,
+} from "@/components/tags";
+import { horsQuotaPour } from "@/lib/quotas";
 import { GroupeFiltre, type Params } from "@/components/filtres";
 import { FiltresMobile } from "@/components/FiltresMobile";
 import { StatuerSeance } from "@/components/StatuerSeance";
@@ -75,6 +84,7 @@ export default async function Aujourdhui({ searchParams }: { searchParams: Promi
     include: { patient: true, cabinet: true },
   });
   const total = heuresTotales(seances);
+  const horsQuota = await horsQuotaPour(seances.map((s) => s.patientId));
 
   return (
     <div className="flex flex-col gap-7">
@@ -210,6 +220,8 @@ export default async function Aujourdhui({ searchParams }: { searchParams: Promi
                 <span className="flex flex-wrap items-center gap-2">
                   <CabinetTag cabinet={s.cabinet} />
                   {s.patient && <RegimeTag scheme={s.patient.scheme} />}
+                  {s.visio && <TagVisio />}
+                  {horsQuota.has(s.id) && <HorsQuota />}
                   {conflits.has(i) && <AlerteTrajet />}
                 </span>
                 <span className="flex shrink-0 items-center gap-4">

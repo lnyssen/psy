@@ -26,6 +26,9 @@ export type SeanceGrille = {
   conflit: boolean;
   /** Seule une séance à venir s'annule d'ici — voir annulerSeance. */
   aVenir: boolean;
+  visio?: boolean;
+  /** Au-delà du plafond INAMI sur douze mois (voir lib/quotas.ts). */
+  horsQuota?: boolean;
   /** Rendez-vous venu de Google Agenda qui n'est pas une séance : affiché, mais
    *  ni déplaçable, ni annulable, ni lié à un patient. */
   externe?: "A_RATTACHER" | "OCCUPE";
@@ -65,7 +68,7 @@ export function GrilleSemaine({
   heureDebut: number;
   heureFin: number;
   /** Pour la création rapide au clic sur une case vide. */
-  patients: { id: string; firstName: string; lastName: string }[];
+  patients: { id: string; firstName: string; lastName: string; alerte?: string }[];
   cabinets: { id: string; nom: string }[];
 }) {
   const router = useRouter();
@@ -385,6 +388,8 @@ export function GrilleSemaine({
                               : s.externe === "OCCUPE"
                                 ? "Google — occupé"
                                 : s.cabinetNom}
+                            {s.visio ? " · visio" : ""}
+                            {s.horsQuota ? " · hors quota INAMI" : ""}
                           </span>
                         </span>
                         {s.libellePaiement && (
@@ -477,7 +482,7 @@ function PopoverCreation({
 }: {
   jour: JourGrille;
   minutes: number;
-  patients: { id: string; firstName: string; lastName: string }[];
+  patients: { id: string; firstName: string; lastName: string; alerte?: string }[];
   cabinets: { id: string; nom: string }[];
   alignerADroite: boolean;
   style: React.CSSProperties;
@@ -530,6 +535,10 @@ function PopoverCreation({
             </option>
           ))}
         </select>
+        <label className="flex items-center gap-2 px-1 text-xs">
+          <input type="checkbox" name="visio" className="accent-accent" />
+          En visio
+        </label>
         <button
           type="submit"
           className="mt-0.5 rounded-full bg-accent px-4 py-1.5 text-sm font-medium text-accent-contrast transition-colors hover:bg-accent-hover"
@@ -554,7 +563,7 @@ function CreationMobile({
   onCreer,
 }: {
   jour: JourGrille;
-  patients: { id: string; firstName: string; lastName: string }[];
+  patients: { id: string; firstName: string; lastName: string; alerte?: string }[];
   cabinets: { id: string; nom: string }[];
   onFermer: () => void;
   onCreer: (f: FormData) => void;
@@ -607,6 +616,10 @@ function CreationMobile({
           </select>
         </div>
         <SelectPatientRecherche patients={patients} />
+        <label className="flex items-center gap-2 px-1 text-xs">
+          <input type="checkbox" name="visio" className="accent-accent" />
+          En visio
+        </label>
         <button
           type="submit"
           className="mt-0.5 rounded-full bg-accent px-4 py-1.5 text-sm font-medium text-accent-contrast transition-colors hover:bg-accent-hover"
@@ -742,7 +755,16 @@ function Bloc({
         <span className="flex min-w-0 shrink-0 items-center gap-1">
           <span className="texte-cabinet min-w-0 truncate text-[10.5px] leading-[1.45] font-semibold">
             {seance.cabinetNom}
+            {seance.visio ? " · visio" : ""}
           </span>
+          {seance.horsQuota && (
+            <span
+              className="shrink-0 rounded bg-due-soft px-1 text-[10px] leading-[1.45] font-semibold text-due"
+              title="Au-delà du plafond INAMI sur douze mois : séance non remboursée par la convention."
+            >
+              INAMI
+            </span>
+          )}
           {seance.conflit && (
             <span
               className="shrink-0 text-overdue"

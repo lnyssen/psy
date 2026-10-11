@@ -21,6 +21,8 @@ type Patient = {
   firstName: string;
   lastName: string;
   scheme: "PRIVE" | "CONVENTIONNE";
+  pplType: "SOUTIEN" | "TRAITEMENT";
+  pplReseau: "ENFANTS" | "ADULTES" | null;
   tarifId: string | null;
   feeCents: number | null;
   email: string | null;
@@ -147,6 +149,8 @@ export function FormulairePatient({
           regimeInitial={p?.scheme}
           tarifInitial={p?.tarifId}
           ancienMontantCents={p?.feeCents}
+          pplTypeInitial={p?.pplType}
+          pplReseauInitial={p?.pplReseau}
         />
         <label>
           <span className={libelle}>Cabinet habituel</span>

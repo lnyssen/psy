@@ -39,6 +39,25 @@ enum CareScheme {
   PRIVE
 }
 
+/// Convention de psychologie de première ligne (INAMI, en vigueur depuis le
+/// 1er avril 2024) : le plafond de séances remboursées sur douze mois dépend
+/// du type de prise en charge et du réseau.
+///   - soutien : 10 séances (réseau enfants et adolescents), 8 (adultes) ;
+///   - traitement : 20 séances au plus, dans les deux réseaux.
+/// Source : inami.fgov.be, « Dispenser des soins psychologiques de première
+/// ligne via un réseau de santé mentale ».
+enum PplType {
+  SOUTIEN
+  TRAITEMENT
+}
+
+/// Les deux réseaux se chevauchent de 15 à 23 ans : le patient y choisit son
+/// réseau. Sans choix explicite, l'âge décide (23 ans compris : enfants).
+enum PplReseau {
+  ENFANTS
+  ADULTES
+}
+
 /// Statut d'une séance passée. Le brief prévoit qu'un seul geste par séance
 /// suffise à le fixer, et que ce statut détermine mécaniquement si l'acte
 /// devient facturable : SCHEDULED et CANCELLED_IN_TIME ne le sont pas,
@@ -248,6 +267,10 @@ model Patient {
   city           String?
   birthDate      DateTime?  @map("birth_date")
   scheme         CareScheme
+  /// Conventionné seulement : soutien ou traitement, et réseau si choisi
+  /// (vide : déduit de l'âge). Servent au plafond INAMI, voir lib/quotas.ts.
+  pplType        PplType    @default(SOUTIEN) @map("ppl_type")
+  pplReseau      PplReseau? @map("ppl_reseau")
   /// Tarif choisi dans la grille (Réglages → Tarifs) : c'est lui qui fait foi
   /// pour le montant d'une séance.
   tarifId        String?    @map("tarif_id")
@@ -311,6 +334,9 @@ model Session {
   facture         FactureEtablissement? @relation(fields: [factureId], references: [id], onDelete: SetNull)
   /// Vrai si la séance a été prise par le patient depuis le site.
   reserveeEnLigne Boolean               @default(false) @map("reservee_en_ligne")
+  /// Séance à distance. Le lieu reste celui de rattachement (facturation,
+  /// statistiques) ; l'agenda Google affiche « visio » au lieu de l'adresse.
+  visio           Boolean               @default(false)
   /// Note clinique. Chiffrement applicatif à venir (le chiffrement de bout en
   /// bout a été écarté, voir les arbitrages du brief) : ce champ restera vide
   /// tant que ce chiffrement n'est pas en place.

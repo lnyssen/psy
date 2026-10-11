@@ -46,7 +46,7 @@ export function LigneGoogle({
   /** Texte si l'événement n'est plus « à traiter » (occupé, ignoré). */
   statut: string | null;
   suggestion: { id: string; nom: string } | null;
-  patients: { id: string; firstName: string; lastName: string }[];
+  patients: { id: string; firstName: string; lastName: string; alerte?: string }[];
   cabinets: { id: string; nom: string; factureInstitution: boolean }[];
 }) {
   const serie = occurrences > 1;

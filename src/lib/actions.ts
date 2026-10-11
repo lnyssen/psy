@@ -108,6 +108,7 @@ export async function enregistrerPatient(f: FormData) {
       city: texte(f, "city") || null,
       birthDate,
       scheme: regime,
+      ...pplDepuis(f),
       tarifId,
       feeCents,
       cabinetId,
@@ -323,7 +324,13 @@ export async function creerSeanceDepuisFormulaire(f: FormData) {
 
   const duree = (await parametres()).dureeSeanceMin;
   await prisma.session.createMany({
-    data: dates.map((d) => ({ patientId, cabinetId, startsAt: d, durationMin: duree })),
+    data: dates.map((d) => ({
+      patientId,
+      cabinetId,
+      startsAt: d,
+      durationMin: duree,
+      visio: f.get("visio") === "on",
+    })),
   });
 
   revalidatePath("/admin/semaine");
@@ -352,6 +359,17 @@ export async function annulerSeance(id: string) {
  * (première séance, notes). Prénom et nom seuls sont exigés ; le reste se
  * complète quand on l'a sous la main, comme pour enregistrerPatient.
  */
+/** Soutien ou traitement, et réseau INAMI : lus seulement s'ils sont envoyés
+ *  (le formulaire ne les montre qu'en conventionné). Réseau vide : selon
+ *  l'âge (voir lib/quotas.ts). */
+function pplDepuis(f: FormData) {
+  if (!f.has("pplType")) return {};
+  const type = texte(f, "pplType") === "TRAITEMENT" ? ("TRAITEMENT" as const) : ("SOUTIEN" as const);
+  const r = texte(f, "pplReseau");
+  const reseau = r === "ENFANTS" ? ("ENFANTS" as const) : r === "ADULTES" ? ("ADULTES" as const) : null;
+  return { pplType: type, pplReseau: reseau };
+}
+
 export async function creerPatient(f: FormData) {
   await exigerSession();
   const firstName = texte(f, "firstName");
@@ -387,6 +405,7 @@ export async function creerPatient(f: FormData) {
       city: texte(f, "city") || null,
       birthDate: birthDate && !Number.isNaN(birthDate.getTime()) ? birthDate : null,
       scheme: schemeValide,
+      ...pplDepuis(f),
       tarifId,
       cabinetId,
       jetonRdv: crypto.randomUUID(),

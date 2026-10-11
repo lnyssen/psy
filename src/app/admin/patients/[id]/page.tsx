@@ -1,12 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
-import {
-  CabinetTag,
-  EtatPaiement,
-  RegimeTag,
-  StatutSeance,
-} from "@/components/tags";
+import { CabinetTag, EtatPaiement, HorsQuota, RegimeTag, StatutSeance } from "@/components/tags";
 import { BoutonEnregistrer } from "@/components/BoutonEnregistrer";
 import { Notes } from "@/components/Notes";
 import { Encaisser } from "@/components/Encaisser";
@@ -16,10 +11,11 @@ import { montantSeanceCents, payeurDe } from "@/lib/tarifs";
 import { AnnulerAbsence } from "@/components/AnnulerAbsence";
 import { AnnulerSeance } from "@/components/AnnulerSeance";
 import { StatuerSeance } from "@/components/StatuerSeance";
+import { BasculeVisio } from "@/components/BasculeVisio";
 import { NoteSeance } from "@/components/NoteSeance";
 import { cleNotesPresente, dechiffrer } from "@/lib/chiffrement";
 import { creerSeanceDepuisFormulaire, enregistrerPatient } from "@/lib/actions";
-import { plafondConventionne, seancesConventionneAnnee } from "@/lib/quotas";
+import { plafondConventionne, reseauPpl, seancesHorsQuota, seancesSurDouzeMois } from "@/lib/quotas";
 import {
   euros,
   fmtDateCourte,
@@ -96,32 +92,25 @@ export default async function FichePatient({
     .filter((s) => s.paymentStatus === "PAID")
     .reduce((n, s) => n + valeur(s), 0);
 
-  // Plafond INAMI de la convention de première ligne : huit séances par
-  // année civile, vingt pour les 16-25 ans. Ne s'affiche que pour un patient
-  // conventionné — un patient privé n'y est pas soumis.
-  const anneeCourante = new Date().getFullYear();
-  const plafondInami =
-    patient.scheme === "CONVENTIONNE"
-      ? plafondConventionne(patient.birthDate)
-      : null;
-  const utiliseesInami =
-    plafondInami !== null
-      ? seancesConventionneAnnee(patient.sessions, anneeCourante)
-      : null;
-  // L'alerte se lève avant de créer la séance de trop, pas après : on compte
-  // aussi les rendez-vous déjà posés pour le reste de l'année.
+  // Plafond INAMI de la convention de première ligne (voir lib/quotas.ts) :
+  // soutien 10 ou 8 séances sur douze mois selon le réseau, traitement 20. Ne
+  // s'affiche que pour un patient conventionné — un patient privé n'y est pas
+  // soumis. On compte aussi les rendez-vous déjà posés : l'alerte se lève
+  // avant de créer la séance de trop, pas après.
   const maintenant = new Date();
-  const prevuesInami =
-    plafondInami !== null
-      ? patient.sessions.filter(
-          (s) =>
-            s.status === "SCHEDULED" &&
-            s.startsAt.getFullYear() === anneeCourante,
-        ).length
-      : 0;
-  const quotaAtteint =
-    plafondInami !== null &&
-    (utiliseesInami ?? 0) + prevuesInami >= plafondInami;
+  const conventionne = patient.scheme === "CONVENTIONNE";
+  const plafondInami = conventionne ? plafondConventionne(patient) : null;
+  const faitesInami = conventionne ? seancesSurDouzeMois(patient.sessions, maintenant) : 0;
+  const prevuesInami = conventionne
+    ? patient.sessions.filter((s) => s.status === "SCHEDULED" && s.startsAt > maintenant).length
+    : 0;
+  const quotaAtteint = plafondInami !== null && faitesInami + prevuesInami >= plafondInami;
+  const horsQuota = conventionne ? seancesHorsQuota(patient.sessions, patient) : new Set<string>();
+  const libelleReseau = conventionne
+    ? `${patient.pplType === "TRAITEMENT" ? "traitement" : "soutien"} · réseau ${
+        reseauPpl(patient) === "ENFANTS" ? "enfants" : "adultes"
+      }`
+    : null;
 
   // Notes de séance : déchiffrées ici, côté serveur, pour ne jamais faire
   // voyager la clé. Une note illisible (clé changée) n'empêche pas la page de
@@ -193,10 +182,20 @@ export default async function FichePatient({
           </h1>
           <p className="mt-2 flex flex-wrap items-center gap-2">
             <RegimeTag scheme={patient.scheme} />
+            {libelleReseau && <span className="text-xs text-ink-muted">{libelleReseau}</span>}
             {patient.cabinet && <CabinetTag cabinet={patient.cabinet} />}
           </p>
         </div>
       </header>
+
+      {quotaAtteint && (
+        <p className="rounded-[10px] border border-due/40 bg-due-soft px-4 py-2.5 text-sm text-due">
+          Plafond INAMI atteint : {faitesInami} séance{faitesInami > 1 ? "s" : ""} sur les
+          douze derniers mois et {prevuesInami} prévue{prevuesInami > 1 ? "s" : ""}, pour{" "}
+          {plafondInami} remboursées ({libelleReseau}).
+          Une séance de plus ne sera pas prise en charge par la convention.
+        </p>
+      )}
 
       <details className="rounded-[14px] border border-dashed border-line-strong bg-surface px-5 py-3">
         <summary className="w-fit cursor-pointer list-none rounded-full bg-accent px-5 py-2.5 text-sm font-medium text-accent-contrast transition-colors hover:bg-accent-hover">
@@ -251,16 +250,11 @@ export default async function FichePatient({
               Répète chaque semaine, même jour et même heure.
             </span>
           </label>
+          <label className="flex items-center gap-2 self-end pb-2 text-sm">
+            <input type="checkbox" name="visio" className="accent-accent" />
+            En visio
+          </label>
           <BoutonEnregistrer className="self-end">Créer</BoutonEnregistrer>
-          {quotaAtteint && (
-            <p className="rounded-[10px] border border-due/40 bg-due-soft px-4 py-2.5 text-sm text-due sm:col-span-2 lg:col-span-4">
-              Plafond INAMI {anneeCourante} atteint : {utiliseesInami} séance
-              {(utiliseesInami ?? 0) > 1 ? "s" : ""} faite
-              {(utiliseesInami ?? 0) > 1 ? "s" : ""} et {prevuesInami} prévue
-              {prevuesInami > 1 ? "s" : ""}, pour {plafondInami} remboursées.
-              Une séance de plus ne sera pas prise en charge par la convention.
-            </p>
-          )}
         </form>
       </details>
 
@@ -318,9 +312,9 @@ export default async function FichePatient({
           ...(plafondInami !== null
             ? [
                 {
-                  t: `Séances INAMI ${anneeCourante}`,
-                  v: `${utiliseesInami} / ${plafondInami}`,
-                  alerte: (utiliseesInami ?? 0) >= plafondInami,
+                  t: "INAMI, 12 mois",
+                  v: `${faitesInami} / ${plafondInami}`,
+                  alerte: faitesInami >= plafondInami,
                 },
               ]
             : []),
@@ -360,8 +354,10 @@ export default async function FichePatient({
                   {fmtHeure.format(s.startsAt)}
                 </time>
                 <CabinetTag cabinet={s.cabinet} />
-                <span className="flex-1">
+                <span className="flex flex-1 flex-wrap items-center gap-2">
                   <StatutSeance status={s.status} />
+                  {(s.status === "SCHEDULED" || s.visio) && <BasculeVisio id={s.id} visio={s.visio} />}
+                  {horsQuota.has(s.id) && <HorsQuota />}
                 </span>
                 {isBillable(s.status) && (
                   <span className="font-mono text-sm" data-numeric>

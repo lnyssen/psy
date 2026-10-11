@@ -7,7 +7,7 @@ import { GroupeFiltre, avecParam, type Params } from "@/components/filtres";
 import { FiltresMobile } from "@/components/FiltresMobile";
 import { IconChevronDroite, IconChevronGauche } from "@/components/icons";
 import { cabinetsActifs, optionsCabinet } from "@/lib/cabinets";
-import { heuresFacturablesSemaine } from "@/lib/quotas";
+import { alertesQuota, heuresFacturablesSemaine, horsQuotaPour } from "@/lib/quotas";
 import { creerSeanceDepuisFormulaire } from "@/lib/actions";
 import { BoutonEnregistrer } from "@/components/BoutonEnregistrer";
 import { SelectPatientRecherche } from "@/components/SelectPatientRecherche";
@@ -73,11 +73,15 @@ export default async function Semaine({ searchParams }: { searchParams: Promise<
     orderBy: { debut: "asc" },
   });
   const aFaire = await compterAFaire();
-  const patients = await prisma.patient.findMany({
-    where: { active: true },
-    orderBy: { lastName: "asc" },
-    select: { id: true, firstName: true, lastName: true },
-  });
+  const alertes = await alertesQuota();
+  const patients = (
+    await prisma.patient.findMany({
+      where: { active: true },
+      orderBy: { lastName: "asc" },
+      select: { id: true, firstName: true, lastName: true },
+    })
+  ).map((p) => ({ ...p, alerte: alertes.get(p.id) }));
+  const horsQuota = await horsQuotaPour(seances.map((s) => s.patientId));
 
   const reglages = await parametres();
   const conflits = conflitsDeTrajet(seances, reglages.trajetMin);
@@ -117,6 +121,8 @@ export default async function Semaine({ searchParams }: { searchParams: Promise<
     libellePaiement: isBillable(s.status) ? PAYMENT_LABEL[s.paymentStatus] : null,
     conflit: conflits.has(i),
     aVenir: s.status === "SCHEDULED",
+    visio: s.visio,
+    horsQuota: horsQuota.has(s.id),
   }]);
   // Rendez-vous Google : mêmes colonnes, mais ni séance ni facturables.
   for (const e of externes) {
@@ -262,6 +268,10 @@ export default async function Semaine({ searchParams }: { searchParams: Promise<
             <span className="mt-1 block text-[11px] text-ink-muted">
               Répète chaque semaine, même jour et même heure, jusqu’à cette date.
             </span>
+          </label>
+          <label className="flex items-center gap-2 self-end pb-2 text-sm">
+            <input type="checkbox" name="visio" className="accent-accent" />
+            En visio
           </label>
           <BoutonEnregistrer className="self-end">Créer</BoutonEnregistrer>
         </form>

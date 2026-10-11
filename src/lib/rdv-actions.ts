@@ -9,6 +9,7 @@ import { parametres } from "@/lib/parametres";
 import { exigerSession } from "@/lib/garde";
 import { adresseNotifications, creneauEnClair, envoyerCourriel } from "@/lib/courriel";
 import { SITE } from "@/lib/site";
+import { horsQuotaPour } from "@/lib/quotas";
 
 /** Adresse publique de l'outil, pour les liens des e-mails. */
 const URL_SITE = process.env.SITE_URL || "https://amandinemonsel.be";
@@ -125,12 +126,16 @@ export async function reserverOuDemander(_etat: ResultatRdv, f: FormData): Promi
       },
       include: { cabinet: true },
     });
+    const horsQuota = (await horsQuotaPour([patient.id])).has(seance.id);
     prevenirAmandine(
       `Réservation : ${patient.firstName} ${patient.lastName}, ${creneauEnClair(debut)}`,
       [
         `${patient.firstName} ${patient.lastName} a réservé en ligne avec son lien personnel :`,
         "",
         `${creneauEnClair(debut)} à ${seance.cabinet.nom}.`,
+        ...(horsQuota
+          ? ["", "Attention : cette séance dépasse le plafond INAMI sur douze mois, elle ne sera pas remboursée par la convention."]
+          : []),
         "",
         `La séance est déjà dans l’agenda : ${URL_SITE}/admin/semaine`,
       ].join("\n"),

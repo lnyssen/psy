@@ -83,13 +83,17 @@ export function idEvenement(idSeance: string) {
   return Buffer.from(idSeance, "utf8").toString("hex");
 }
 
-function corpsEvenement(s: Pick<SeanceComplete, "id" | "startsAt" | "durationMin" | "patient" | "cabinet">): CorpsEvenement {
+function corpsEvenement(
+  s: Pick<SeanceComplete, "id" | "startsAt" | "durationMin" | "patient" | "cabinet" | "visio">,
+): CorpsEvenement {
   const fin = new Date(s.startsAt.getTime() + s.durationMin * 60_000);
   return {
     // Le nom du patient part chez Google : choix assumé d'Amandine, plus lisible
     // qu'un simple lieu. Le flux iCalendar public, lui, n'en porte jamais.
-    summary: s.patient ? `${s.patient.firstName} ${s.patient.lastName} — ${s.cabinet.nom}` : s.cabinet.nom,
-    location: adresseCabinet(s.cabinet),
+    summary: s.patient
+      ? `${s.patient.firstName} ${s.patient.lastName} — ${s.visio ? "visio" : s.cabinet.nom}`
+      : s.cabinet.nom,
+    location: s.visio ? "Visio" : adresseCabinet(s.cabinet),
     description: "Séance — détail dans l’outil de gestion.",
     start: { dateTime: s.startsAt.toISOString(), timeZone: FUSEAU },
     end: { dateTime: fin.toISOString(), timeZone: FUSEAU },

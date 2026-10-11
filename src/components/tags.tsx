@@ -139,3 +139,24 @@ export function AlerteTrajet() {
     </span>
   );
 }
+
+/** Séance d'un patient conventionné au-delà de son plafond INAMI sur douze
+ *  mois (voir lib/quotas.ts) : la convention ne la remboursera pas. */
+export function HorsQuota() {
+  return (
+    <span
+      title="Au-delà du plafond INAMI sur douze mois : séance non remboursée par la convention."
+      className="inline-flex items-center rounded-full border border-due/40 bg-due-soft px-2.5 py-0.5 text-[11px] font-semibold whitespace-nowrap text-due"
+    >
+      hors quota INAMI
+    </span>
+  );
+}
+
+export function TagVisio() {
+  return (
+    <span className="inline-flex items-center rounded-full border border-line-strong px-2.5 py-0.5 text-[11px] font-medium whitespace-nowrap text-ink-muted">
+      visio
+    </span>
+  );
+}

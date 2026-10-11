@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { exigerSession } from "@/lib/garde";
+import { synchroniserApres } from "@/lib/google-sync";
 import { chiffrer, cleNotesPresente } from "@/lib/chiffrement";
 
 /**
@@ -67,4 +68,17 @@ export async function enregistrerNoteSeance(id: string, texte: string) {
   });
   if (seance.patientId) revalidatePath(`/admin/patients/${seance.patientId}`);
   return { ok: true as const };
+}
+
+/** Bascule une séance entre cabinet et visio. L'agenda Google suit : son lieu
+ *  devient « Visio », ou reprend l'adresse du cabinet. */
+export async function basculerVisio(id: string) {
+  await exigerSession();
+  const s = await prisma.session.findUnique({ where: { id }, select: { visio: true, patientId: true } });
+  if (!s) return;
+  await prisma.session.update({ where: { id }, data: { visio: !s.visio } });
+  revalidatePath("/admin");
+  revalidatePath("/admin/semaine");
+  if (s.patientId) revalidatePath(`/admin/patients/${s.patientId}`);
+  synchroniserApres();
 }

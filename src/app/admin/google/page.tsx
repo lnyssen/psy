@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
+import { alertesQuota } from "@/lib/quotas";
 import { LigneGoogle } from "@/components/LigneGoogle";
 import { Pagination, pageDe, tailleDePage } from "@/components/Pagination";
 import type { Params } from "@/components/filtres";
@@ -72,7 +73,7 @@ export default async function GoogleATraiter({ searchParams }: { searchParams: P
   const page = Math.min(pageDe(params), Math.max(1, Math.ceil(lignes.length / taille)));
   const affichees = lignes.slice((page - 1) * taille, page * taille);
 
-  const [patients, cabinetsActifs, sansTitre] = await Promise.all([
+  const [patientsBruts, cabinetsActifs, sansTitre, alertes] = await Promise.all([
     prisma.patient.findMany({
       where: { active: true },
       orderBy: { lastName: "asc" },
@@ -88,7 +89,9 @@ export default async function GoogleATraiter({ searchParams }: { searchParams: P
       : prisma.evenementGoogle.count({
           where: { statut: "A_RATTACHER", fin: { gte: maintenant }, titre: "(sans titre)" },
         }),
+    alertesQuota(),
   ]);
+  const patients = patientsBruts.map((p) => ({ ...p, alerte: alertes.get(p.id) }));
 
   // Compte rendu d'un rattachement qui vient d'avoir lieu.
   const fait = params.fait !== undefined ? Number(params.fait) : null;
@@ -146,6 +149,9 @@ export default async function GoogleATraiter({ searchParams }: { searchParams: P
                 <>à {cabinetFait?.nom ?? "l’établissement"}</>
               )}
               . Elles sont dans le calendrier.
+              {patientFait && alertes.has(patientFait.id) && (
+                <span className="mt-1 block font-semibold text-due">{alertes.get(patientFait.id)}</span>
+              )}
             </>
           )}
         </p>

@@ -27,6 +27,8 @@ export function RegimeEtTarif({
   regimeInitial = "PRIVE",
   tarifInitial = null,
   ancienMontantCents = null,
+  pplTypeInitial = "SOUTIEN",
+  pplReseauInitial = null,
 }: {
   tarifs: TarifChoix[];
   regimeInitial?: Regime;
@@ -34,6 +36,10 @@ export function RegimeEtTarif({
   tarifInitial?: string | null;
   /** Ancien montant libre, d'avant la grille : proposé tant qu'aucun tarif n'est choisi. */
   ancienMontantCents?: number | null;
+  /** Convention de première ligne : soutien ou traitement (plafond INAMI). */
+  pplTypeInitial?: "SOUTIEN" | "TRAITEMENT";
+  /** Réseau choisi ; vide, il se déduit de l'âge. */
+  pplReseauInitial?: "ENFANTS" | "ADULTES" | null;
 }) {
   const parDefaut = (r: Regime) =>
     (tarifs.find((t) => t.regime === r && t.parDefaut) ?? tarifs.find((t) => t.regime === r))?.id ?? "";
@@ -94,6 +100,31 @@ export function RegimeEtTarif({
             : "Ce que paie le patient à chaque séance."}
         </span>
       </label>
+      {regime === "CONVENTIONNE" && (
+        <>
+          <label>
+            <span className={libelleChamp}>Prise en charge</span>
+            <select name="pplType" defaultValue={pplTypeInitial} className={`mt-1 ${champ}`}>
+              <option value="SOUTIEN">soutien psychologique</option>
+              <option value="TRAITEMENT">traitement psychologique</option>
+            </select>
+            <span className="mt-1 block text-[11px] text-ink-muted">
+              Soutien : 10 séances sur 12 mois (enfants et ados), 8 (adultes). Traitement : 20.
+            </span>
+          </label>
+          <label>
+            <span className={libelleChamp}>Réseau INAMI</span>
+            <select name="pplReseau" defaultValue={pplReseauInitial ?? ""} className={`mt-1 ${champ}`}>
+              <option value="">selon l’âge (23 ans compris : enfants)</option>
+              <option value="ENFANTS">enfants et adolescents</option>
+              <option value="ADULTES">adultes</option>
+            </select>
+            <span className="mt-1 block text-[11px] text-ink-muted">
+              De 15 à 23 ans, le patient peut relever de l’un ou l’autre.
+            </span>
+          </label>
+        </>
+      )}
     </>
   );
 }

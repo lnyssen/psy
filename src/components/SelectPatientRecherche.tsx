@@ -21,7 +21,9 @@ export function SelectPatientRecherche({
   name = "patientId",
   defaultId,
 }: {
-  patients: { id: string; firstName: string; lastName: string }[];
+  /** `alerte` : message affiché sous le champ quand ce patient est choisi
+   *  (plafond INAMI atteint, voir lib/quotas.ts). */
+  patients: { id: string; firstName: string; lastName: string; alerte?: string }[];
   name?: string;
   defaultId?: string;
 }) {
@@ -35,6 +37,7 @@ export function SelectPatientRecherche({
   const [actif, setActif] = useState(0);
   const conteneur = useRef<HTMLDivElement>(null);
 
+  const alerte = patients.find((p) => p.id === id)?.alerte;
   const recherche = texte.trim().toLowerCase();
   const filtres = recherche
     ? patients.filter((p) => libelle(p).toLowerCase().includes(recherche))
@@ -114,6 +117,11 @@ export function SelectPatientRecherche({
             ))
           )}
         </ul>
+      )}
+      {alerte && (
+        <p role="status" className="mt-1.5 rounded-[10px] border border-due/40 bg-due-soft px-3 py-2 text-xs text-due">
+          {alerte}
+        </p>
       )}
     </div>
   );
