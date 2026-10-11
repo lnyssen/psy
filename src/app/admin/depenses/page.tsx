@@ -6,6 +6,7 @@ import { enregistrerDepense, supprimerDepense } from "@/lib/actions";
 import { euros, fmtDateCourte, partiesJour } from "@/lib/format";
 import { IconChevronDroite, IconChevronGauche } from "@/components/icons";
 import { DepensePhotoOCR } from "@/components/DepensePhotoOCR";
+import { modifierDepense } from "@/lib/depense-actions";
 
 export const dynamic = "force-dynamic";
 
@@ -51,15 +52,33 @@ export default async function Depenses({
   const debut = new Date(Date.UTC(annee, m - 1, 1));
   const fin = new Date(Date.UTC(annee, m, 1));
 
-  const [depenses, cabinets, categories] = await Promise.all([
+  const [depenses, cabinets, toutesCategories, dejaSaisis] = await Promise.all([
     prisma.depense.findMany({
       where: { date: { gte: debut, lt: fin } },
       include: { cabinet: true, categorie: true },
       orderBy: { date: "desc" },
     }),
     cabinetsActifs(),
-    prisma.categorieDepense.findMany({ where: { actif: true }, orderBy: { ordre: "asc" } }),
+    prisma.categorieDepense.findMany({ orderBy: { ordre: "asc" } }),
+    prisma.depense.findMany({
+      where: { fournisseur: { not: null } },
+      select: { fournisseur: true },
+      distinct: ["fournisseur"],
+    }),
   ]);
+  const categories = toutesCategories.filter((c) => c.actif);
+
+  // Les fournisseurs déjà saisis, proposés à la frappe : « one.com » ne
+  // devient pas « One.com » puis « one com » au fil des mois, ce qui
+  // éparpillerait les totaux par fournisseur. Un nom nouveau se tape tel quel.
+  const fournisseurs = [
+    ...new Map(
+      dejaSaisis
+        .map((d) => d.fournisseur?.trim() ?? "")
+        .filter(Boolean)
+        .map((n) => [n.toLocaleLowerCase("fr"), n] as const),
+    ).values(),
+  ].sort((a, b) => a.localeCompare(b, "fr", { sensitivity: "base" }));
 
   const total = depenses.reduce((n, d) => n + d.amountCents, 0);
 
@@ -72,6 +91,12 @@ export default async function Depenses({
           avec la dépense, et le mois se donne d’un bloc à la comptable.
         </p>
       </header>
+
+      <datalist id="fournisseurs">
+        {fournisseurs.map((n) => (
+          <option key={n} value={n} />
+        ))}
+      </datalist>
 
       <form
         action={enregistrerDepense}
@@ -112,7 +137,13 @@ export default async function Depenses({
           </label>
           <label>
             <span className={libelleChamp}>Fournisseur</span>
-            <input name="fournisseur" className={`mt-1 ${champ}`} />
+            <input
+              name="fournisseur"
+              list="fournisseurs"
+              autoComplete="off"
+              placeholder={fournisseurs.length ? "Choisir ou taper un nouveau" : undefined}
+              className={`mt-1 ${champ}`}
+            />
           </label>
           <label>
             <span className={libelleChamp}>Lieu concerné</span>
@@ -224,6 +255,100 @@ export default async function Depenses({
                   supprimer
                 </button>
               </form>
+              {/* Formulaire de correction replié sous la ligne : ouvert, il
+                  prend toute la largeur et repousse la ligne suivante. */}
+              <details className="open:basis-full">
+                <summary className="cursor-pointer list-none rounded-full border border-line-strong px-2.5 py-0.5 text-[11px] font-medium text-ink-muted transition-colors hover:border-accent hover:text-accent-text [&::-webkit-details-marker]:hidden">
+                  modifier
+                </summary>
+                <form action={modifierDepense} className="mt-3 flex flex-col gap-3">
+                  <input type="hidden" name="id" value={d.id} />
+                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                    <label>
+                      <span className={libelleChamp}>Date</span>
+                      <input
+                        name="date"
+                        type="date"
+                        required
+                        defaultValue={d.date.toISOString().slice(0, 10)}
+                        className={`mt-1 ${champ}`}
+                      />
+                    </label>
+                    <label className="lg:col-span-2">
+                      <span className={libelleChamp}>Libellé</span>
+                      <input name="libelle" required defaultValue={d.libelle} className={`mt-1 ${champ}`} />
+                    </label>
+                    <label className="w-32">
+                      <span className={libelleChamp}>Montant (€)</span>
+                      <input
+                        name="montant"
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        required
+                        defaultValue={(d.amountCents / 100).toFixed(2)}
+                        className={`mt-1 ${champ}`}
+                      />
+                    </label>
+                    <label>
+                      <span className={libelleChamp}>Catégorie</span>
+                      <select name="categorieId" required defaultValue={d.categorieId} className={`mt-1 ${champ}`}>
+                        {toutesCategories
+                          .filter((c) => c.actif || c.id === d.categorieId)
+                          .map((c) => (
+                            <option key={c.id} value={c.id}>
+                              {c.libelle}
+                            </option>
+                          ))}
+                      </select>
+                    </label>
+                    <label>
+                      <span className={libelleChamp}>Fournisseur</span>
+                      <input
+                        name="fournisseur"
+                        list="fournisseurs"
+                        autoComplete="off"
+                        defaultValue={d.fournisseur ?? ""}
+                        className={`mt-1 ${champ}`}
+                      />
+                    </label>
+                    <label>
+                      <span className={libelleChamp}>Lieu concerné</span>
+                      <select name="cabinetId" defaultValue={d.cabinetId ?? ""} className={`mt-1 ${champ}`}>
+                        <option value="">Commun aux deux</option>
+                        {cabinets.map((c) => (
+                          <option key={c.id} value={c.id}>
+                            {c.nom}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <div>
+                      <label>
+                        <span className={libelleChamp}>{d.photoMime ? "Remplacer le reçu" : "Ajouter un reçu"}</span>
+                        <input
+                          name="photo"
+                          type="file"
+                          accept="image/*,application/pdf"
+                          className={`mt-1 ${champ} file:mr-3 file:rounded-full file:border-0 file:bg-accent-soft file:px-3 file:py-1 file:text-xs file:font-medium file:text-accent-text`}
+                        />
+                      </label>
+                      {d.photoMime && (
+                        <label className="mt-1.5 flex items-center gap-2 text-xs text-ink-muted">
+                          <input type="checkbox" name="retirerPhoto" value="1" />
+                          retirer le reçu actuel
+                        </label>
+                      )}
+                    </div>
+                  </div>
+                  <button
+                    type="submit"
+                    className="self-start rounded-full bg-accent px-5 py-2 text-sm font-medium text-accent-contrast transition-colors hover:bg-accent-hover"
+                  >
+                    Enregistrer les modifications
+                  </button>
+                </form>
+              </details>
             </li>
           ))}
         </ul>
