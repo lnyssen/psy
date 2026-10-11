@@ -26,7 +26,12 @@ export async function middleware(req: NextRequest) {
   if (chemin.startsWith("/api/agenda") || chemin.startsWith("/api/google")) return NextResponse.next();
 
   // Sur admin.…, la racine est l'outil.
-  if (surSousDomaineAdmin && !chemin.startsWith("/admin") && chemin !== "/connexion") {
+  if (
+    surSousDomaineAdmin &&
+    !chemin.startsWith("/admin") &&
+    !chemin.startsWith("/connexion") &&
+    !chemin.startsWith("/api/passkey")
+  ) {
     const vers = url.clone();
     vers.pathname = `/admin${chemin === "/" ? "" : chemin}`;
     return NextResponse.rewrite(vers);

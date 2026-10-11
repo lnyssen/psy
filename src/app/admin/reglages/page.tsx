@@ -18,6 +18,7 @@ import {
 } from "@/components/Parametres";
 import { parametres } from "@/lib/parametres";
 import { GoogleAgenda } from "@/components/GoogleAgenda";
+import { Securite } from "@/components/Securite";
 
 export const dynamic = "force-dynamic";
 
@@ -29,9 +30,9 @@ const libelleChamp =
 export default async function Reglages({
   searchParams,
 }: {
-  searchParams: Promise<{ google?: string }>;
+  searchParams: Promise<{ google?: string; securite?: string }>;
 }) {
-  const { google } = await searchParams;
+  const { google, securite } = await searchParams;
   const [
     cabinets,
     tarifs,
@@ -76,6 +77,14 @@ export default async function Reglages({
         ["tarifs", "Tarifs"],
         ["categories-depense", "Catégories de dépenses"],
         ["identite", "Identité et facturation"],
+      ],
+    },
+    {
+      titre: "Sécurité",
+      liens: [
+        ["mot-de-passe", "Mot de passe"],
+        ["recuperation", "Adresse de récupération"],
+        ["appareils", "Face ID et appareils"],
       ],
     },
     {
@@ -767,6 +776,8 @@ export default async function Reglages({
               </div>
             </form>
           </section>
+
+          <Securite code={securite} />
 
           <GoogleAgenda retour={google} />
         </div>

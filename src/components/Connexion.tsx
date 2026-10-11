@@ -1,6 +1,11 @@
 "use client";
 
-import { useActionState } from "react";
+import Link from "next/link";
+import { useActionState, useState, useSyncExternalStore } from "react";
+import {
+  browserSupportsWebAuthn,
+  startAuthentication,
+} from "@simplewebauthn/browser";
 import { seConnecter } from "@/lib/auth-actions";
 import { IconCadenas } from "@/components/icons";
 
@@ -14,23 +19,102 @@ import { IconCadenas } from "@/components/icons";
  * Rien d'autre que la signature n'y figure : ni nom de patient, ni compteur, ni
  * prochain rendez-vous. C'est l'écran que voit quelqu'un d'autre.
  */
-export function Connexion({ suite, verrouille }: { suite: string; verrouille: boolean }) {
+export function Connexion({
+  suite,
+  verrouille,
+  reinit = false,
+}: {
+  suite: string;
+  verrouille: boolean;
+  reinit?: boolean;
+}) {
   const [erreur, action, enCours] = useActionState(seConnecter, null);
+  // Faux côté serveur, vrai ou faux côté navigateur selon ce qu'il sait faire.
+  const appareil = useSyncExternalStore(
+    () => () => {},
+    () => browserSupportsWebAuthn(),
+    () => false,
+  );
+  const [erreurAppareil, setErreurAppareil] = useState<string | null>(null);
+  const [verifie, setVerifie] = useState(false);
+
+  // Face ID, Touch ID, empreinte : l'appareil enregistré signe un défi, le
+  // serveur vérifie la signature et ouvre la session. Aucun mot de passe.
+  async function ouvrirParAppareil() {
+    setErreurAppareil(null);
+    setVerifie(true);
+    try {
+      const options = await (
+        await fetch("/api/passkey/connexion/options", { method: "POST" })
+      ).json();
+      if (options.message) throw new Error(options.message);
+      const reponse = await startAuthentication({ optionsJSON: options });
+      const r = await (
+        await fetch("/api/passkey/connexion/verifier", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(reponse),
+        })
+      ).json();
+      if (!r.ok) throw new Error(r.message);
+      window.location.href =
+        suite.startsWith("/") && !suite.startsWith("//") ? suite : "/admin";
+    } catch (e) {
+      const annule =
+        e instanceof Error &&
+        /NotAllowed|cancel|abort/i.test(`${e.name} ${e.message}`);
+      setErreurAppareil(
+        annule
+          ? null
+          : e instanceof Error && e.message
+            ? e.message
+            : "La connexion par appareil a échoué.",
+      );
+      setVerifie(false);
+    }
+  }
 
   return (
     <div className="flex min-h-[80vh] flex-col items-center justify-center gap-8 px-6">
       <div className="flex flex-col items-center gap-2 text-center">
-        <span className="font-display text-4xl tracking-tight">Amandine Monsel</span>
+        <span className="font-display text-4xl tracking-tight">
+          Amandine Monsel
+        </span>
         <span className="text-sm font-semibold tracking-[0.22em] text-accent-text uppercase">
           Amapsy&nbsp;SRL
         </span>
       </div>
 
       <p className="max-w-xs text-center text-sm text-ink-muted">
-        {verrouille
-          ? "Session verrouillée. Rien n’est affiché tant que vous n’avez pas repris la main."
-          : "Entrez votre mot de passe pour ouvrir le dossier."}
+        {reinit
+          ? "Mot de passe changé. Entrez le nouveau pour ouvrir le dossier."
+          : verrouille
+            ? "Session verrouillée. Rien n’est affiché tant que vous n’avez pas repris la main."
+            : "Entrez votre mot de passe pour ouvrir le dossier."}
       </p>
+
+      {appareil && (
+        <div className="flex w-full max-w-xs flex-col gap-2">
+          <button
+            type="button"
+            onClick={ouvrirParAppareil}
+            disabled={verifie}
+            className="flex items-center justify-center gap-2 rounded-full border border-ink/35 px-6 py-2.5 text-sm font-medium transition-colors hover:border-ink disabled:opacity-50"
+          >
+            {verifie
+              ? "En attente de l’appareil…"
+              : "Ouvrir avec Face ID ou Touch ID"}
+          </button>
+          {erreurAppareil && (
+            <p role="alert" className="text-center text-sm text-overdue">
+              {erreurAppareil}
+            </p>
+          )}
+          <p className="text-center text-xs text-ink-muted">
+            ou avec le mot de passe
+          </p>
+        </div>
+      )}
 
       <form action={action} className="flex w-full max-w-xs flex-col gap-3">
         <input type="hidden" name="suite" value={suite} />
@@ -59,6 +143,12 @@ export function Connexion({ suite, verrouille }: { suite: string; verrouille: bo
             {erreur}
           </p>
         )}
+        <Link
+          href="/connexion/oublie"
+          className="py-2 text-center text-sm text-ink-muted underline underline-offset-4 transition-colors hover:text-accent-text"
+        >
+          Mot de passe oublié ?
+        </Link>
       </form>
     </div>
   );

@@ -594,3 +594,49 @@ model EvenementGoogle {
   @@index([serieId])
   @@map("evenements_google")
 }
+
+/// Accès à l'outil : une seule ligne, comme les paramètres.
+///
+/// L'empreinte du mot de passe vit ici dès qu'il a été changé depuis les
+/// réglages ; tant qu'elle est vide, c'est celle de l'environnement qui fait
+/// foi (voir lib/acces.ts). L'adresse de récupération reçoit le lien de
+/// réinitialisation quand le mot de passe est oublié.
+model Acces {
+  id             String   @id @default("global")
+  passwordHash   String?  @map("password_hash")
+  recoveryEmail  String?  @map("recovery_email")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  @@map("acces")
+}
+
+/// Un appareil enregistré pour ouvrir l'outil sans mot de passe (Face ID, Touch
+/// ID, empreinte, Windows Hello) : une « passkey » WebAuthn. Seule la clé
+/// PUBLIQUE est conservée ; la clé privée ne quitte jamais l'appareil.
+model Passkey {
+  id           String    @id @default(cuid())
+  /// Identifiant de la clé, en base64url, tel que l'appareil le présente.
+  credentialId String    @unique @map("credential_id")
+  publicKey    Bytes     @map("public_key")
+  /// Compteur d'utilisations rapporté par l'appareil : sert à repérer un clone.
+  counter      Int       @default(0)
+  transports   String?
+  /// Nom donné par la praticienne (« iPhone d'Amandine »).
+  nom          String
+  createdAt    DateTime  @default(now()) @map("created_at")
+  lastUsedAt   DateTime? @map("last_used_at")
+
+  @@map("passkeys")
+}
+
+/// Lien de réinitialisation du mot de passe : à usage unique, valable peu de
+/// temps. Seule l'empreinte SHA-256 du jeton est stockée, jamais le jeton.
+model ReinitialisationMdp {
+  id        String    @id @default(cuid())
+  jetonHash String    @unique @map("jeton_hash")
+  expireAt  DateTime  @map("expire_at")
+  utiliseAt DateTime? @map("utilise_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  @@map("reinitialisations_mdp")
+}
