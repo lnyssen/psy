@@ -67,7 +67,7 @@ export default async function Accueil() {
       */}
       <section
         data-fond-sombre
-        className="relative isolate -mt-[var(--entete)] flex min-h-[36rem] items-end overflow-hidden px-6 md:px-10 lg:px-14 md:min-h-[44rem]"
+        className="relative isolate -mt-[var(--entete)] flex min-h-[38rem] items-end overflow-hidden md:items-center px-6 md:min-h-[min(100svh,58rem)] md:px-10 lg:px-14"
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
@@ -120,16 +120,16 @@ export default async function Accueil() {
         {/* Le haut du bloc réserve la hauteur de la pastille : sur téléphone le
             texte dépasse la hauteur minimale de la section et remontait sinon
             sous l'en-tête, qui coupait le sur-titre. */}
-        <div className="hero-cascade mx-auto w-full max-w-[100rem] pt-[calc(var(--entete)+2rem)] pb-16 text-white md:pt-[calc(var(--entete)+3rem)] md:pb-24">
-          <p className="text-[11px] font-bold tracking-[0.2em] text-white/85 uppercase">
+        <div className="hero-cascade mx-auto w-full max-w-[100rem] pt-[calc(var(--entete)+2rem)] pb-14 text-white md:pt-[calc(var(--entete)+2rem)] md:pb-16">
+          <p className="text-[11px] font-bold tracking-[0.22em] text-white/90 uppercase">
             {SITE.titre}
           </p>
-          <h1 className="mt-5 max-w-3xl font-display text-[3.25rem] leading-[0.95] tracking-[-0.03em] md:text-[5.5rem]">
+          <h1 className="mt-6 font-display text-[3.75rem] leading-[0.9] tracking-[-0.035em] sm:text-[5.5rem] lg:text-[clamp(6.5rem,9vw,10.5rem)]">
             Amandine
             <br />
             Monsel
           </h1>
-          <p className="mt-8 flex flex-wrap items-center gap-x-5 gap-y-2 text-lg font-semibold sm:gap-x-3">
+          <p className="mt-10 flex flex-wrap items-center gap-x-5 gap-y-2 text-xl font-semibold sm:gap-x-4 md:text-2xl">
             {SITE.publics.map((p, i) => (
               <span key={p} className="flex items-center gap-3">
                 {i > 0 && (
@@ -142,19 +142,19 @@ export default async function Accueil() {
               </span>
             ))}
           </p>
-          <p className="mt-5 max-w-lg text-lg leading-relaxed text-white/90">
+          <p className="mt-5 max-w-xl text-lg leading-relaxed text-white/90 md:text-xl">
             {SITE.accroche}
           </p>
-          <div className="mt-9 flex flex-wrap items-center gap-3">
+          <div className="mt-10 flex flex-wrap items-center gap-3">
             <Link
               href="/rendez-vous"
-              className="rounded-full bg-accent px-7 py-3.5 text-sm font-semibold text-accent-contrast transition-colors hover:bg-accent-hover"
+              className="rounded-full bg-accent px-8 py-4 text-sm font-semibold text-accent-contrast transition-colors hover:bg-accent-hover"
             >
               Prendre rendez-vous
             </Link>
             <a
               href={`tel:${SITE.telephoneLien}`}
-              className="rounded-full border border-white/40 px-7 py-3.5 text-sm font-semibold transition-colors hover:border-white"
+              className="rounded-full border border-white/50 px-8 py-4 text-sm font-semibold transition-colors hover:border-white"
               data-numeric
             >
               {SITE.telephone}
@@ -165,12 +165,12 @@ export default async function Accueil() {
 
       <section
         aria-label="En bref"
-        className="bg-bande-violette px-6 md:px-10 lg:px-14 py-12 text-nuit md:py-14"
+        className="bg-bande-violette px-6 py-14 text-nuit md:px-10 md:py-20 lg:px-14"
       >
         <Reveal className="mx-auto max-w-[100rem]">
-          <p className="max-w-3xl font-display text-[1.6rem] leading-snug tracking-tight md:text-[2.25rem]">
-            Des consultations en français et en anglais, à{" "}
-            {cabinets.map((c) => c.nom).join(" et ")}.
+          <p className="max-w-4xl font-display text-[2rem] leading-[1.12] tracking-tight md:text-[3.25rem]">
+            À {cabinets.map((c) => c.nom).join(" comme à ")}, je vous reçois en
+            français ou en anglais.
           </p>
         </Reveal>
       </section>
