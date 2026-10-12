@@ -9,7 +9,8 @@
     "lint": "eslint",
     "postinstall": "prisma generate",
     "db:migrate": "prisma migrate dev",
-    "db:studio": "prisma studio"
+    "db:studio": "prisma studio",
+    "pdf-doc": "bash scripts/pdf-documentation.sh"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.10.0",

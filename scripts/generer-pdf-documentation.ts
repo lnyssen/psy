@@ -2,13 +2,14 @@
  * PDF de la documentation, à partir de la page imprimable de l'outil
  * (/admin/documentation/complete) tournant sur la base fictive des captures.
  *
- * Le plus simple : `bash scripts/pdf-documentation.sh`, qui prépare la base
- * jetable, lance l'outil et appelle ce script. Seul, il suppose l'outil déjà
- * lancé sur le port 3100 (voir capturer-documentation.ts) et AUTH_SECRET dans
- * l'environnement.
+ * `npx tsx scripts/generer-pdf-documentation.ts` suffit : sans AUTH_SECRET dans
+ * l'environnement, il lance scripts/pdf-documentation.sh, qui prépare la base
+ * jetable et l'outil local puis le rappelle. Avec AUTH_SECRET, il suppose
+ * l'outil déjà lancé sur le port 3100 (voir capturer-documentation.ts).
  *
  * Écrit exports/Documentation-Amapsy.pdf (ignoré par git : il se régénère).
  */
+import { spawnSync } from "node:child_process";
 import { createHmac } from "node:crypto";
 import { mkdirSync } from "node:fs";
 import { readFile } from "node:fs/promises";
@@ -27,6 +28,12 @@ function jeton() {
 }
 
 async function main() {
+  // Lancé seul, sans environnement préparé (pas d'AUTH_SECRET), il confie tout
+  // au script complet : base jetable, outil local, puis lui-même.
+  if (!process.env.AUTH_SECRET) {
+    const r = spawnSync("bash", ["scripts/pdf-documentation.sh"], { stdio: "inherit" });
+    process.exit(r.status ?? 1);
+  }
   mkdirSync("exports", { recursive: true });
   const navigateur = await puppeteer.launch({ executablePath: CHROME, headless: true, args: ["--no-sandbox"] });
   try {
