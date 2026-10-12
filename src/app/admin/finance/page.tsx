@@ -209,7 +209,8 @@ export default async function Finance({
     {
       t: "Reste dû",
       v: euros(totalAnnee.du + totalAnnee.retard),
-      ton: "text-due",
+      // À zéro, plus rien à signaler : la couleur d'alerte s'éteint.
+      ton: totalAnnee.du + totalAnnee.retard > 0 ? "text-due" : undefined,
     },
     { t: "Actes", v: String(totalAnnee.actes) },
     {

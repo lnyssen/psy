@@ -19,6 +19,7 @@ import { ContactRapide } from "@/components/ContactRapide";
 import { SEUIL_ABSENCES, compterAbsences } from "@/lib/absences";
 import { texteCoordonnees } from "@/lib/contact";
 import { EnvoyerRecu } from "@/components/EnvoyerRecu";
+import { MenuPlus } from "@/components/MenuPlus";
 import { seanceAVenir, seancePieceComptable } from "@/lib/suppression-patient";
 import { montantSeanceCents, payeurDe } from "@/lib/tarifs";
 import { AnnulerAbsence } from "@/components/AnnulerAbsence";
@@ -239,7 +240,91 @@ export default async function FichePatient({
         </p>
       )}
 
-      <details className="rounded-[14px] border border-dashed border-line-strong bg-surface px-5 py-3">
+      {/* Une rangée qui se remplit quel que soit le nombre de compteurs (quatre
+          pour un patient privé, cinq en conventionné) : plus de carte seule sur
+          une deuxième ligne. */}
+      <dl className="grid grid-cols-2 gap-3 sm:grid-cols-[repeat(auto-fit,minmax(9.5rem,1fr))] [&>div:last-child:nth-child(odd)]:col-span-2 sm:[&>div:last-child:nth-child(odd)]:col-span-1">
+        {[
+          { t: "Séances", v: String(patient.sessions.length) },
+          { t: "Heures", v: formatDuree(heuresTotales(patient.sessions)) },
+          // En conventionné, l'argent qui compte vient de l'INAMI : le patient, lui,
+          // ne doit jamais rien.
+          {
+            t: payeur === "INAMI" ? "Reçu de l’INAMI" : "Encaissé",
+            v: euros(encaisse),
+          },
+          {
+            t: payeur === "INAMI" ? "À recevoir de l’INAMI" : "Dû",
+            v: du > 0 ? euros(du) : "—",
+            alerte: payeur === "PATIENT" && du > 0,
+          },
+          ...(plafondInami !== null
+            ? [
+                {
+                  t: "INAMI, 12 mois",
+                  v: `${faitesInami} / ${plafondInami}`,
+                  alerte: faitesInami >= plafondInami,
+                },
+              ]
+            : []),
+        ].map((c) => (
+          <div
+            key={c.t}
+            className="rounded-[14px] border border-line bg-surface px-4 py-3 sm:px-5 sm:py-4"
+          >
+            <dt className="text-[10px] font-semibold tracking-[0.1em] text-ink-muted uppercase sm:text-[11px]">
+              {c.t}
+            </dt>
+            <dd
+              className={`mt-1 font-mono text-lg font-semibold sm:mt-1.5 sm:text-xl ${c.alerte ? "text-due" : ""}`}
+              data-numeric
+            >
+              {c.v}
+            </dd>
+          </div>
+        ))}
+      </dl>
+
+      <div className="grid gap-8 lg:grid-cols-[minmax(0,19rem)_minmax(0,1fr)] lg:items-start">
+        <div className="flex flex-col gap-8">
+      <section className="rounded-[14px] border border-line bg-surface px-5 py-4">
+        <div className="flex items-start justify-between gap-3">
+          <h2 className="sr-only">Coordonnées</h2>
+          <dl className="grid flex-1 gap-x-8 gap-y-3 sm:grid-cols-2 lg:grid-cols-1">
+            {coordonnees.map((c) => (
+              // Sur téléphone, un champ vide ne prend pas de place : on le
+              // retrouve dans « Modifier la fiche ».
+              <div key={c.t} className={c.v ? "" : "hidden sm:block"}>
+                <dt className="text-[11px] font-semibold tracking-[0.1em] text-ink-muted uppercase">
+                  {c.t}
+                </dt>
+                <dd
+                  className={`mt-0.5 text-sm ${c.mono ? "font-mono" : ""}`}
+                  data-numeric
+                >
+                  {c.v || <span className="text-ink-muted">—</span>}
+                </dd>
+              </div>
+            ))}
+          </dl>
+        </div>
+
+        <ContactRapide
+          texte={texteCoordonnees(patient)}
+          numeros={[
+            { libelle: "", tel: patient.phone },
+            { libelle: "mère", tel: patient.phoneMother },
+            { libelle: "père", tel: patient.phoneFather },
+          ].filter((n): n is { libelle: string; tel: string } => Boolean(n.tel))}
+        />
+
+      </section>
+
+        </div>
+
+        <div className="flex min-w-0 flex-col gap-8">
+      <div className="flex flex-wrap items-start gap-3">
+      <details className="rounded-[14px] open:order-last open:basis-full open:border open:border-dashed open:border-line-strong open:bg-surface open:px-5 open:py-3">
         <summary className="w-fit cursor-pointer list-none rounded-full bg-accent px-5 py-2.5 text-sm font-medium text-accent-contrast transition-colors hover:bg-accent-hover">
           Nouvelle séance
         </summary>
@@ -299,38 +384,8 @@ export default async function FichePatient({
           <BoutonEnregistrer className="self-end">Créer</BoutonEnregistrer>
         </form>
       </details>
-
-      <section className="rounded-[14px] border border-line bg-surface px-5 py-4">
-        <div className="flex items-start justify-between gap-3">
-          <h2 className="sr-only">Coordonnées</h2>
-          <dl className="grid flex-1 gap-x-8 gap-y-3 sm:grid-cols-2 lg:grid-cols-3">
-            {coordonnees.map((c) => (
-              <div key={c.t}>
-                <dt className="text-[11px] font-semibold tracking-[0.1em] text-ink-muted uppercase">
-                  {c.t}
-                </dt>
-                <dd
-                  className={`mt-0.5 text-sm ${c.mono ? "font-mono" : ""}`}
-                  data-numeric
-                >
-                  {c.v || <span className="text-ink-muted">—</span>}
-                </dd>
-              </div>
-            ))}
-          </dl>
-        </div>
-
-        <ContactRapide
-          texte={texteCoordonnees(patient)}
-          numeros={[
-            { libelle: "", tel: patient.phone },
-            { libelle: "mère", tel: patient.phoneMother },
-            { libelle: "père", tel: patient.phoneFather },
-          ].filter((n): n is { libelle: string; tel: string } => Boolean(n.tel))}
-        />
-
-        <details className="mt-4 border-t border-line pt-4">
-          <summary className="w-fit cursor-pointer list-none rounded-full border border-line-strong px-5 py-2 text-sm font-medium transition-colors hover:border-accent hover:text-accent-text">
+        <details id="modifier-fiche" className="rounded-[14px] open:order-last open:basis-full open:border open:border-line open:bg-surface open:px-5 open:py-4">
+          <summary className="w-fit cursor-pointer list-none rounded-full border border-line-strong bg-surface px-5 py-2.5 text-sm font-medium transition-colors hover:border-accent hover:text-accent-text">
             Modifier la fiche
           </summary>
           <div className="mt-5">
@@ -341,51 +396,25 @@ export default async function FichePatient({
               cabinets={cabinets}
               libelleBouton="Enregistrer la fiche"
             />
+      {patient.jetonRdv && (
+        <section className="mt-6 border-t border-line pt-5">
+          <h3 className="text-[11px] font-semibold tracking-[0.1em] text-ink-muted uppercase">
+            Lien personnel de réservation
+          </h3>
+          <p className="mt-2 text-sm text-ink-muted">
+            À transmettre au patient : il lui permet de réserver un créneau
+            libre sans passer par une demande à confirmer. Ce lien vaut
+            reconnaissance — ne le diffusez pas ailleurs.
+          </p>
+          <code className="mt-2 block overflow-x-auto rounded-[10px] bg-sunken px-4 py-2 text-xs">
+            /rendez-vous?p={patient.jetonRdv}
+          </code>
+        </section>
+      )}
+
           </div>
         </details>
-      </section>
-
-      <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        {[
-          { t: "Séances", v: String(patient.sessions.length) },
-          { t: "Heures", v: formatDuree(heuresTotales(patient.sessions)) },
-          // En conventionné, l'argent qui compte vient de l'INAMI : le patient, lui,
-          // ne doit jamais rien.
-          {
-            t: payeur === "INAMI" ? "Reçu de l’INAMI" : "Encaissé",
-            v: euros(encaisse),
-          },
-          {
-            t: payeur === "INAMI" ? "À recevoir de l’INAMI" : "Dû",
-            v: du > 0 ? euros(du) : "—",
-            alerte: payeur === "PATIENT" && du > 0,
-          },
-          ...(plafondInami !== null
-            ? [
-                {
-                  t: "INAMI, 12 mois",
-                  v: `${faitesInami} / ${plafondInami}`,
-                  alerte: faitesInami >= plafondInami,
-                },
-              ]
-            : []),
-        ].map((c) => (
-          <div
-            key={c.t}
-            className="rounded-[14px] border border-line bg-surface px-5 py-4"
-          >
-            <dt className="text-[11px] font-semibold tracking-[0.1em] text-ink-muted uppercase">
-              {c.t}
-            </dt>
-            <dd
-              className={`mt-1.5 font-mono text-xl font-semibold ${c.alerte ? "text-due" : ""}`}
-              data-numeric
-            >
-              {c.v}
-            </dd>
-          </div>
-        ))}
-      </dl>
+      </div>
 
       <section>
         <h2 className="mb-3 text-sm font-semibold">Historique des séances</h2>
@@ -394,13 +423,13 @@ export default async function FichePatient({
             Aucune séance enregistrée pour ce dossier.
           </p>
         ) : (
-          <ol className="overflow-hidden rounded-[14px] border border-line bg-surface">
+          <ol className="rounded-[14px] border border-line bg-surface">
             {patient.sessions.map((s) => (
               <li
                 key={s.id}
-                className="flex flex-wrap items-center gap-x-5 gap-y-2 border-b border-line px-5 py-3.5 last:border-b-0"
+                className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-line px-5 py-3.5 last:border-b-0"
               >
-                <time className="w-36 shrink-0 font-mono text-xs" data-numeric>
+                <time className="w-32 shrink-0 font-mono text-xs" data-numeric>
                   {fmtDateCourte.format(s.startsAt)} ·{" "}
                   {fmtHeure.format(s.startsAt)}
                 </time>
@@ -423,31 +452,41 @@ export default async function FichePatient({
                   methode={s.paymentMethod}
                   payeur={payeur}
                 />
-                {isBillable(s.status) &&
-                  s.paymentStatus !== "PAID" &&
-                  (payeur === "INAMI" ? (
-                    <RecuInami id={s.id} />
-                  ) : (
-                    <Encaisser id={s.id} />
-                  ))}
-                {s.status === "NO_SHOW" && <AnnulerAbsence id={s.id} />}
-                {s.status === "SCHEDULED" &&
-                  (s.startsAt <= maintenant ? (
-                    <StatuerSeance ids={[s.id]} />
-                  ) : (
-                    <AnnulerSeance id={s.id} />
-                  ))}
-                {s.paymentStatus === "PAID" && payeur === "PATIENT" && (
-                  <a
-                    href={`/api/recu/${s.id}`}
-                    className="rounded-full border border-line-strong px-2.5 py-0.5 text-[11px] font-medium transition-colors hover:border-accent hover:text-accent-text"
-                  >
-                    reçu PDF
-                  </a>
-                )}
-                {s.paymentStatus === "PAID" && payeur === "PATIENT" && (
-                  <EnvoyerRecu id={s.id} dejaEnvoye={Boolean(s.receiptAt)} />
-                )}
+                {/* Les actions forment un seul bloc : il tient sur la ligne ou passe
+                    en entier à la suivante, au lieu de s'éparpiller bouton par
+                    bouton. */}
+                <span className="ml-auto flex flex-wrap items-center justify-end gap-2">
+                  {isBillable(s.status) &&
+                    s.paymentStatus !== "PAID" &&
+                    (payeur === "INAMI" ? (
+                      <RecuInami id={s.id} />
+                    ) : (
+                      <Encaisser id={s.id} />
+                    ))}
+                  {s.status === "SCHEDULED" &&
+                    (s.startsAt <= maintenant ? (
+                      <StatuerSeance ids={[s.id]} />
+                    ) : (
+                      <AnnulerSeance id={s.id} />
+                    ))}
+                  {((s.paymentStatus === "PAID" && payeur === "PATIENT") ||
+                    s.status === "NO_SHOW") && (
+                    <MenuPlus>
+                      {s.status === "NO_SHOW" && <AnnulerAbsence id={s.id} />}
+                      {s.paymentStatus === "PAID" && payeur === "PATIENT" && (
+                        <>
+                          <a
+                            href={`/api/recu/${s.id}`}
+                            className="rounded-full border border-line-strong px-2.5 py-0.5 text-[11px] font-medium transition-colors hover:border-accent hover:text-accent-text"
+                          >
+                            reçu PDF
+                          </a>
+                          <EnvoyerRecu id={s.id} dejaEnvoye={Boolean(s.receiptAt)} />
+                        </>
+                      )}
+                    </MenuPlus>
+                  )}
+                </span>
                 {(s.status === "ATTENDED" || s.note) && (
                   <NoteSeance
                     id={s.id}
@@ -463,22 +502,6 @@ export default async function FichePatient({
           </ol>
         )}
       </section>
-
-      {patient.jetonRdv && (
-        <section className="rounded-[14px] border border-line bg-surface px-5 py-4">
-          <h2 className="text-[11px] font-semibold tracking-[0.1em] text-ink-muted uppercase">
-            Lien personnel de réservation
-          </h2>
-          <p className="mt-2 text-sm text-ink-muted">
-            À transmettre au patient : il lui permet de réserver un créneau
-            libre sans passer par une demande à confirmer. Ce lien vaut
-            reconnaissance — ne le diffusez pas ailleurs.
-          </p>
-          <code className="mt-2 block overflow-x-auto rounded-[10px] bg-sunken px-4 py-2 text-xs">
-            /rendez-vous?p={patient.jetonRdv}
-          </code>
-        </section>
-      )}
 
       <Notes
         patientId={patient.id}
@@ -503,6 +526,8 @@ export default async function FichePatient({
         suppressible={!patient.sessions.some(seancePieceComptable)}
         rdvAVenir={patient.sessions.filter(seanceAVenir).length}
       />
+        </div>
+      </div>
     </div>
   );
 }

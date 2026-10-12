@@ -36,6 +36,15 @@ import {
 
 export const dynamic = "force-dynamic";
 
+/** « dans 25 min », « dans 1 h 20 » : un délai en clair, jamais en millisecondes. */
+function delaiEnClair(ms: number) {
+  const min = Math.max(1, Math.round(ms / 60_000));
+  if (min < 60) return `dans ${min} min`;
+  const h = Math.floor(min / 60);
+  const r = min % 60;
+  return r === 0 ? `dans ${h} h` : `dans ${h} h ${String(r).padStart(2, "0")}`;
+}
+
 /** Prochain jour ouvré à partir de la date donnée, elle comprise. */
 function prochainJourOuvre(d: Date) {
   const x = new Date(d);
@@ -85,6 +94,20 @@ export default async function Aujourdhui({ searchParams }: { searchParams: Promi
     include: { patient: true, cabinet: true },
   });
   const total = heuresTotales(seances);
+  // La séance en cours, ou à défaut la prochaine : ce qu'on cherche des yeux en
+  // ouvrant l'écran. Seulement pour la journée d'aujourd'hui.
+  const enCours = estAujourdhui
+    ? seances.find(
+        (s) =>
+          s.status === "SCHEDULED" &&
+          s.startsAt <= maintenant &&
+          maintenant.getTime() < s.startsAt.getTime() + s.durationMin * 60_000,
+      )
+    : undefined;
+  const prochaine = estAujourdhui
+    ? (enCours ??
+      seances.find((s) => s.status === "SCHEDULED" && s.startsAt > maintenant))
+    : undefined;
   const horsQuota = await horsQuotaPour(seances.map((s) => s.patientId));
 
   return (
@@ -113,7 +136,7 @@ export default async function Aujourdhui({ searchParams }: { searchParams: Promi
         <div className="sans-impression flex flex-wrap items-center gap-3">
           <Link
             href={`/admin/imprimer?jour=${isoJour(debut)}${params.cabinet ? `&cabinet=${params.cabinet}` : ""}`}
-            className="rounded-full border border-line-strong px-5 py-2.5 text-sm font-medium transition-colors hover:border-accent hover:text-accent-text"
+            className="hidden rounded-full border border-line-strong px-5 py-2.5 text-sm font-medium transition-colors hover:border-accent hover:text-accent-text md:inline-block"
           >
             Imprimer la journée
           </Link>
@@ -171,27 +194,63 @@ export default async function Aujourdhui({ searchParams }: { searchParams: Promi
             </h2>
             {aStatuer.length > 1 && <StatuerSeance ids={aStatuer.map((s) => s.id)} groupe />}
           </div>
-          <ul className="mt-3 flex flex-col divide-y divide-line">
-            {aStatuer.slice(0, 20).map((s) => (
-              <li key={s.id} className="flex flex-wrap items-center gap-x-4 gap-y-2 py-2">
-                <time className="w-32 shrink-0 font-mono text-xs" data-numeric>
-                  {fmtDateCourte.format(s.startsAt)} · {fmtHeure.format(s.startsAt)}
-                </time>
-                <Link
-                  href={s.patientId ? `/admin/patients/${s.patientId}` : "/admin/etablissements"}
-                  className="min-w-32 flex-1 text-sm font-medium hover:text-accent-text"
-                >
-                  {nomSeance(s)}
-                </Link>
-                <CabinetTag cabinet={s.cabinet} />
-                <StatuerSeance ids={[s.id]} />
-              </li>
-            ))}
-          </ul>
-          {aStatuer.length > 20 && (
-            <p className="mt-2 text-xs text-ink-muted">
-              Et {aStatuer.length - 20} autres, plus récentes : elles apparaîtront ici à mesure.
-            </p>
+          {/* Au-delà de trois, la liste se replie : une longue file de séances
+              oubliées repoussait la journée en cours sous la ligne de flottaison.
+              En dessous, pas de <details> : sans <summary>, le navigateur
+              afficherait un « Détails » par défaut. */}
+          {aStatuer.length > 3 ? (
+            <details className="mt-3">
+              <summary className="w-fit cursor-pointer text-xs font-medium text-accent-text">
+                Voir les {aStatuer.length} séances
+              </summary>
+            <ul className="mt-2 flex flex-col divide-y divide-line">
+              {aStatuer.slice(0, 20).map((s) => (
+                <li key={s.id} className="flex flex-wrap items-center gap-x-4 gap-y-2 py-2">
+                  <time className="w-32 shrink-0 font-mono text-xs" data-numeric>
+                    {fmtDateCourte.format(s.startsAt)} · {fmtHeure.format(s.startsAt)}
+                  </time>
+                  <Link
+                    href={s.patientId ? `/admin/patients/${s.patientId}` : "/admin/etablissements"}
+                    className="min-w-32 flex-1 text-sm font-medium hover:text-accent-text"
+                  >
+                    {nomSeance(s)}
+                  </Link>
+                  <CabinetTag cabinet={s.cabinet} />
+                  <StatuerSeance ids={[s.id]} />
+                </li>
+              ))}
+            </ul>
+            {aStatuer.length > 20 && (
+              <p className="mt-2 text-xs text-ink-muted">
+                Et {aStatuer.length - 20} autres, plus récentes : elles apparaîtront ici à mesure.
+              </p>
+            )}
+            </details>
+          ) : (
+            <div className="mt-3">
+            <ul className="mt-2 flex flex-col divide-y divide-line">
+              {aStatuer.slice(0, 20).map((s) => (
+                <li key={s.id} className="flex flex-wrap items-center gap-x-4 gap-y-2 py-2">
+                  <time className="w-32 shrink-0 font-mono text-xs" data-numeric>
+                    {fmtDateCourte.format(s.startsAt)} · {fmtHeure.format(s.startsAt)}
+                  </time>
+                  <Link
+                    href={s.patientId ? `/admin/patients/${s.patientId}` : "/admin/etablissements"}
+                    className="min-w-32 flex-1 text-sm font-medium hover:text-accent-text"
+                  >
+                    {nomSeance(s)}
+                  </Link>
+                  <CabinetTag cabinet={s.cabinet} />
+                  <StatuerSeance ids={[s.id]} />
+                </li>
+              ))}
+            </ul>
+            {aStatuer.length > 20 && (
+              <p className="mt-2 text-xs text-ink-muted">
+                Et {aStatuer.length - 20} autres, plus récentes : elles apparaîtront ici à mesure.
+              </p>
+            )}
+            </div>
           )}
         </section>
       )}
@@ -211,7 +270,9 @@ export default async function Aujourdhui({ searchParams }: { searchParams: Promi
             <li key={s.id}>
               <Link
                 href={s.patientId ? `/admin/patients/${s.patientId}` : "/admin/etablissements"}
-                className="flex flex-wrap items-center gap-x-5 gap-y-3 rounded-[14px] border border-line bg-surface px-5 py-4 transition-colors hover:border-accent"
+                className={`flex flex-wrap items-center gap-x-5 gap-y-3 rounded-[14px] border bg-surface px-5 py-4 transition-colors hover:border-accent ${
+                  prochaine?.id === s.id ? "border-accent" : "border-line"
+                }`}
               >
                 <time
                   dateTime={s.startsAt.toISOString()}
@@ -227,6 +288,13 @@ export default async function Aujourdhui({ searchParams }: { searchParams: Promi
                   {nomSeance(s)}
                 </span>
                 <span className="flex flex-wrap items-center gap-2">
+                  {prochaine?.id === s.id && (
+                    <span className="rounded-full bg-accent-soft px-2.5 py-0.5 text-[11px] font-semibold whitespace-nowrap text-accent-text">
+                      {s.id === enCours?.id
+                        ? "en cours"
+                        : `prochaine · ${delaiEnClair(s.startsAt.getTime() - maintenant.getTime())}`}
+                    </span>
+                  )}
                   <CabinetTag cabinet={s.cabinet} />
                   {s.patient && <RegimeTag scheme={s.patient.scheme} />}
                   {s.visio && <TagVisio />}
@@ -234,17 +302,21 @@ export default async function Aujourdhui({ searchParams }: { searchParams: Promi
                   {conflits.has(i) && <AlerteTrajet />}
                 </span>
                 <span className="flex shrink-0 items-center gap-4">
-                  <StatutSeance status={s.status} />
+                  {/* Une séance à venir n'a ni statut ni paiement à dire :
+                      « à venir — » sur chaque ligne n'apprenait rien. */}
+                  {s.status !== "SCHEDULED" && <StatutSeance status={s.status} />}
                   {isBillable(s.status) && (
-                    <span className="text-sm" data-numeric>
-                      {euros(s.amountCents)}
-                    </span>
+                    <>
+                      <span className="text-sm" data-numeric>
+                        {euros(s.amountCents)}
+                      </span>
+                      <EtatPaiement
+                        status={s.status}
+                        payment={s.paymentStatus}
+                        methode={s.paymentMethod}
+                      />
+                    </>
                   )}
-                  <EtatPaiement
-                    status={s.status}
-                    payment={s.paymentStatus}
-                    methode={s.paymentMethod}
-                  />
                 </span>
               </Link>
               {conflits.has(i) && (
@@ -258,9 +330,6 @@ export default async function Aujourdhui({ searchParams }: { searchParams: Promi
         </ol>
       )}
 
-      <p className="text-xs text-ink-muted" data-numeric>
-        Une séance dure {reglages.dureeSeanceMin} minutes.
-      </p>
     </div>
   );
 }

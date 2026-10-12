@@ -140,7 +140,7 @@ export function Nav({
                   aria-current={actif ? "page" : undefined}
                   className={`flex items-center gap-3 rounded-full px-4 py-3 text-sm font-medium transition-colors ${
                     actif
-                      ? "bg-accent text-accent-contrast"
+                      ? "bg-accent-soft font-semibold text-accent-text ring-1 ring-accent/30 ring-inset"
                       : "text-ink-muted hover:bg-accent-soft hover:text-accent-text"
                   }`}
                 >
@@ -149,7 +149,7 @@ export function Nav({
                   {n.nb > 0 && (
                     <span
                       className={`ml-auto flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[11px] font-bold ${
-                        actif ? "bg-white/25 text-white" : n.classe
+                        n.classe
                       }`}
                     >
                       {n.nb}
@@ -174,7 +174,7 @@ export function Nav({
                   aria-current={actif ? "page" : undefined}
                   className={`flex items-center gap-3 rounded-full px-4 py-3 text-sm font-medium transition-colors ${
                     actif
-                      ? "bg-accent text-accent-contrast"
+                      ? "bg-accent-soft font-semibold text-accent-text ring-1 ring-accent/30 ring-inset"
                       : "text-ink-muted hover:bg-accent-soft hover:text-accent-text"
                   }`}
                 >

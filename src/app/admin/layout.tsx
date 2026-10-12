@@ -53,7 +53,7 @@ export default async function AdminLayout({
   const sauvegarde = await statutSauvegarde();
 
   return (
-    <div className="flex min-h-screen">
+    <div className="outil flex min-h-screen">
       {/* Pas pendant la démonstration ouverte : il n'y a rien à verrouiller. */}
       {!ouverte && <VerrouInactivite />}
       <BarreLaterale

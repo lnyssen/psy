@@ -48,6 +48,7 @@ export function DonneesPersonnelles({
   const message = code ? MESSAGES[code] : undefined;
   return (
     <details
+      id="donnees"
       className="rounded-[14px] border border-line bg-surface px-5 py-3"
       open={Boolean(message)}
     >

@@ -12,6 +12,14 @@ export default function Documentation() {
           tels qu’ils s’affichent à l’écran. Toutes les personnes montrées sur
           les captures sont fictives.
         </p>
+        <p className="mt-4">
+          <Link
+            href="/admin/documentation/complete"
+            className="inline-block rounded-full border border-line-strong px-5 py-2 text-sm font-medium transition-colors hover:border-accent hover:text-accent-text"
+          >
+            Version imprimable (PDF)
+          </Link>
+        </p>
       </header>
 
       <ul className="grid gap-4 sm:grid-cols-2">

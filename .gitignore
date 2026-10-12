@@ -39,3 +39,6 @@ next-env.d.ts
 
 # Le modèle ne contient aucun secret et doit être versionné.
 !.env.example
+
+# PDF de la documentation, produit par scripts/generer-pdf-documentation.ts
+/exports/

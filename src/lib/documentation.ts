@@ -95,7 +95,7 @@ export const PAGES_DOC: PageDoc[] = [
           {
             t: "liste",
             items: [
-              "**Aujourd'hui** : ce qui vous attend aujourd'hui, et les séances passées à trancher. Un compteur ambre sur cette entrée indique combien de séances passées n'ont pas encore de statut, d'où que vous soyez dans l'outil : sans statut, une séance ne se facture pas.",
+              "**Aujourd'hui** : ce qui vous attend aujourd'hui, et les séances passées à trancher. Un compteur ambre sur cette entrée indique combien de séances passées n'ont pas encore de statut, d'où que vous soyez dans l'outil : sans statut, une séance ne se facture pas. Sur la journée, la **prochaine séance** (ou celle **en cours**) est entourée et porte une pastille, par exemple « prochaine · dans 25 min » ; une séance à venir n'affiche ni statut ni paiement tant qu'il n'y a rien à en dire.",
               "**Agenda** : la semaine, les séances, la création de rendez-vous.",
               "**Patients** : les dossiers.",
               "**Facturation** : ce qui est dû, encaissé, et la facturation aux établissements.",
@@ -107,7 +107,12 @@ export const PAGES_DOC: PageDoc[] = [
           {
             t: "p",
             texte:
-              "Tout en bas du menu, sous un trait, **Réglages** et **Documentation** (cette page) ; juste en dessous, le **thème** clair ou sombre (la lune) et le **cadenas**. La flèche en haut replie la barre pour gagner de la place.",
+              "Tout en bas du menu, sous un trait, **Réglages** et **Documentation** (cette page) ; juste en dessous, le **thème** clair ou sombre (la lune) et le **cadenas**. La flèche en haut replie la barre pour gagner de la place. La page où vous êtes est sur fond violet pâle. Sur la page **Documentation**, le bouton **Version imprimable (PDF)** réunit tout ce guide sur une seule page, avec couverture et table des matières : **Imprimer** ouvre la boîte d'impression, qui permet aussi d'**Enregistrer en PDF**.",
+          },
+          {
+            t: "p",
+            texte:
+              "**Les couleurs** : le violet plein est réservé aux actions principales (**Nouvelle séance**, **Enregistrer**) ; l'**ambre** signale ce qui est dû ou à trancher, le **rouge** ce qui est en retard, le **vert** ce qui est payé ou reçu. Une couleur d'alerte ne s'affiche que s'il y a quelque chose à signaler : un « En retard » à 0,00 € reste gris. Chaque cabinet garde sa couleur (Uccle, Auderghem, École) partout dans l'outil.",
           },
           {
             t: "p",
@@ -128,7 +133,7 @@ export const PAGES_DOC: PageDoc[] = [
           {
             t: "p",
             texte:
-              "L'outil est conçu pour s'utiliser aussi bien sur téléphone que sur ordinateur. Pour qu'il s'ouvre comme une application, avec son icône :",
+              "L'outil est conçu pour s'utiliser aussi bien sur téléphone que sur ordinateur : sur un écran tactile, les petits boutons (honorée, absente, espèces, annuler…) sont agrandis pour le pouce. Pour qu'il s'ouvre comme une application, avec son icône :",
           },
           {
             t: "liste",
@@ -220,7 +225,7 @@ export const PAGES_DOC: PageDoc[] = [
           {
             t: "p",
             texte:
-              "Une séance passée n'est facturée que lorsque vous avez dit ce qui s'est passé. Sur **Aujourd'hui**, les séances passées sans statut apparaissent avec deux boutons :",
+              "Une séance passée n'est facturée que lorsque vous avez dit ce qui s'est passé. Sur **Aujourd'hui**, les séances passées sans statut apparaissent dans un encadré ambre (au-delà de trois, la liste se replie : **Voir les N séances**), avec deux boutons :",
           },
           {
             t: "liste",
@@ -341,7 +346,7 @@ export const PAGES_DOC: PageDoc[] = [
           {
             t: "p",
             texte:
-              "En haut : le nom, le régime, le cabinet. Puis le bouton **Nouvelle séance** (pour ce patient), ses coordonnées, et des compteurs : nombre de séances, heures, ce qui a été encaissé ou reçu de l'INAMI, ce qui reste dû ou à recevoir. Pour un patient conventionné, **INAMI, 12 mois** montre où il en est de son plafond (par exemple 4 / 10). Plus bas : l'historique des séances, ses notes, ses documents et, tout en bas, ses données personnelles. Sous les coordonnées, **Copier les coordonnées** met nom, téléphones, e-mails et adresse dans le presse-papiers (pour les coller dans un message ou un événement d'agenda), et **Appeler** et **WhatsApp** apparaissent pour chaque numéro connu (patient, mère, père). Deux absences non excusées ou plus sur les douze derniers mois sont signalées par un bandeau sur la fiche et par une pastille **2 absences** dans la liste des patients.",
+              "En haut : le nom, le régime, le cabinet, puis une rangée de compteurs : nombre de séances, heures, ce qui a été encaissé ou reçu de l'INAMI, ce qui reste dû ou à recevoir. Pour un patient conventionné, **INAMI, 12 mois** montre où il en est de son plafond (par exemple 4 / 10). Dessous, deux colonnes sur ordinateur (tout s'empile sur téléphone) : à gauche les **coordonnées**, à droite les boutons **Nouvelle séance** (pour ce patient) et **Modifier la fiche** (dont le **lien personnel de réservation**, en bas du formulaire), l'**historique des séances**, les notes, les documents et, tout en bas, les données personnelles. Sous les coordonnées, **Copier les coordonnées** met nom, téléphones, e-mails et adresse dans le presse-papiers (pour les coller dans un message ou un événement d'agenda), et **Appeler** et **WhatsApp** apparaissent pour chaque numéro connu (patient, mère, père). Deux absences non excusées ou plus sur les douze derniers mois sont signalées par un bandeau sur la fiche et par une pastille **2 absences** dans la liste des patients.",
           },
           img(
             "patient-modifier",
@@ -351,7 +356,7 @@ export const PAGES_DOC: PageDoc[] = [
           {
             t: "p",
             texte:
-              "Le **lien personnel de réservation** (en bas de la fiche) est celui que reçoit le patient pour réserver lui-même un créneau sans passer par une demande : ne le diffusez pas ailleurs.",
+              "Le **lien personnel de réservation** (en bas de **Modifier la fiche**) est celui que reçoit le patient pour réserver lui-même un créneau sans passer par une demande : ne le diffusez pas ailleurs.",
           },
         ],
       },
@@ -573,13 +578,13 @@ export const PAGES_DOC: PageDoc[] = [
           {
             t: "p",
             texte:
-              "La page **Facturation** liste les séances facturables : honorées ou absences non excusées. Les annulations à temps et les séances à venir n'y figurent pas. En haut, six compteurs : **Encaissé**, **Dû**, **En retard**, **INAMI reçu**, **INAMI à recevoir**, et le nombre d'**Actes**. Les filtres (paiement, cabinet, régime) et les titres de colonnes trient et restreignent la liste.",
+              "La page **Facturation** liste les séances facturables : honorées ou absences non excusées. Les annulations à temps et les séances à venir n'y figurent pas. En haut, une bande de six chiffres : **Encaissé**, **Dû**, **En retard**, **INAMI reçu**, **INAMI à recevoir**, et le nombre d'**Actes** (un chiffre d'alerte à zéro reste gris : l'ambre et le rouge n'apparaissent que s'il y a une somme). Les filtres (paiement, cabinet, régime) et les titres de colonnes trient et restreignent la liste.",
           },
           {
             t: "etapes",
             items: [
-              "Pour un patient privé qui paie, cliquez sur **espèces** ou **carte** à la fin de la ligne : la séance passe en « payé » et le mode de paiement est mémorisé.",
-              "Le bouton **reçu PDF** apparaît alors : il produit le reçu à remettre au patient, avec tous les champs obligatoires Deux boutons le suivent : **envoyer par e-mail** joint le PDF à un message envoyé au patient (ou à ses parents s'il n'a pas d'adresse ; le bouton devient **renvoyer par e-mail** et la fiche indique « déjà envoyé »), et **partager** ouvre la feuille de partage du téléphone — WhatsApp, SMS, Mail — avec le PDF (sur ordinateur, le fichier se télécharge).",
+              "Pour un patient privé qui paie, cliquez sur **espèces** ou **carte**, derrière « encaisser : », à la fin de la ligne : la séance passe en « payé » et le mode de paiement est mémorisé.",
+              "Le bouton **reçu PDF** apparaît alors : il produit le reçu à remettre au patient, avec tous les champs obligatoires. Deux boutons le suivent : **envoyer par e-mail** joint le PDF à un message envoyé au patient (ou à ses parents s'il n'a pas d'adresse ; le bouton devient **renvoyer par e-mail** et la fiche indique « déjà envoyé »), et **partager** ouvre la feuille de partage du téléphone — WhatsApp, SMS, Mail — avec le PDF (sur ordinateur, le fichier se télécharge). Dans la fiche d'un patient, ces trois boutons (et **annuler l'absence**) sont rangés derrière le menu **⋯** de la ligne.",
               "Pour une séance conventionnée, le patient ne doit rien : cliquez sur **reçu de l'INAMI** quand l'INAMI a versé le montant.",
               "Pour une absence que vous ne souhaitez pas facturer, **annuler l'absence** la rend non due, tout en gardant la trace.",
             ],

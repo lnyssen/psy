@@ -14,7 +14,15 @@ function enrichi(texte: string) {
 }
 
 /** Un bloc de documentation : paragraphe, étapes, liste, remarque, capture. */
-export function DocBloc({ bloc }: { bloc: Bloc }) {
+export function DocBloc({
+  bloc,
+  eager = false,
+}: {
+  bloc: Bloc;
+  /** Version imprimable : toutes les images se chargent tout de suite, sans quoi
+   *  celles qui sont hors de l'écran manqueraient au PDF. */
+  eager?: boolean;
+}) {
   switch (bloc.t) {
     case "p":
       return <p className="max-w-3xl leading-relaxed">{enrichi(bloc.texte)}</p>;
@@ -64,19 +72,21 @@ export function DocBloc({ bloc }: { bloc: Bloc }) {
       );
     case "image":
       return (
-        <figure className="max-w-4xl">
+        <figure className="max-w-4xl break-inside-avoid">
           <a
             href={bloc.src}
             target="_blank"
             rel="noreferrer"
-            className="block overflow-hidden rounded-[14px] border border-line bg-surface"
+            className="block overflow-hidden rounded-[14px] border border-line bg-surface print:text-center"
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={bloc.src}
               alt={bloc.alt}
-              loading="lazy"
-              className="h-auto w-full"
+              loading={eager ? "eager" : "lazy"}
+              // Sur papier, une capture haute (la fiche entière) ne doit pas
+              // déborder de la page : elle se réduit en hauteur.
+              className="h-auto w-full print:mx-auto print:max-h-[215mm] print:w-auto print:max-w-full"
             />
           </a>
           {bloc.legende && (

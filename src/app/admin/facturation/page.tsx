@@ -65,21 +65,28 @@ export default async function Facturation({ searchParams }: { searchParams: Prom
   const somme = (f: typeof seances) => f.reduce((n, s) => n + valeur(s), 0);
   const prives = seances.filter((s) => payeurDe(s.patient.scheme) === "PATIENT");
   const inami = seances.filter((s) => payeurDe(s.patient.scheme) === "INAMI");
+  // Une couleur d'alerte n'a de sens que sur une somme : à zéro, « en retard »
+  // en rouge crierait au loup. La valeur reste lisible, mais neutre.
+  const carte = (t: string, centimes: number, ton?: string) => ({
+    t,
+    v: euros(centimes),
+    ton: centimes > 0 ? ton : undefined,
+  });
   const cartes = [
-    { t: "Encaissé", v: euros(somme(prives.filter((s) => s.paymentStatus === "PAID"))) },
-    { t: "Dû", v: euros(somme(prives.filter((s) => s.paymentStatus === "DUE"))), ton: "text-due" },
-    {
-      t: "En retard",
-      v: euros(somme(prives.filter((s) => s.paymentStatus === "OVERDUE"))),
-      ton: "text-overdue",
-    },
-    { t: "INAMI reçu", v: euros(somme(inami.filter((s) => s.paymentStatus === "PAID"))) },
-    {
-      t: "INAMI à recevoir",
-      v: euros(somme(inami.filter((s) => s.paymentStatus !== "PAID"))),
-      ton: "text-due",
-    },
-    { t: "Actes", v: String(seances.length) },
+    carte("Encaissé", somme(prives.filter((s) => s.paymentStatus === "PAID"))),
+    carte("Dû", somme(prives.filter((s) => s.paymentStatus === "DUE")), "text-due"),
+    carte(
+      "En retard",
+      somme(prives.filter((s) => s.paymentStatus === "OVERDUE")),
+      "text-overdue",
+    ),
+    carte("INAMI reçu", somme(inami.filter((s) => s.paymentStatus === "PAID"))),
+    carte(
+      "INAMI à recevoir",
+      somme(inami.filter((s) => s.paymentStatus !== "PAID")),
+      "text-due",
+    ),
+    { t: "Actes", v: String(seances.length), ton: undefined },
   ];
 
   // Ce que la table reçoit : le strict nécessaire, à plat. Le montant prévu est
@@ -158,7 +165,7 @@ export default async function Facturation({ searchParams }: { searchParams: Prom
           ]}
       />
 
-      <div className="flex flex-wrap gap-x-6 gap-y-3">
+      <div className="flex flex-wrap gap-x-5 gap-y-2">
         <GroupeFiltre
           base="/admin/facturation"
           params={params}
@@ -189,13 +196,15 @@ export default async function Facturation({ searchParams }: { searchParams: Prom
         />
       </div>
 
-      <dl className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+      {/* Une bande compacte : six chiffres qui tiennent sur une ligne laissent la
+          table remonter dans le premier écran. */}
+      <dl className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-6">
         {cartes.map((c) => (
-          <div key={c.t} className="rounded-[14px] border border-line bg-surface px-5 py-4">
-            <dt className="text-[11px] font-semibold tracking-[0.1em] text-ink-muted uppercase">
+          <div key={c.t} className="rounded-[12px] border border-line bg-surface px-4 py-2.5">
+            <dt className="text-[10px] font-semibold tracking-[0.1em] text-ink-muted uppercase">
               {c.t}
             </dt>
-            <dd className={`mt-1.5 font-mono text-xl font-semibold ${c.ton ?? ""}`} data-numeric>
+            <dd className={`mt-0.5 font-mono text-lg font-semibold ${c.ton ?? ""}`} data-numeric>
               {c.v}
             </dd>
           </div>

@@ -31,7 +31,7 @@ async function enregistrer(buffer: Uint8Array | Buffer, nom: string, largeurMax 
 const attendre = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 /** Photographie la page entière visible (fenêtre) ou un élément. */
-async function capturer(page: Page, nom: string, chemin: string, opts: { selecteur?: string; ouvrir?: string; pleine?: boolean } = {}) {
+async function capturer(page: Page, nom: string, chemin: string, opts: { selecteur?: string; ouvrir?: string; pleine?: boolean; hauteurMax?: number } = {}) {
   await page.goto(`${BASE}${chemin}`, { waitUntil: "load" });
   await attendre(1800); // chargement et animations d'entrée
   if (opts.ouvrir) {
@@ -46,6 +46,22 @@ async function capturer(page: Page, nom: string, chemin: string, opts: { selecte
     if (!el) {
       console.log("  ✗", nom, "(sélecteur introuvable :", opts.selecteur, ")");
       return;
+    }
+    // Un élément très haut (un long formulaire) se coupe en haut : une capture
+    // de 3 600 px de haut est illisible, réduite à la largeur d'une page.
+    if (opts.hauteurMax) {
+      await el.evaluate((e) => e.scrollIntoView({ block: "start" }));
+      await attendre(500);
+      const boite = await el.boundingBox();
+      if (boite) {
+        const image = await page.screenshot({
+          type: "png",
+          captureBeyondViewport: true,
+          clip: { x: boite.x, y: boite.y + (await page.evaluate(() => window.scrollY)), width: boite.width, height: Math.min(boite.height, opts.hauteurMax) },
+        });
+        await enregistrer(image, nom);
+        return;
+      }
     }
     await el.evaluate((e) => e.scrollIntoView({ block: "center" }));
     await attendre(500);
@@ -80,9 +96,9 @@ async function main() {
     const lien = await page.evaluate(() => [...document.querySelectorAll("a")].find((a) => a.textContent?.includes("Emma Peeters"))?.getAttribute("href"));
     if (lien) {
       await capturer(page, "patient-fiche", lien, { pleine: true });
-      await capturer(page, "patient-modifier", lien, { ouvrir: "Modifier la fiche", selecteur: "details:has(form)" });
+      await capturer(page, "patient-modifier", lien, { ouvrir: "Modifier la fiche", selecteur: "#modifier-fiche", hauteurMax: 900 });
       await capturer(page, "patient-documents", lien, { selecteur: "#documents" });
-      await capturer(page, "patient-rgpd", lien, { ouvrir: "Données personnelles", selecteur: "details:last-of-type" });
+      await capturer(page, "patient-rgpd", lien, { ouvrir: "Données personnelles", selecteur: "#donnees" });
     }
     await capturer(page, "patient-nouveau", "/admin/patients/nouveau", { pleine: true });
     await capturer(page, "import", "/admin/patients/import");
@@ -101,7 +117,7 @@ async function main() {
       ["reglages-ouverture", "ouverture"], ["reglages-rythme", "rythme"], ["reglages-horaires", "horaires"], ["reglages-tarifs", "tarifs"],
       ["reglages-identite", "identite"], ["reglages-securite", "securite"], ["reglages-sauvegardes", "sauvegardes"], ["reglages-lieux", "lieux"],
     ] as const) {
-      await capturer(page, nom, "/admin/reglages", { selecteur: `#${id}` });
+      await capturer(page, nom, "/admin/reglages", { selecteur: `#${id}`, hauteurMax: nom === "reglages-lieux" ? 1400 : undefined });
     }
     await capturer(page, "reglages", "/admin/reglages");
 

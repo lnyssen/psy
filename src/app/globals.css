@@ -96,6 +96,10 @@
   /* Filets */
   --color-line: #e5e1da;
   --color-line-strong: #cfc9c0;
+  /* Bordure des champs de saisie : 3:1 au moins contre le fond, comme l'exige
+     WCAG 1.4.11 pour qu'un champ se distingue de la page sans le survoler. Les
+     filets décoratifs (--color-line) restent discrets. */
+  --color-champ: #8c87a0;
 
   /* Accent — le violet ne sert qu'à ce qui se clique */
   --color-accent: #7f00ff;
@@ -175,12 +179,16 @@
 
   --color-line: #322d3e;
   --color-line-strong: #463f56;
+  --color-champ: #6f6885;
 
-  --color-accent: #9b4dff;
-  --color-accent-hover: #ae72ff;
+  /* Violet éclairci, texte sombre dessus : le blanc sur #9b4dff ne donnait que
+     4,29:1, sous les 4,5:1 d'un texte courant. Ici 5,16:1 au repos, 6,65:1 au
+     survol — qui éclaircit, comme avant, au lieu d'assombrir. */
+  --color-accent: #a566ff;
+  --color-accent-hover: #b583ff;
   --color-accent-text: #c39bff;
   --color-accent-soft: #2a1d45;
-  --color-accent-contrast: #ffffff;
+  --color-accent-contrast: #16141c;
 
   --color-due: #e0a94a;
   --color-due-soft: #35291247;
@@ -489,4 +497,31 @@ html[data-curseur-rond] input,
 html[data-curseur-rond] textarea,
 html[data-curseur-rond] select {
   cursor: auto;
+}
+
+/*
+ * Zones tactiles. Les petits boutons de l'outil (honorée, absente, annuler,
+ * espèces, reçu PDF…) sont dessinés pour la souris : une vingtaine de pixels de
+ * haut, trop peu pour un pouce entre deux séances. Sur un écran tactile
+ * seulement (pointeur « grossier »), ils passent à 40 px de haut ; sur
+ * ordinateur, rien ne change. Limité à <main> : les barres de navigation ont
+ * déjà leurs propres dimensions.
+ */
+@media (pointer: coarse) {
+  main button.rounded-full:not(.hidden),
+  main a.rounded-full:not(.hidden),
+  main summary.rounded-full:not(.hidden) {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 2.5rem;
+    padding-inline: 1rem;
+  }
+}
+
+/* Champs de saisie de l'outil : bordure à 3:1 (voir --color-champ). Sélecteur
+   plus spécifique que la classe border-line des champs, donc sans toucher à
+   chacun d'eux. */
+.outil :is(input, textarea, select):not([type="checkbox"], [type="radio"], [type="file"], [type="hidden"], [type="submit"]) {
+  border-color: var(--color-champ);
 }

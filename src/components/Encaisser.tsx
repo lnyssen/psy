@@ -17,7 +17,10 @@ export function Encaisser({ id }: { id: string }) {
     });
 
   return (
-    <span className="inline-flex gap-1">
+    <span className="inline-flex items-center gap-1">
+      {/* Ce sont des boutons, pas des états : le mot qui les introduit les
+          distingue des pastilles « dû » et « payé » qui les entourent. */}
+      <span className="mr-0.5 text-[11px] text-ink-muted">encaisser :</span>
       <button
         type="button"
         disabled={enCours}
