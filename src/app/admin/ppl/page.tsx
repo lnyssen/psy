@@ -120,7 +120,12 @@ export default async function SuiviPpl({
         </p>
       ) : (
         <>
-          <div className="overflow-x-auto rounded-[14px] border border-line bg-surface">
+          <div
+            className="overflow-x-auto rounded-[14px] border border-line bg-surface"
+            tabIndex={0}
+            role="region"
+            aria-label="Suivi trimestriel (tableau défilant)"
+          >
             <table className="w-full border-collapse text-sm">
               <thead>
                 <tr className="border-b border-line bg-sunken text-[11px] tracking-[0.1em] text-ink-muted uppercase">

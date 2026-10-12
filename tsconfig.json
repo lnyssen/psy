@@ -33,6 +33,7 @@
   "exclude": [
     "node_modules",
     "scripts/capturer-documentation.ts",
-    "scripts/generer-pdf-documentation.ts"
+    "scripts/generer-pdf-documentation.ts",
+    "scripts/audit-accessibilite.ts"
   ]
 }

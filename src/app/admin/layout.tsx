@@ -54,6 +54,14 @@ export default async function AdminLayout({
 
   return (
     <div className="outil flex min-h-screen">
+      {/* Lien d'évitement : au clavier, on arrive sur les sept entrées du menu
+          avant le contenu ; ce premier Tab propose de les sauter. */}
+      <a
+        href="#contenu"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[70] focus:rounded-full focus:bg-surface focus:px-5 focus:py-3 focus:text-sm focus:font-semibold focus:text-ink focus:ring-2 focus:ring-accent"
+      >
+        Aller au contenu
+      </a>
       {/* Pas pendant la démonstration ouverte : il n'y a rien à verrouiller. */}
       {!ouverte && <VerrouInactivite />}
       <BarreLaterale
@@ -114,7 +122,11 @@ export default async function AdminLayout({
           </p>
         )}
 
-        <main className="mx-auto w-full max-w-7xl px-5 py-8 md:px-8 md:py-10">
+        <main
+          id="contenu"
+          tabIndex={-1}
+          className="mx-auto w-full max-w-7xl px-5 py-8 outline-none md:px-8 md:py-10"
+        >
           {children}
         </main>
         {ouverte && (

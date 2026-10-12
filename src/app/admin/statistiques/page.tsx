@@ -150,7 +150,12 @@ export default async function Statistiques({
         <h2 className="px-5 pt-5 text-[11px] font-semibold tracking-[0.1em] text-ink-muted uppercase">
           Heures par semaine et par cabinet
         </h2>
-        <div className="mt-3 overflow-x-auto">
+        <div
+          className="mt-3 overflow-x-auto"
+          tabIndex={0}
+          role="region"
+          aria-label="Heures par semaine et par cabinet (tableau défilant)"
+        >
           <table className="w-full border-collapse text-sm">
             <caption className="sr-only">Heures de séance par semaine et par cabinet</caption>
             <thead>
@@ -172,7 +177,7 @@ export default async function Statistiques({
               {lignesSemaines.map((l, i) => (
                 <tr
                   key={l.lundi.getTime()}
-                  className={`border-b border-line last:border-b-0 ${l.total === 0 ? "text-ink-muted/60" : ""}`}
+                  className={`border-b border-line last:border-b-0 ${l.total === 0 ? "text-ink-muted" : ""}`}
                 >
                   <th scope="row" className="px-5 py-2 text-left font-mono text-xs font-medium" data-numeric>
                     {fmtJourMoisAn.format(l.lundi)}

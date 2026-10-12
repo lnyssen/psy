@@ -448,7 +448,7 @@ export default async function Finance({
               <tr
                 key={i}
                 className={`border-b border-line last:border-b-0 ${
-                  m.actes === 0 ? "text-ink-muted/60" : "hover:bg-sunken/60"
+                  m.actes === 0 ? "text-ink-muted" : "hover:bg-sunken/60"
                 }`}
               >
                 <th
@@ -671,7 +671,12 @@ function ResultatNet({
           {euros(total.net)}
         </p>
       </div>
-      <div className="mt-3 overflow-x-auto">
+      <div
+        className="mt-3 overflow-x-auto"
+        tabIndex={0}
+        role="region"
+        aria-label="Tableau défilant"
+      >
         <table className="w-full border-collapse text-sm">
           <caption className="sr-only">Résultat mensuel {annee}</caption>
           <thead>
@@ -697,7 +702,7 @@ function ResultatNet({
               return (
                 <tr
                   key={i}
-                  className={`border-b border-line ${vide ? "text-ink-muted/60" : "hover:bg-sunken/60"}`}
+                  className={`border-b border-line ${vide ? "text-ink-muted" : "hover:bg-sunken/60"}`}
                 >
                   <th
                     scope="row"

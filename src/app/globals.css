@@ -525,3 +525,11 @@ html[data-curseur-rond] select {
 .outil :is(input, textarea, select):not([type="checkbox"], [type="radio"], [type="file"], [type="hidden"], [type="submit"]) {
   border-color: var(--color-champ);
 }
+
+/* Texte indicatif des champs : contraste de 4,5:1 au moins (WCAG 1.4.3 vaut
+   aussi pour lui). Les utilitaires placeholder:text-ink-muted/60 le laissaient à
+   moins de 3:1 ; cette règle, hors couches, l'emporte sur eux. */
+.outil ::placeholder {
+  color: var(--color-ink-muted);
+  opacity: 1;
+}

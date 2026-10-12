@@ -76,6 +76,7 @@ export function ImportPatients({ champs }: { champs: Champ[] }) {
         <input
           ref={entree}
           type="file"
+          aria-label="Fichier Excel des patients (.xlsx)"
           accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
           onChange={(e) => {
             setFichier(e.target.files?.[0] ?? null);
@@ -172,7 +173,12 @@ export function ImportPatients({ champs }: { champs: Champ[] }) {
                 </button>
               </div>
 
-              <div className="overflow-x-auto rounded-[14px] border border-line bg-surface">
+              <div
+                className="overflow-x-auto rounded-[14px] border border-line bg-surface"
+                tabIndex={0}
+                role="region"
+                aria-label="Aperçu de l’import (tableau défilant)"
+              >
                 <table className="w-full border-collapse text-sm">
                   <thead>
                     <tr className="border-b border-line bg-sunken text-[11px] tracking-[0.1em] text-ink-muted uppercase">

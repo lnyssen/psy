@@ -162,7 +162,7 @@ export function GrilleSemaine({
                 </div>
                 <div
                   className={`mt-1 text-[12px] font-semibold ${
-                    j.total === "—" ? "text-ink-muted/60" : "text-accent-text"
+                    j.total === "—" ? "text-ink-muted" : "text-accent-text"
                   }`}
                   data-numeric
                 >
@@ -193,7 +193,7 @@ export function GrilleSemaine({
               {heures.slice(0, -1).map((h, i) => (
                 <span
                   key={`${h}-30`}
-                  className="absolute right-1.5 -translate-y-1/2 text-[10px] text-ink-muted/70"
+                  className="absolute right-1.5 -translate-y-1/2 text-[11px] text-ink-muted"
                   style={{ top: i * PX_PAR_HEURE + PX_PAR_HEURE / 2 + MARGE_HAUT }}
                   data-numeric
                 >

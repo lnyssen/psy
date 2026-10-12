@@ -117,6 +117,11 @@ export const PAGES_DOC: PageDoc[] = [
           {
             t: "p",
             texte:
+              "**Au clavier** : le premier appui sur Tab propose **Aller au contenu**, qui évite de parcourir tout le menu ; Entrée place alors le curseur sur la page. L'élément sélectionné est toujours entouré d'un contour violet. Les tableaux qui dépassent de l'écran défilent au clavier une fois sélectionnés (flèches), et les messages de confirmation sont annoncés par les lecteurs d'écran.",
+          },
+          {
+            t: "p",
+            texte:
               "Le champ **Rechercher…** en haut de la barre retrouve un patient, une note ou un lieu en tapant quelques lettres.",
           },
         ],

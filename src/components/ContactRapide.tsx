@@ -37,6 +37,11 @@ export function ContactRapide({
       <button type="button" onClick={copier} className={bouton}>
         {copie ? "Copié ✓" : "Copier les coordonnées"}
       </button>
+      {/* Annonce pour les lecteurs d'écran : le libellé du bouton change sans
+          que rien ne le dise (WCAG 4.1.3). */}
+      <span role="status" className="sr-only">
+        {copie ? "Coordonnées copiées" : ""}
+      </span>
       {numeros.map((n) => {
         const wa = lienWhatsApp(n.tel);
         const suffixe = n.libelle ? ` · ${n.libelle}` : "";
