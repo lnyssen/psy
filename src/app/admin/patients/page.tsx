@@ -22,7 +22,8 @@ export default async function Patients({
 }: {
   searchParams: Promise<Params>;
 }) {
-  const params = await searchParams;
+  // « supprime » n'est pas un filtre : il ne doit pas suivre dans les liens.
+  const { supprime, ...params } = await searchParams;
 
   const nbDoublons = (await trouverDoublons()).length;
   const patients = await prisma.patient.findMany({
@@ -111,6 +112,15 @@ export default async function Patients({
           </Link>
         </div>
       </header>
+
+      {supprime === "1" && (
+        <p
+          role="status"
+          className="rounded-[10px] border border-paid/40 bg-paid-soft px-4 py-2.5 text-sm text-paid"
+        >
+          Le patient a été supprimé.
+        </p>
+      )}
 
       <FiltresMobile
         base="/admin/patients"

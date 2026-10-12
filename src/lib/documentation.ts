@@ -107,7 +107,7 @@ export const PAGES_DOC: PageDoc[] = [
           {
             t: "p",
             texte:
-              "En bas de la barre : **Réglages** (la roue), **Documentation** (le point d'interrogation, cette page), le **thème** clair ou sombre (la lune), et le **cadenas**. La flèche en haut replie la barre pour gagner de la place.",
+              "Tout en bas du menu, sous un trait, **Réglages** et **Documentation** (cette page) ; juste en dessous, le **thème** clair ou sombre (la lune) et le **cadenas**. La flèche en haut replie la barre pour gagner de la place.",
           },
           {
             t: "p",
@@ -417,16 +417,17 @@ export const PAGES_DOC: PageDoc[] = [
           {
             t: "p",
             texte:
-              "En bas de chaque fiche, **Données personnelles (RGPD)** permet :",
+              "En bas de chaque fiche, **Données personnelles et suppression** permet :",
           },
           {
             t: "liste",
             items: [
               "**D'exporter le dossier** : un fichier qui regroupe tout ce que l'outil sait du patient. Les notes de séance, cliniques, n'y figurent que si vous choisissez **Exporter avec les notes de séance**.",
               "**D'anonymiser le dossier** : le nom, les coordonnées, le numéro national, les notes et les documents sont effacés. Les séances et leurs montants restent, rattachés à « Dossier anonymisé », car ce sont des pièces comptables à conserver. Il faut taper ANONYMISER pour confirmer, et c'est refusé tant qu'un rendez-vous à venir existe.",
+              "**De supprimer le patient** : la fiche, ses notes, ses documents et ses rendez-vous à venir disparaissent pour de bon (et de l'agenda Google). Il faut taper SUPPRIMER pour confirmer. C'est prévu pour une fiche créée par erreur, un doublon ou une personne jamais venue : dès que le patient a une séance passée ou facturée, la suppression est refusée, car ce sont des pièces comptables à conserver sept ans. Il reste alors l'anonymisation.",
             ],
           },
-          { t: "attention", texte: "L'anonymisation est irréversible." },
+          { t: "attention", texte: "L'anonymisation et la suppression sont irréversibles." },
         ],
       },
     ],

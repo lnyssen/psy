@@ -4,10 +4,10 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { verrouiller } from "@/lib/auth-actions";
-import { ENTREES, estActif } from "@/components/entrees";
+import { ENTREES, ENTREES_BAS, estActif } from "@/components/entrees";
 import { Recherche } from "@/components/Recherche";
 import { Theme } from "@/components/Theme";
-import { IconAide, IconCadenas, IconFermer, IconMenu, IconReglages } from "@/components/icons";
+import { IconCadenas, IconFermer, IconMenu } from "@/components/icons";
 
 /**
  * Barre de l'outil sur téléphone, en dessous de 900 px.
@@ -151,35 +151,28 @@ export function Nav({
             })}
           </nav>
 
+          <div className="mt-3 flex flex-col gap-1 border-t border-line pt-3">
+            {ENTREES_BAS.map(({ href, label, Icone }) => {
+              const actif = estActif(href, pathname);
+              return (
+                <Link
+                  key={href}
+                  href={href}
+                  aria-current={actif ? "page" : undefined}
+                  className={`flex items-center gap-3 rounded-full px-4 py-3 text-sm font-medium transition-colors ${
+                    actif
+                      ? "bg-accent text-accent-contrast"
+                      : "text-ink-muted hover:bg-accent-soft hover:text-accent-text"
+                  }`}
+                >
+                  <Icone className="shrink-0" />
+                  {label}
+                </Link>
+              );
+            })}
+          </div>
+
           <div className="mt-4 flex items-center gap-2 border-t border-line pt-4">
-            <Link
-              href="/admin/reglages"
-              aria-current={pathname.startsWith("/admin/reglages") ? "page" : undefined}
-              title="Réglages"
-              className={`flex h-11 w-11 items-center justify-center rounded-full border transition-colors ${
-                pathname.startsWith("/admin/reglages")
-                  ? "border-accent bg-accent text-accent-contrast"
-                  : "border-contour-nav text-contour-nav hover:border-accent hover:text-accent-text"
-              }`}
-            >
-              <span className="sr-only">Réglages</span>
-              <IconReglages />
-            </Link>
-
-            <Link
-              href="/admin/documentation"
-              aria-current={pathname.startsWith("/admin/documentation") ? "page" : undefined}
-              title="Documentation"
-              className={`flex h-11 w-11 items-center justify-center rounded-full border transition-colors ${
-                pathname.startsWith("/admin/documentation")
-                  ? "border-accent bg-accent text-accent-contrast"
-                  : "border-contour-nav text-contour-nav hover:border-accent hover:text-accent-text"
-              }`}
-            >
-              <span className="sr-only">Documentation</span>
-              <IconAide />
-            </Link>
-
             <Theme initial={theme} />
 
             {!ouverte && (

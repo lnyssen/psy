@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { verrouiller } from "@/lib/auth-actions";
-import { ENTREES, estActif } from "@/components/entrees";
+import { ENTREES, ENTREES_BAS, estActif } from "@/components/entrees";
 import { Recherche } from "@/components/Recherche";
 import { Theme } from "@/components/Theme";
 import {
@@ -12,8 +12,6 @@ import {
   IconChevronDroite,
   IconChevronGauche,
   IconRecherche,
-  IconAide,
-  IconReglages,
 } from "@/components/icons";
 
 /**
@@ -211,39 +209,48 @@ export function BarreLaterale({
         })}
       </nav>
 
+      {/* Réglages et documentation : des entrées à part entière, en bas du
+          menu et non de simples pictogrammes à côté du thème. */}
+      <div
+        className={`flex flex-col gap-1 border-t border-line px-3 pt-3 pb-3 ${
+          repliee ? "items-center" : ""
+        }`}
+      >
+        {ENTREES_BAS.map(({ href, label, Icone }) => {
+          const actif = estActif(href, pathname);
+          return (
+            <Link
+              key={href}
+              href={href}
+              aria-current={actif ? "page" : undefined}
+              className={`group relative flex items-center rounded-full text-[14px] font-medium whitespace-nowrap transition-colors ${
+                repliee ? "h-10 w-10 justify-center" : "gap-3 px-3.5 py-2.5"
+              } ${
+                actif
+                  ? "bg-accent text-accent-contrast"
+                  : "text-ink-muted hover:bg-accent-soft hover:text-accent-text"
+              }`}
+            >
+              <Icone className="shrink-0" />
+              <span className={repliee ? "sr-only" : "truncate"}>{label}</span>
+              {repliee && (
+                <span
+                  aria-hidden="true"
+                  className="pointer-events-none absolute top-1/2 left-full z-50 ml-3 -translate-y-1/2 rounded-full bg-nuit px-3 py-1.5 text-[12px] font-medium text-white opacity-0 ring-1 ring-white/15 transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100"
+                >
+                  {label}
+                </span>
+              )}
+            </Link>
+          );
+        })}
+      </div>
+
       <div
         className={`flex gap-2 border-t border-line p-3 ${
           repliee ? "flex-col items-center" : "items-center"
         }`}
       >
-        <Link
-          href="/admin/reglages"
-          aria-current={pathname.startsWith("/admin/reglages") ? "page" : undefined}
-          title="Réglages"
-          className={`flex h-9 w-9 items-center justify-center rounded-full border transition-colors ${
-            pathname.startsWith("/admin/reglages")
-              ? "border-accent bg-accent text-accent-contrast"
-              : "border-contour-nav text-contour-nav hover:border-accent hover:text-accent-text"
-          }`}
-        >
-          <span className="sr-only">Réglages</span>
-          <IconReglages />
-        </Link>
-
-        <Link
-          href="/admin/documentation"
-          aria-current={pathname.startsWith("/admin/documentation") ? "page" : undefined}
-          title="Documentation"
-          className={`flex h-9 w-9 items-center justify-center rounded-full border transition-colors ${
-            pathname.startsWith("/admin/documentation")
-              ? "border-accent bg-accent text-accent-contrast"
-              : "border-contour-nav text-contour-nav hover:border-accent hover:text-accent-text"
-          }`}
-        >
-          <span className="sr-only">Documentation</span>
-          <IconAide />
-        </Link>
-
         <Theme initial={theme} />
 
         {/* Pas de cadenas pendant la démonstration : le bouton renverrait vers

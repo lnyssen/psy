@@ -1,4 +1,4 @@
-import { anonymiserPatient } from "@/lib/dossier-actions";
+import { anonymiserPatient, supprimerPatient } from "@/lib/dossier-actions";
 
 const MESSAGES: Record<string, { ok: boolean; texte: string }> = {
   ok: {
@@ -15,6 +15,15 @@ const MESSAGES: Record<string, { ok: boolean; texte: string }> = {
     texte:
       "Ce patient a encore un rendez-vous à venir. Annulez-le d’abord, puis recommencez.",
   },
+  "suppr-confirmation": {
+    ok: false,
+    texte: "Pour confirmer, tapez SUPPRIMER en capitales dans le champ.",
+  },
+  "suppr-comptable": {
+    ok: false,
+    texte:
+      "Ce patient a des séances passées ou facturées : elles sont des pièces comptables et ne peuvent pas être supprimées. Anonymisez le dossier à la place.",
+  },
 };
 
 /**
@@ -26,10 +35,15 @@ export function DonneesPersonnelles({
   id,
   anonymise,
   code,
+  suppressible,
+  rdvAVenir,
 }: {
   id: string;
   anonymise: boolean;
   code?: string;
+  /** Aucune séance passée ni facturée : la fiche peut vraiment disparaître. */
+  suppressible: boolean;
+  rdvAVenir: number;
 }) {
   const message = code ? MESSAGES[code] : undefined;
   return (
@@ -38,7 +52,7 @@ export function DonneesPersonnelles({
       open={Boolean(message)}
     >
       <summary className="w-fit cursor-pointer text-sm font-medium text-ink-muted transition-colors hover:text-accent-text">
-        Données personnelles (RGPD)
+        Données personnelles et suppression
       </summary>
       <div className="mt-4 flex flex-col gap-6">
         {message && (
@@ -113,6 +127,45 @@ export function DonneesPersonnelles({
             </button>
           </form>
         )}
+
+        <div className="flex flex-col gap-3 border-t border-line pt-5">
+          <h3 className="text-sm font-semibold">Supprimer le patient</h3>
+          {suppressible ? (
+            <form action={supprimerPatient} className="flex flex-col gap-3">
+              <input type="hidden" name="id" value={id} />
+              <p className="text-xs text-ink-muted">
+                Efface la fiche, ses notes et ses documents
+                {rdvAVenir > 0 &&
+                  `, ainsi que ${rdvAVenir === 1 ? "son rendez-vous" : `ses ${rdvAVenir} rendez-vous`} à venir (retiré${rdvAVenir > 1 ? "s" : ""} aussi de l’agenda Google)`}
+                . <strong>Irréversible.</strong> Fait pour une fiche créée par
+                erreur, un doublon ou une personne jamais venue.
+              </p>
+              <label className="max-w-xs">
+                <span className="block text-[11px] font-semibold tracking-[0.1em] text-ink-muted uppercase">
+                  Tapez SUPPRIMER pour confirmer
+                </span>
+                <input
+                  name="confirmation"
+                  autoComplete="off"
+                  className="mt-1 w-full rounded-full border border-line bg-surface px-3.5 py-2 text-sm"
+                />
+              </label>
+              <button
+                type="submit"
+                className="self-start rounded-full border border-line-strong px-5 py-2 text-sm font-medium text-ink-muted transition-colors hover:border-overdue hover:text-overdue"
+              >
+                Supprimer ce patient
+              </button>
+            </form>
+          ) : (
+            <p className="text-xs text-ink-muted">
+              Ce patient a des séances passées ou facturées : ce sont des pièces
+              comptables à conserver pendant sept ans, la fiche ne peut donc pas
+              être supprimée. L’anonymisation ci-dessus efface tout ce qui
+              l’identifie et garde les montants.
+            </p>
+          )}
+        </div>
       </div>
     </details>
   );

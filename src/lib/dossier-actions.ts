@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { exigerSession } from "@/lib/garde";
 import { synchroniserApres } from "@/lib/google-sync";
+import { seancePieceComptable } from "@/lib/suppression-patient";
 
 /**
  * Droit à l'effacement : anonymiser un dossier.
@@ -77,4 +78,42 @@ export async function anonymiserPatient(f: FormData) {
   ])
     revalidatePath(c);
   redirect(`/admin/patients/${id}?rgpd=ok`);
+}
+
+/**
+ * Supprime une fiche et tout ce qui s'y rattache (notes, documents, rendez-vous
+ * à venir). Définitif, et refusé dès qu'une séance est une pièce comptable : le
+ * message oriente alors vers l'anonymisation, qui garde les montants.
+ */
+export async function supprimerPatient(f: FormData) {
+  await exigerSession();
+  const id = String(f.get("id") ?? "");
+  const confirmation = String(f.get("confirmation") ?? "").trim();
+  if (!id) return;
+  if (confirmation !== "SUPPRIMER")
+    redirect(`/admin/patients/${id}?suppr=confirmation`);
+
+  const seances = await prisma.session.findMany({
+    where: { patientId: id },
+    select: {
+      status: true,
+      startsAt: true,
+      amountCents: true,
+      paidAt: true,
+      receiptAt: true,
+      factureId: true,
+    },
+  });
+  if (seances.some(seancePieceComptable))
+    redirect(`/admin/patients/${id}?suppr=comptable`);
+
+  // deleteMany : une fiche déjà supprimée (deuxième clic, autre onglet) n'est
+  // pas une erreur.
+  await prisma.patient.deleteMany({ where: { id } });
+  // Les rendez-vous partis avec la fiche laissent des événements chez Google :
+  // la synchronisation les retire.
+  synchroniserApres();
+  for (const c of ["/admin/patients", "/admin/semaine", "/admin"])
+    revalidatePath(c);
+  redirect("/admin/patients?supprime=1");
 }

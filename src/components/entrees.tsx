@@ -1,10 +1,12 @@
 import {
+  IconAide,
   IconDemandes,
   IconDepenses,
   IconFacturation,
   IconFinance,
   IconJour,
   IconPatients,
+  IconReglages,
   IconSemaine,
 } from "@/components/icons";
 
@@ -29,6 +31,12 @@ export const ENTREES = [
   { href: "/admin/depenses", label: "Dépenses", Icone: IconDepenses },
   { href: "/admin/finance", label: "Finance", Icone: IconFinance },
   { href: "/admin/demandes", label: "Demandes", Icone: IconDemandes },
+];
+
+/** Réglages et documentation : en bas du menu, séparés du travail quotidien. */
+export const ENTREES_BAS = [
+  { href: "/admin/reglages", label: "Réglages", Icone: IconReglages },
+  { href: "/admin/documentation", label: "Documentation", Icone: IconAide },
 ];
 
 /** « Aujourd'hui » est la racine : elle ne doit s'allumer que sur elle-même,

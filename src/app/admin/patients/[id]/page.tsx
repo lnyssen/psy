@@ -15,6 +15,7 @@ import { RecuInami } from "@/components/RecuInami";
 import { FormulairePatient } from "@/components/FormulairePatient";
 import { DonneesPersonnelles } from "@/components/DonneesPersonnelles";
 import { Documents } from "@/components/Documents";
+import { seanceAVenir, seancePieceComptable } from "@/lib/suppression-patient";
 import { montantSeanceCents, payeurDe } from "@/lib/tarifs";
 import { AnnulerAbsence } from "@/components/AnnulerAbsence";
 import { AnnulerSeance } from "@/components/AnnulerSeance";
@@ -58,10 +59,10 @@ export default async function FichePatient({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ rgpd?: string; doc?: string }>;
+  searchParams: Promise<{ rgpd?: string; doc?: string; suppr?: string }>;
 }) {
   const { id } = await params;
-  const { rgpd, doc } = await searchParams;
+  const { rgpd, doc, suppr } = await searchParams;
   const patient = await prisma.patient.findUnique({
     where: { id },
     include: {
@@ -475,7 +476,9 @@ export default async function FichePatient({
       <DonneesPersonnelles
         id={patient.id}
         anonymise={Boolean(patient.anonymiseAt)}
-        code={rgpd}
+        code={rgpd ?? (suppr ? `suppr-${suppr}` : undefined)}
+        suppressible={!patient.sessions.some(seancePieceComptable)}
+        rdvAVenir={patient.sessions.filter(seanceAVenir).length}
       />
     </div>
   );
