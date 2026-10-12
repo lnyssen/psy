@@ -22,7 +22,9 @@ export type StatutSauvegarde =
 
 export async function statutSauvegarde(): Promise<StatutSauvegarde> {
   try {
-    const brut = JSON.parse(await readFile(CHEMIN, "utf8")) as {
+    const brut = JSON.parse(
+      await readFile(/* turbopackIgnore: true */ CHEMIN, "utf8"),
+    ) as {
       date: string;
       taille: number;
       nombre: number;
