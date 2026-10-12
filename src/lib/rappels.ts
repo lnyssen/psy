@@ -97,6 +97,8 @@ function corps(ligneIntro: string, s: SeanceMail, lien: string) {
     `Pour annuler ou déplacer ce rendez-vous, jusqu’à ${DELAI_ANNULATION_H} heures avant : ${lien}`,
     `Passé ce délai, merci de me joindre au ${SITE.telephone}.`,
     "",
+    "Ce message est automatique : pour toute question, répondez-y ou appelez-moi.",
+    "",
     SITE.nom,
     SITE.telephone,
   ].join("\n");

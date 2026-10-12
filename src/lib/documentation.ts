@@ -530,7 +530,7 @@ export const PAGES_DOC: PageDoc[] = [
           {
             t: "p",
             texte:
-              "Les rappels partent chaque matin à 5 h pour les rendez-vous du lendemain. Ils se désactivent patient par patient, avec la case **Rappel de rendez-vous par e-mail, la veille** dans la fiche.",
+              "Les rappels partent chaque matin à 5 h pour les rendez-vous du lendemain. Le message donne la date et l'heure en clair (« mardi 13 octobre à 13 h 15 »), le lieu, le lien pour annuler ou déplacer jusqu'à 24 heures avant et le numéro à appeler passé ce délai ; il précise qu'il est automatique, et une réponse arrive dans votre boîte e-mail. Les e-mails de confirmation et la page du lien suivent la même écriture. Les rappels se désactivent patient par patient, avec la case **Rappel de rendez-vous par e-mail, la veille** dans la fiche.",
           },
         ],
       },

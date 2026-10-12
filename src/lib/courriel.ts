@@ -69,16 +69,25 @@ export function adresseNotifications() {
   return process.env.MAIL_NOTIFICATIONS || SITE.email;
 }
 
-const fmtCreneau = new Intl.DateTimeFormat("fr-BE", {
+const fmtJourCreneau = new Intl.DateTimeFormat("fr-BE", {
   weekday: "long",
   day: "numeric",
   month: "long",
-  hour: "2-digit",
+  timeZone: FUSEAU,
+});
+const fmtHeureCreneau = new Intl.DateTimeFormat("fr-BE", {
+  hour: "numeric",
   minute: "2-digit",
+  hour12: false,
   timeZone: FUSEAU,
 });
 
-/** « mardi 14 octobre à 16:30 » */
+/** « mardi 14 octobre à 16 h 30 » ; à l'heure pile, « mardi 14 octobre à 16 h ». */
 export function creneauEnClair(d: Date) {
-  return fmtCreneau.format(d);
+  const parties = fmtHeureCreneau.formatToParts(d);
+  const valeur = (t: string) => Number(parties.find((p) => p.type === t)?.value ?? 0);
+  const minutes = valeur("minute");
+  return `${fmtJourCreneau.format(d)} à ${valeur("hour") % 24} h${
+    minutes ? ` ${String(minutes).padStart(2, "0")}` : ""
+  }`;
 }
