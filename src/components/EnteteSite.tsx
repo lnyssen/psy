@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { IconFermer, IconMenu } from "@/components/icons";
 
 const PAGES = [
@@ -23,6 +23,34 @@ const PAGES = [
 export function EnteteSite() {
   const pathname = usePathname();
   const [ouvert, setOuvert] = useState(false);
+
+  // La pastille de la page courante glisse d'un lien à l'autre. Elle est
+  // placée directement sur l'élément (pas d'état) : mesurer puis rendre à
+  // nouveau décalerait d'une image ce qui doit être immédiat.
+  const liens = useRef(new Map<string, HTMLAnchorElement>());
+  const pastille = useRef<HTMLSpanElement>(null);
+  const dejaPlacee = useRef(false);
+  useLayoutEffect(() => {
+    const placer = () => {
+      const el = pastille.current;
+      if (!el) return;
+      const actif = liens.current.get(pathname);
+      if (!actif || actif.offsetWidth === 0) {
+        el.style.opacity = "0";
+        return;
+      }
+      // Le premier placement se fait sans transition : la pastille ne doit pas
+      // arriver en glissant depuis le bord au chargement de la page.
+      el.style.transition = dejaPlacee.current ? "" : "none";
+      el.style.width = `${actif.offsetWidth}px`;
+      el.style.transform = `translateX(${actif.offsetLeft}px)`;
+      el.style.opacity = "1";
+      dejaPlacee.current = true;
+    };
+    placer();
+    window.addEventListener("resize", placer);
+    return () => window.removeEventListener("resize", placer);
+  }, [pathname]);
   const [cheminAffiche, setCheminAffiche] = useState(pathname);
 
   if (cheminAffiche !== pathname) {
@@ -85,17 +113,29 @@ export function EnteteSite() {
         */}
         <nav
           aria-label="Navigation du site"
-          className="ml-auto hidden items-center gap-1 md:flex"
+          className="relative ml-auto hidden items-center gap-1 md:flex"
         >
+          {/* Même graisse pour tous les liens : une graisse qui change à la
+              sélection élargit le lien et pousse ses voisins. Seule la couleur
+              et la pastille désignent la page courante. */}
+          <span
+            ref={pastille}
+            aria-hidden="true"
+            className="pointer-events-none absolute top-0 left-0 h-full rounded-full bg-accent-soft opacity-0 transition-[transform,width,opacity] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] motion-reduce:transition-none"
+          />
           {PAGES.map((p) => (
             <Link
               key={p.href}
               href={p.href}
+              ref={(el) => {
+                if (el) liens.current.set(p.href, el);
+                else liens.current.delete(p.href);
+              }}
               aria-current={pathname === p.href ? "page" : undefined}
-              className={`rounded-full px-4 py-1.5 text-[15px] transition-colors ${
+              className={`relative rounded-full px-4 py-1.5 text-[15px] font-medium transition-colors duration-300 ${
                 pathname === p.href
-                  ? "bg-accent-soft font-semibold text-accent-text"
-                  : "text-ink hover:bg-accent-soft/60 hover:text-accent-text"
+                  ? "text-accent-text"
+                  : "text-ink hover:text-accent-text"
               }`}
             >
               {p.label}
