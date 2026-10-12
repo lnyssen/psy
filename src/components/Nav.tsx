@@ -7,7 +7,7 @@ import { verrouiller } from "@/lib/auth-actions";
 import { ENTREES, estActif } from "@/components/entrees";
 import { Recherche } from "@/components/Recherche";
 import { Theme } from "@/components/Theme";
-import { IconCadenas, IconFermer, IconMenu, IconReglages } from "@/components/icons";
+import { IconAide, IconCadenas, IconFermer, IconMenu, IconReglages } from "@/components/icons";
 
 /**
  * Barre de l'outil sur téléphone, en dessous de 900 px.
@@ -164,6 +164,20 @@ export function Nav({
             >
               <span className="sr-only">Réglages</span>
               <IconReglages />
+            </Link>
+
+            <Link
+              href="/admin/documentation"
+              aria-current={pathname.startsWith("/admin/documentation") ? "page" : undefined}
+              title="Documentation"
+              className={`flex h-11 w-11 items-center justify-center rounded-full border transition-colors ${
+                pathname.startsWith("/admin/documentation")
+                  ? "border-accent bg-accent text-accent-contrast"
+                  : "border-contour-nav text-contour-nav hover:border-accent hover:text-accent-text"
+              }`}
+            >
+              <span className="sr-only">Documentation</span>
+              <IconAide />
             </Link>
 
             <Theme initial={theme} />

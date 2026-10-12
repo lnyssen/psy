@@ -12,6 +12,7 @@ import {
   IconChevronDroite,
   IconChevronGauche,
   IconRecherche,
+  IconAide,
   IconReglages,
 } from "@/components/icons";
 
@@ -227,6 +228,20 @@ export function BarreLaterale({
         >
           <span className="sr-only">Réglages</span>
           <IconReglages />
+        </Link>
+
+        <Link
+          href="/admin/documentation"
+          aria-current={pathname.startsWith("/admin/documentation") ? "page" : undefined}
+          title="Documentation"
+          className={`flex h-9 w-9 items-center justify-center rounded-full border transition-colors ${
+            pathname.startsWith("/admin/documentation")
+              ? "border-accent bg-accent text-accent-contrast"
+              : "border-contour-nav text-contour-nav hover:border-accent hover:text-accent-text"
+          }`}
+        >
+          <span className="sr-only">Documentation</span>
+          <IconAide />
         </Link>
 
         <Theme initial={theme} />

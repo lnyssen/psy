@@ -119,6 +119,16 @@ export function IconReglages({ className }: Props) {
   );
 }
 
+export function IconAide({ className }: Props) {
+  return (
+    <svg {...base} className={className}>
+      <circle cx="10" cy="10" r="7.2" />
+      <path d="M7.9 7.8a2.2 2.2 0 1 1 3.3 1.9c-.7.4-1.2.9-1.2 1.7" />
+      <path d="M10 14.1h.01" />
+    </svg>
+  );
+}
+
 export function IconRecherche({ className }: Props) {
   return (
     <svg {...base} className={className}>
