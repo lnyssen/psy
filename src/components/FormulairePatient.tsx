@@ -27,6 +27,7 @@ type Patient = {
   feeCents: number | null;
   email: string | null;
   phone: string | null;
+  rappelsEmail?: boolean;
   phoneMother: string | null;
   phoneFather: string | null;
   emailMother: string | null;
@@ -187,6 +188,23 @@ export function FormulairePatient({
             defaultValue={p?.email ?? ""}
             className={`mt-1 ${champ}`}
           />
+        </label>
+        <label className="flex items-start gap-3 text-sm sm:col-span-2">
+          <input
+            type="checkbox"
+            name="rappelsEmail"
+            defaultChecked={p ? (p.rappelsEmail ?? true) : true}
+            className="mt-1 h-4 w-4"
+          />
+          <span>
+            <span className="font-medium">
+              Rappel de rendez-vous par e-mail, la veille
+            </span>
+            <span className="mt-0.5 block text-xs text-ink-muted">
+              Envoyé au patient s’il a une adresse, sinon à ses parents. À
+              décocher pour qui préfère être appelé.
+            </span>
+          </span>
         </label>
       </Groupe>
 

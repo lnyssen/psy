@@ -1,15 +1,21 @@
+import Link from "next/link";
 import { cookies } from "next/headers";
 import type { Metadata } from "next";
 import { BarreLaterale } from "@/components/BarreLaterale";
 import { Nav } from "@/components/Nav";
 import { prisma } from "@/lib/db";
 import { demoOuverte } from "@/lib/demo";
+import { statutSauvegarde } from "@/lib/sauvegardes";
 
 export const metadata: Metadata = {
   title: "Amandine Monsel — Amapsy SRL",
   description: "Outil de gestion de pratique.",
   // L'outil n'a rien à faire dans un moteur de recherche.
   robots: { index: false, follow: false },
+  // Installable sur l'écran d'accueil : il s'ouvre alors directement sur
+  // l'outil, sans la barre du navigateur, avec le nom court « Amapsy ».
+  manifest: "/manifeste-outil.webmanifest",
+  appleWebApp: { capable: true, title: "Amapsy", statusBarStyle: "default" },
 };
 
 export const dynamic = "force-dynamic";
@@ -21,7 +27,11 @@ export const dynamic = "force-dynamic";
  * part dès la première réponse, sans éclair blanc ni barre qui se replie après
  * coup sous les yeux.
  */
-export default async function AdminLayout({ children }: { children: React.ReactNode }) {
+export default async function AdminLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const jar = await cookies();
   const theme = jar.get("theme")?.value === "dark" ? "dark" : "light";
   const repliee = jar.get("nav")?.value === "replie";
@@ -29,8 +39,12 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   // Une demande déposée depuis le site n'avertit personne : aucun e-mail n'est
   // encore envoyé. Ce compteur est, en attendant, le seul signal qu'elle
   // existe — sans lui, une demande peut dormir des jours.
-  const enAttente = await prisma.demandeRdv.count({ where: { statut: "EN_ATTENTE" } });
+  const enAttente = await prisma.demandeRdv.count({
+    where: { statut: "EN_ATTENTE" },
+  });
   const ouverte = demoOuverte();
+  // Une sauvegarde qui ne tourne plus ne fait aucun bruit : on le dit en haut.
+  const sauvegarde = await statutSauvegarde();
 
   return (
     <div className="flex min-h-screen">
@@ -58,17 +72,42 @@ export default async function AdminLayout({ children }: { children: React.ReactN
               <span className="font-semibold">Démonstration ouverte</span>
               <span aria-hidden="true">·</span>
               <span>
-                l’outil est accessible sans mot de passe. N’y saisissez aucune donnée réelle.
+                l’outil est accessible sans mot de passe. N’y saisissez aucune
+                donnée réelle.
               </span>
             </span>
           </p>
         )}
 
-        <main className="mx-auto w-full max-w-7xl px-5 py-8 md:px-8 md:py-10">{children}</main>
+        {sauvegarde.etat === "ancienne" && (
+          <p
+            role="alert"
+            className="mx-auto w-full max-w-7xl px-5 pt-5 md:px-8"
+          >
+            <span className="flex flex-wrap items-center gap-x-2 gap-y-1 rounded-[14px] border border-overdue/40 bg-overdue-soft px-4 py-2.5 text-[13px] text-overdue">
+              <span className="font-semibold">Aucune sauvegarde récente</span>
+              <span aria-hidden="true">·</span>
+              <span>
+                la base n’a pas été sauvegardée depuis plus de 36 heures.
+              </span>
+              <Link
+                href="/admin/reglages#sauvegardes"
+                className="font-medium underline underline-offset-4"
+              >
+                Voir
+              </Link>
+            </span>
+          </p>
+        )}
+
+        <main className="mx-auto w-full max-w-7xl px-5 py-8 md:px-8 md:py-10">
+          {children}
+        </main>
         {ouverte && (
           <footer className="mx-auto w-full max-w-7xl px-5 pb-10 md:px-8">
             <p className="rounded-full bg-sunken px-4 py-2 text-center text-[11px] text-ink-muted">
-              Instance de démonstration. Toutes les personnes affichées sont fictives.
+              Instance de démonstration. Toutes les personnes affichées sont
+              fictives.
             </p>
           </footer>
         )}

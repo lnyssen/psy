@@ -13,6 +13,8 @@ export type Parametres = {
   numeroCommission: string | null;
   rdvEnLigne: boolean;
   rdvMessage: string | null;
+  nouveauxPatients: boolean;
+  nouveauxPatientsMessage: string | null;
   iban: string | null;
   delaiPaiementJours: number;
   adresseSiege: string | null;
@@ -32,6 +34,8 @@ const PAR_DEFAUT: Parametres = {
   numeroCommission: null,
   rdvEnLigne: true,
   rdvMessage: null,
+  nouveauxPatients: true,
+  nouveauxPatientsMessage: null,
   iban: null,
   delaiPaiementJours: 30,
   adresseSiege: null,

@@ -1,8 +1,14 @@
 import Link from "next/link";
 import type { CareScheme } from "@prisma/client";
 import { prisma } from "@/lib/db";
+import { trouverDoublons } from "@/lib/doublons";
 import { CabinetTag, RegimeTag } from "@/components/tags";
-import { EnTeteTri, GroupeFiltre, TriMobile, type Params } from "@/components/filtres";
+import {
+  EnTeteTri,
+  GroupeFiltre,
+  TriMobile,
+  type Params,
+} from "@/components/filtres";
 import { FiltresMobile } from "@/components/FiltresMobile";
 import { cabinetsActifs, optionsCabinet } from "@/lib/cabinets";
 import { euros, isBillable, nomComplet } from "@/lib/format";
@@ -11,9 +17,14 @@ import { Pagination, pageDe, tailleDePage } from "@/components/Pagination";
 
 export const dynamic = "force-dynamic";
 
-export default async function Patients({ searchParams }: { searchParams: Promise<Params> }) {
+export default async function Patients({
+  searchParams,
+}: {
+  searchParams: Promise<Params>;
+}) {
   const params = await searchParams;
 
+  const nbDoublons = (await trouverDoublons()).length;
   const patients = await prisma.patient.findMany({
     where: {
       ...(params.cabinet ? { cabinetId: params.cabinet } : {}),
@@ -24,7 +35,9 @@ export default async function Patients({ searchParams }: { searchParams: Promise
   // Un lieu facturé à un établissement (l'école) n'a pas de patientèle propre
   // depuis que ses séances ne tiennent plus à un patient : le filtrer ici
   // plutôt que proposer un cabinet qui ne ramènera jamais un dossier.
-  const cabinets = (await cabinetsActifs()).filter((c) => !c.factureInstitution);
+  const cabinets = (await cabinetsActifs()).filter(
+    (c) => !c.factureInstitution,
+  );
 
   // Le tri se fait ici plutôt qu'en base : deux des colonnes triables (nombre
   // de séances, solde dû) sont calculées et n'existent pas comme champs.
@@ -37,22 +50,32 @@ export default async function Patients({ searchParams }: { searchParams: Promise
         ? 0
         : p.sessions
             .filter((s) => isBillable(s.status) && s.paymentStatus !== "PAID")
-            .reduce((n, s) => n + (s.amountCents ?? montantSeanceCents(p) ?? 0), 0),
+            .reduce(
+              (n, s) => n + (s.amountCents ?? montantSeanceCents(p) ?? 0),
+              0,
+            ),
   }));
 
   const sens = params.sens === "desc" ? -1 : 1;
-  const comparateurs: Record<string, (a: typeof enrichis[number], b: typeof enrichis[number]) => number> = {
+  const comparateurs: Record<
+    string,
+    (a: (typeof enrichis)[number], b: (typeof enrichis)[number]) => number
+  > = {
     nom: (a, b) => a.p.lastName.localeCompare(b.p.lastName, "fr"),
     seances: (a, b) => a.seances - b.seances,
     du: (a, b) => a.du - b.du,
-    cabinet: (a, b) => (a.p.cabinet?.nom ?? "").localeCompare(b.p.cabinet?.nom ?? "", "fr"),
+    cabinet: (a, b) =>
+      (a.p.cabinet?.nom ?? "").localeCompare(b.p.cabinet?.nom ?? "", "fr"),
     regime: (a, b) => a.p.scheme.localeCompare(b.p.scheme),
   };
   const tri = comparateurs[params.tri ?? "nom"] ?? comparateurs.nom;
   enrichis.sort((a, b) => tri(a, b) * sens);
 
   const taille = tailleDePage(params);
-  const page = Math.min(pageDe(params), Math.max(1, Math.ceil(enrichis.length / taille)));
+  const page = Math.min(
+    pageDe(params),
+    Math.max(1, Math.ceil(enrichis.length / taille)),
+  );
   const pageActuelle = enrichis.slice((page - 1) * taille, page * taille);
 
   return (
@@ -65,6 +88,15 @@ export default async function Patients({ searchParams }: { searchParams: Promise
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
+          {nbDoublons > 0 && (
+            <Link
+              href="/admin/patients/doublons"
+              className="rounded-full border border-due/50 bg-due-soft px-5 py-2.5 text-sm font-medium text-due transition-colors hover:border-due"
+            >
+              {nbDoublons} doublon{nbDoublons > 1 ? "s" : ""} possible
+              {nbDoublons > 1 ? "s" : ""}
+            </Link>
+          )}
           <Link
             href="/admin/patients/import"
             className="rounded-full border border-line px-5 py-2.5 text-sm font-medium transition-colors hover:bg-sunken"
@@ -84,22 +116,22 @@ export default async function Patients({ searchParams }: { searchParams: Promise
         base="/admin/patients"
         params={params}
         groupes={[
-            {
-              cle: "cabinet",
-              libelle: "Cabinet",
-              tout: "Tous les lieux",
-              options: optionsCabinet(cabinets),
-            },
-            {
-              cle: "regime",
-              libelle: "Régime",
-              tout: "Tous les régimes",
-              options: [
-                { valeur: "PRIVE", label: "privé" },
-                { valeur: "CONVENTIONNE", label: "conventionné" },
-              ],
-            },
-          ]}
+          {
+            cle: "cabinet",
+            libelle: "Cabinet",
+            tout: "Tous les lieux",
+            options: optionsCabinet(cabinets),
+          },
+          {
+            cle: "regime",
+            libelle: "Régime",
+            tout: "Tous les régimes",
+            options: [
+              { valeur: "PRIVE", label: "privé" },
+              { valeur: "CONVENTIONNE", label: "conventionné" },
+            ],
+          },
+        ]}
       />
 
       <div className="flex flex-wrap gap-x-6 gap-y-3">
@@ -182,19 +214,35 @@ export default async function Patients({ searchParams }: { searchParams: Promise
               <th scope="col" className="px-3 py-2.5 text-left font-semibold">
                 Téléphone
               </th>
-              <EnTeteTri base="/admin/patients" params={params} champ="seances" aDroite>
+              <EnTeteTri
+                base="/admin/patients"
+                params={params}
+                champ="seances"
+                aDroite
+              >
                 Séances
               </EnTeteTri>
-              <EnTeteTri base="/admin/patients" params={params} champ="du" aDroite>
+              <EnTeteTri
+                base="/admin/patients"
+                params={params}
+                champ="du"
+                aDroite
+              >
                 Dû
               </EnTeteTri>
             </tr>
           </thead>
           <tbody>
             {pageActuelle.map(({ p, seances, du }) => (
-              <tr key={p.id} className="border-b border-line last:border-b-0 hover:bg-sunken/60">
+              <tr
+                key={p.id}
+                className="border-b border-line last:border-b-0 hover:bg-sunken/60"
+              >
                 <td className="px-5 py-3">
-                  <Link href={`/admin/patients/${p.id}`} className="font-medium">
+                  <Link
+                    href={`/admin/patients/${p.id}`}
+                    className="font-medium"
+                  >
                     {nomComplet(p)}
                   </Link>
                 </td>
@@ -228,7 +276,12 @@ export default async function Patients({ searchParams }: { searchParams: Promise
         </p>
       )}
 
-      <Pagination base="/admin/patients" params={params} total={enrichis.length} taille={taille} />
+      <Pagination
+        base="/admin/patients"
+        params={params}
+        total={enrichis.length}
+        taille={taille}
+      />
     </div>
   );
 }

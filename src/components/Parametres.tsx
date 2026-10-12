@@ -76,6 +76,40 @@ export function RendezVousEnLigne({ valeurs }: { valeurs: ParametresType }) {
           </span>
         </label>
 
+        <div className="flex flex-col gap-4 border-t border-line pt-5">
+          <label className="flex items-start gap-3 text-sm">
+            <input
+              type="checkbox"
+              name="nouveauxPatients"
+              defaultChecked={valeurs.nouveauxPatients}
+              className="mt-1 h-4 w-4"
+            />
+            <span>
+              <span className="font-medium">
+                J’accepte de nouveaux patients
+              </span>
+              <span className={aide}>
+                Décochée, les personnes que l’outil ne connaît pas ne peuvent
+                plus demander de rendez-vous : elles laissent leurs coordonnées
+                sur une liste d’attente, que vous retrouvez dans « Demandes ».
+                Les patients qui ont leur lien personnel réservent comme avant.
+              </span>
+            </span>
+          </label>
+          <label>
+            <span className={libelleChamp}>
+              Message affiché sur la liste d’attente (facultatif)
+            </span>
+            <textarea
+              name="nouveauxPatientsMessage"
+              defaultValue={valeurs.nouveauxPatientsMessage ?? ""}
+              rows={2}
+              placeholder="Je ne prends pas de nouveaux patients pour le moment. Laissez vos coordonnées : je vous rappellerai si une place se libère."
+              className={`mt-1 ${champLarge.replace("rounded-full", "rounded-[14px]")} resize-y leading-snug`}
+            />
+          </label>
+        </div>
+
         <button type="submit" className={bouton}>
           Enregistrer
         </button>

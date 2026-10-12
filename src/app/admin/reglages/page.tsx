@@ -19,6 +19,8 @@ import {
 import { parametres } from "@/lib/parametres";
 import { GoogleAgenda } from "@/components/GoogleAgenda";
 import { Securite } from "@/components/Securite";
+import { StatutSauvegarde } from "@/components/StatutSauvegarde";
+import { InstallerApplication } from "@/components/InstallerApplication";
 
 export const dynamic = "force-dynamic";
 
@@ -85,6 +87,7 @@ export default async function Reglages({
         ["mot-de-passe", "Mot de passe"],
         ["recuperation", "Adresse de récupération"],
         ["appareils", "Face ID et appareils"],
+        ["sauvegardes", "Sauvegardes"],
       ],
     },
     {
@@ -92,6 +95,7 @@ export default async function Reglages({
       liens: [
         ["lieux", "Lieux"],
         ["google", "Google Agenda"],
+        ["application", "Application sur le téléphone"],
       ],
     },
   ];
@@ -779,7 +783,11 @@ export default async function Reglages({
 
           <Securite code={securite} />
 
+          <StatutSauvegarde />
+
           <GoogleAgenda retour={google} />
+
+          <InstallerApplication />
         </div>
       </div>
     </div>

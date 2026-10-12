@@ -4,7 +4,12 @@ import { synchroniserApres } from "@/lib/google-sync";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
-import { JOURS_OUVRES, instantBruxelles, numeroNational, partiesJour } from "@/lib/format";
+import {
+  JOURS_OUVRES,
+  instantBruxelles,
+  numeroNational,
+  partiesJour,
+} from "@/lib/format";
 import { parametres } from "@/lib/parametres";
 import { montantSeanceCents, payeurDe } from "@/lib/tarifs";
 import { PALETTE_CABINETS } from "@/lib/palette";
@@ -26,7 +31,11 @@ export async function deplacerSeance(id: string, isoDebut: string) {
   }
 
   const jour = new Date(
-    Date.UTC(partiesJour(debut).annee, partiesJour(debut).mois - 1, partiesJour(debut).jour),
+    Date.UTC(
+      partiesJour(debut).annee,
+      partiesJour(debut).mois - 1,
+      partiesJour(debut).jour,
+    ),
   ).getUTCDay();
   // getUTCDay : 0 = dimanche, 6 = samedi.
   const indexOuvre = (jour + 6) % 7;
@@ -78,8 +87,15 @@ export async function enregistrerPatient(f: FormData) {
   if (!["PRIVE", "CONVENTIONNE"].includes(scheme)) return;
   const regime = scheme as "PRIVE" | "CONVENTIONNE";
 
-  const actuel = await prisma.patient.findUnique({ where: { id }, select: { feeCents: true } });
-  const { tarifId, feeCents } = await resoudreTarif(regime, texte(f, "tarifId"), actuel?.feeCents ?? null);
+  const actuel = await prisma.patient.findUnique({
+    where: { id },
+    select: { feeCents: true },
+  });
+  const { tarifId, feeCents } = await resoudreTarif(
+    regime,
+    texte(f, "tarifId"),
+    actuel?.feeCents ?? null,
+  );
 
   const birthSaisie = texte(f, "birthDate");
   const birthDate = birthSaisie ? new Date(birthSaisie) : null;
@@ -112,6 +128,7 @@ export async function enregistrerPatient(f: FormData) {
       tarifId,
       feeCents,
       cabinetId,
+      rappelsEmail: f.get("rappelsEmail") === "on",
     },
   });
   revalidatePath(`/admin/patients/${id}`);
@@ -128,7 +145,8 @@ export async function marquerPaye(id: string, methode: "CASH" | "ELECTRONIC") {
   if (seance.patient && payeurDe(seance.patient.scheme) === "INAMI") {
     return {
       ok: false as const,
-      message: "Séance conventionnée : le patient ne paie rien. Marquez-la « reçue de l’INAMI ».",
+      message:
+        "Séance conventionnée : le patient ne paie rien. Marquez-la « reçue de l’INAMI ».",
     };
   }
 
@@ -163,7 +181,8 @@ export async function marquerRecuInami(id: string) {
 
 export async function marquerRecuInamiLot(ids: string[]) {
   await exigerSession();
-  if (ids.length === 0) return { ok: false as const, message: "Aucune séance sélectionnée." };
+  if (ids.length === 0)
+    return { ok: false as const, message: "Aucune séance sélectionnée." };
 
   const seances = await prisma.session.findMany({
     where: {
@@ -175,7 +194,10 @@ export async function marquerRecuInamiLot(ids: string[]) {
     include: { patient: { include: { tarif: true } } },
   });
   if (seances.length === 0) {
-    return { ok: false as const, message: "Aucune séance conventionnée à marquer reçue." };
+    return {
+      ok: false as const,
+      message: "Aucune séance conventionnée à marquer reçue.",
+    };
   }
 
   const maintenant = new Date();
@@ -212,9 +234,13 @@ export async function marquerRecuInamiLot(ids: string[]) {
  *
  * Une transaction, pour que le lot passe entier ou pas du tout.
  */
-export async function marquerPayeLot(ids: string[], methode: "CASH" | "ELECTRONIC") {
+export async function marquerPayeLot(
+  ids: string[],
+  methode: "CASH" | "ELECTRONIC",
+) {
   await exigerSession();
-  if (ids.length === 0) return { ok: false as const, message: "Aucune séance sélectionnée." };
+  if (ids.length === 0)
+    return { ok: false as const, message: "Aucune séance sélectionnée." };
 
   const seances = await prisma.session.findMany({
     where: {
@@ -250,10 +276,18 @@ export async function marquerPayeLot(ids: string[], methode: "CASH" | "ELECTRONI
   revalidatePath("/admin/facturation");
   revalidatePath("/admin/finance");
   for (const s of seances) revalidatePath(`/admin/patients/${s.patientId}`);
-  return { ok: true as const, n: seances.length, ignorees: ids.length - seances.length };
+  return {
+    ok: true as const,
+    n: seances.length,
+    ignorees: ids.length - seances.length,
+  };
 }
 
-export async function creerSeance(patientId: string, isoDebut: string, cabinetId: string) {
+export async function creerSeance(
+  patientId: string,
+  isoDebut: string,
+  cabinetId: string,
+) {
   await exigerSession();
   const patient = await prisma.patient.findUnique({ where: { id: patientId } });
   if (!patient) return { ok: false as const, message: "Patient introuvable." };
@@ -315,7 +349,9 @@ export async function creerSeanceDepuisFormulaire(f: FormData) {
     // glisser les séances d'une heure après le passage à l'heure d'hiver.
     const [a, m, j] = date.split("-").map(Number);
     for (let semaine = 1; semaine < 52; semaine++) {
-      const jourCible = new Date(Date.UTC(a, m - 1, j + 7 * semaine)).toISOString().slice(0, 10);
+      const jourCible = new Date(Date.UTC(a, m - 1, j + 7 * semaine))
+        .toISOString()
+        .slice(0, 10);
       if (jourCible > jusquau) break;
       const suivante = instantBruxelles(jourCible, heure);
       if (suivante && estJourOuvre(suivante)) dates.push(suivante);
@@ -348,7 +384,10 @@ export async function annulerSeance(id: string) {
   const seance = await prisma.session.findUnique({ where: { id } });
   if (!seance || seance.status !== "SCHEDULED") return;
 
-  await prisma.session.update({ where: { id }, data: { status: "CANCELLED_IN_TIME" } });
+  await prisma.session.update({
+    where: { id },
+    data: { status: "CANCELLED_IN_TIME" },
+  });
   revalidatePath("/admin/semaine");
   revalidatePath("/admin");
   if (seance.patientId) revalidatePath(`/admin/patients/${seance.patientId}`);
@@ -364,9 +403,17 @@ export async function annulerSeance(id: string) {
  *  l'âge (voir lib/quotas.ts). */
 function pplDepuis(f: FormData) {
   if (!f.has("pplType")) return {};
-  const type = texte(f, "pplType") === "TRAITEMENT" ? ("TRAITEMENT" as const) : ("SOUTIEN" as const);
+  const type =
+    texte(f, "pplType") === "TRAITEMENT"
+      ? ("TRAITEMENT" as const)
+      : ("SOUTIEN" as const);
   const r = texte(f, "pplReseau");
-  const reseau = r === "ENFANTS" ? ("ENFANTS" as const) : r === "ADULTES" ? ("ADULTES" as const) : null;
+  const reseau =
+    r === "ENFANTS"
+      ? ("ENFANTS" as const)
+      : r === "ADULTES"
+        ? ("ADULTES" as const)
+        : null;
   return { pplType: type, pplReseau: reseau };
 }
 
@@ -378,7 +425,11 @@ export async function creerPatient(f: FormData) {
 
   const scheme = texte(f, "scheme");
   const schemeValide = scheme === "CONVENTIONNE" ? "CONVENTIONNE" : "PRIVE";
-  const { tarifId } = await resoudreTarif(schemeValide, texte(f, "tarifId"), null);
+  const { tarifId } = await resoudreTarif(
+    schemeValide,
+    texte(f, "tarifId"),
+    null,
+  );
 
   const email = texte(f, "email");
   const birthSaisie = texte(f, "birthDate");
@@ -403,12 +454,14 @@ export async function creerPatient(f: FormData) {
       addressLine: texte(f, "addressLine") || null,
       postalCode: texte(f, "postalCode") || null,
       city: texte(f, "city") || null,
-      birthDate: birthDate && !Number.isNaN(birthDate.getTime()) ? birthDate : null,
+      birthDate:
+        birthDate && !Number.isNaN(birthDate.getTime()) ? birthDate : null,
       scheme: schemeValide,
       ...pplDepuis(f),
       tarifId,
       cabinetId,
       jetonRdv: crypto.randomUUID(),
+      rappelsEmail: f.get("rappelsEmail") === "on",
     },
   });
   revalidatePath("/admin/patients");
@@ -455,7 +508,8 @@ async function resoudreTarif(
   }
   if (choix && choix !== "ancien") {
     const t = await prisma.tarif.findUnique({ where: { id: choix } });
-    if (t && t.actif && t.regime === scheme) return { tarifId: t.id, feeCents: null };
+    if (t && t.actif && t.regime === scheme)
+      return { tarifId: t.id, feeCents: null };
   }
   const defaut =
     (await prisma.tarif.findFirst({
@@ -480,7 +534,9 @@ export async function enregistrerCabinet(f: FormData) {
   // plafond. Le tarif horaire suit la même convention euros → centimes que
   // les tarifs de la grille.
   const quotaHeures = texte(f, "quotaHebdoHeures");
-  const quotaHebdoMin = quotaHeures ? Math.round(Number(quotaHeures.replace(",", ".")) * 60) : null;
+  const quotaHebdoMin = quotaHeures
+    ? Math.round(Number(quotaHeures.replace(",", ".")) * 60)
+    : null;
   const tarifHoraire = texte(f, "tarifHoraireEuros");
   const tarifHoraireCents = tarifHoraire
     ? Math.round(Number(tarifHoraire.replace(",", ".")) * 100)
@@ -495,10 +551,13 @@ export async function enregistrerCabinet(f: FormData) {
     acces: texte(f, "acces"),
     actif: f.get("actif") === "on",
     publie: f.get("publie") === "on",
-    quotaHebdoMin: quotaHeures && Number.isFinite(quotaHebdoMin) ? quotaHebdoMin : null,
+    quotaHebdoMin:
+      quotaHeures && Number.isFinite(quotaHebdoMin) ? quotaHebdoMin : null,
     factureInstitution: f.get("factureInstitution") === "on",
     tarifHoraireCents:
-      tarifHoraire && Number.isFinite(tarifHoraireCents) ? tarifHoraireCents : null,
+      tarifHoraire && Number.isFinite(tarifHoraireCents)
+        ? tarifHoraireCents
+        : null,
     raisonSociale: texte(f, "raisonSociale") || null,
     mentionLegaleClient: texte(f, "mentionLegaleClient") || null,
     prefixeReference: texte(f, "prefixeReference") || null,
@@ -517,7 +576,9 @@ export async function enregistrerCabinet(f: FormData) {
       data: { ...donnees, fillHex: teinte.fillHex, vividHex: teinte.vividHex },
     });
   } else {
-    const dernier = await prisma.cabinet.findFirst({ orderBy: { ordre: "desc" } });
+    const dernier = await prisma.cabinet.findFirst({
+      orderBy: { ordre: "desc" },
+    });
     await prisma.cabinet.create({
       data: {
         ...donnees,
@@ -544,7 +605,10 @@ export async function supprimerCabinet(f: FormData) {
   if (seances > 0) {
     await prisma.cabinet.update({ where: { id }, data: { actif: false } });
   } else {
-    await prisma.patient.updateMany({ where: { cabinetId: id }, data: { cabinetId: null } });
+    await prisma.patient.updateMany({
+      where: { cabinetId: id },
+      data: { cabinetId: null },
+    });
     await prisma.cabinet.delete({ where: { id } });
   }
   rafraichirTout();
@@ -558,7 +622,8 @@ export async function enregistrerTarif(f: FormData) {
   const euros = Number(texte(f, "montant").replace(",", "."));
   if (!libelle || !Number.isFinite(euros) || euros < 0) return;
 
-  const regime = texte(f, "regime") === "CONVENTIONNE" ? "CONVENTIONNE" : "PRIVE";
+  const regime =
+    texte(f, "regime") === "CONVENTIONNE" ? "CONVENTIONNE" : "PRIVE";
   const donnees = {
     libelle,
     regime: regime as "PRIVE" | "CONVENTIONNE",
@@ -570,14 +635,21 @@ export async function enregistrerTarif(f: FormData) {
   };
 
   if (donnees.parDefaut) {
-    await prisma.tarif.updateMany({ where: { regime }, data: { parDefaut: false } });
+    await prisma.tarif.updateMany({
+      where: { regime },
+      data: { parDefaut: false },
+    });
   }
 
   if (id) {
     await prisma.tarif.update({ where: { id }, data: donnees });
   } else {
-    const dernier = await prisma.tarif.findFirst({ orderBy: { ordre: "desc" } });
-    await prisma.tarif.create({ data: { ...donnees, ordre: (dernier?.ordre ?? -1) + 1 } });
+    const dernier = await prisma.tarif.findFirst({
+      orderBy: { ordre: "desc" },
+    });
+    await prisma.tarif.create({
+      data: { ...donnees, ordre: (dernier?.ordre ?? -1) + 1 },
+    });
   }
   rafraichirTout();
 }
@@ -591,7 +663,10 @@ export async function supprimerTarif(f: FormData) {
   // s'en aperçoive.
   const utilise = await prisma.patient.count({ where: { tarifId: id } });
   if (utilise > 0) {
-    await prisma.tarif.update({ where: { id }, data: { actif: false, parDefaut: false } });
+    await prisma.tarif.update({
+      where: { id },
+      data: { actif: false, parDefaut: false },
+    });
   } else {
     await prisma.tarif.delete({ where: { id } });
   }
@@ -633,9 +708,14 @@ export async function enregistrerDisponibilite(f: FormData) {
 
   const id = texte(f, "id");
   if (id) {
-    await prisma.disponibilite.update({ where: { id }, data: { jour, debutMin, finMin } });
+    await prisma.disponibilite.update({
+      where: { id },
+      data: { jour, debutMin, finMin },
+    });
   } else {
-    await prisma.disponibilite.create({ data: { cabinetId, jour, debutMin, finMin } });
+    await prisma.disponibilite.create({
+      data: { cabinetId, jour, debutMin, finMin },
+    });
   }
   rafraichirTout();
   revalidatePath("/rendez-vous");
@@ -657,7 +737,8 @@ export async function enregistrerConge(f: FormData) {
   await exigerSession();
   const debut = new Date(texte(f, "debut"));
   const finSaisie = new Date(texte(f, "fin"));
-  if (Number.isNaN(debut.getTime()) || Number.isNaN(finSaisie.getTime())) return;
+  if (Number.isNaN(debut.getTime()) || Number.isNaN(finSaisie.getTime()))
+    return;
 
   // La date de fin est inclusive à la saisie : on ferme la journée entière.
   const fin = new Date(finSaisie);
@@ -706,6 +787,8 @@ export async function enregistrerParametres(f: FormData) {
       ? {
           rdvEnLigne: f.get("rdvEnLigne") === "on",
           rdvMessage: texte(f, "rdvMessage") || null,
+          nouveauxPatients: f.get("nouveauxPatients") === "on",
+          nouveauxPatientsMessage: texte(f, "nouveauxPatientsMessage") || null,
         }
       : groupe === "identite"
         ? {
@@ -764,7 +847,9 @@ export async function enregistrerDepense(f: FormData) {
   let photo: Uint8Array<ArrayBuffer> | null = null;
   let photoMime: string | null = null;
   if (fichier instanceof File && fichier.size > 0) {
-    photo = new Uint8Array(await fichier.arrayBuffer()) as Uint8Array<ArrayBuffer>;
+    photo = new Uint8Array(
+      await fichier.arrayBuffer(),
+    ) as Uint8Array<ArrayBuffer>;
     photoMime = fichier.type || "application/octet-stream";
   }
 
@@ -806,7 +891,9 @@ export async function enregistrerCategorieDepense(f: FormData) {
   if (id) {
     await prisma.categorieDepense.update({ where: { id }, data: donnees });
   } else {
-    const dernier = await prisma.categorieDepense.findFirst({ orderBy: { ordre: "desc" } });
+    const dernier = await prisma.categorieDepense.findFirst({
+      orderBy: { ordre: "desc" },
+    });
     await prisma.categorieDepense.create({
       data: { ...donnees, ordre: (dernier?.ordre ?? -1) + 1 },
     });
@@ -824,7 +911,10 @@ export async function supprimerCategorieDepense(f: FormData) {
   if (!id) return;
   const nb = await prisma.depense.count({ where: { categorieId: id } });
   if (nb > 0) {
-    await prisma.categorieDepense.update({ where: { id }, data: { actif: false } });
+    await prisma.categorieDepense.update({
+      where: { id },
+      data: { actif: false },
+    });
   } else {
     await prisma.categorieDepense.delete({ where: { id } });
   }
@@ -849,7 +939,11 @@ export async function supprimerCategorieDepense(f: FormData) {
  * Émettre n'est pas encaisser : le montant devient facturé (Finance le compte
  * dès maintenant), pas encore payé. Voir marquerFacturePayee.
  */
-export async function emettreFactureEtablissement(cabinetId: string, annee: number, mois: number) {
+export async function emettreFactureEtablissement(
+  cabinetId: string,
+  annee: number,
+  mois: number,
+) {
   await exigerSession();
   const cabinet = await prisma.cabinet.findUnique({ where: { id: cabinetId } });
   if (!cabinet?.factureInstitution || !cabinet.tarifHoraireCents) return;
@@ -870,7 +964,9 @@ export async function emettreFactureEtablissement(cabinetId: string, annee: numb
   if (seances.length === 0) return;
 
   const heuresTotalesMin = seances.reduce((n, s) => n + s.durationMin, 0);
-  const montantCents = Math.round((heuresTotalesMin / 60) * cabinet.tarifHoraireCents);
+  const montantCents = Math.round(
+    (heuresTotalesMin / 60) * cabinet.tarifHoraireCents,
+  );
   const reglages = await parametres();
   const maintenant = new Date();
   const echeanceLe = new Date(maintenant);
@@ -908,7 +1004,11 @@ export async function emettreFactureEtablissement(cabinetId: string, annee: numb
     for (const s of seances) {
       await tx.session.update({
         where: { id: s.id },
-        data: { amountCents: Math.round((s.durationMin / 60) * cabinet.tarifHoraireCents!) },
+        data: {
+          amountCents: Math.round(
+            (s.durationMin / 60) * cabinet.tarifHoraireCents!,
+          ),
+        },
       });
     }
   });
@@ -943,12 +1043,16 @@ export async function enregistrerFactureEtablissementManuelle(f: FormData) {
   const heures = Number(texte(f, "heures") || "0");
   const minutes = Number(texte(f, "minutes") || "0");
   const heuresTotalesMin =
-    Number.isFinite(heures) && Number.isFinite(minutes) && (heures > 0 || minutes > 0)
+    Number.isFinite(heures) &&
+    Number.isFinite(minutes) &&
+    (heures > 0 || minutes > 0)
       ? Math.round(heures * 60 + minutes)
       : null;
   const tarifHoraire = Number(texte(f, "tarifHoraireEuros").replace(",", "."));
   const tarifHoraireCents =
-    heuresTotalesMin !== null && Number.isFinite(tarifHoraire) && tarifHoraire > 0
+    heuresTotalesMin !== null &&
+    Number.isFinite(tarifHoraire) &&
+    tarifHoraire > 0
       ? Math.round(tarifHoraire * 100)
       : null;
 
@@ -967,26 +1071,48 @@ export async function enregistrerFactureEtablissementManuelle(f: FormData) {
   const libelle = libelleSaisi || null;
 
   if (id) {
-    const facture = await prisma.factureEtablissement.findUnique({ where: { id } });
+    const facture = await prisma.factureEtablissement.findUnique({
+      where: { id },
+    });
     if (!facture || facture.payeeLe || facture.annuleeLe) return;
-    const echeanceLe = echeanceSaisie ? new Date(echeanceSaisie) : facture.echeanceLe;
+    const echeanceLe = echeanceSaisie
+      ? new Date(echeanceSaisie)
+      : facture.echeanceLe;
     if (Number.isNaN(echeanceLe.getTime())) return;
     await prisma.factureEtablissement.update({
       where: { id },
-      data: { libelle, montantCents, echeanceLe, commentaire, heuresTotalesMin, tarifHoraireCents },
+      data: {
+        libelle,
+        montantCents,
+        echeanceLe,
+        commentaire,
+        heuresTotalesMin,
+        tarifHoraireCents,
+      },
     });
   } else {
     const cabinetId = texte(f, "cabinetId");
     const annee = Number(texte(f, "annee"));
     const mois = Number(texte(f, "mois"));
-    const cabinet = await prisma.cabinet.findUnique({ where: { id: cabinetId } });
-    if (!cabinet || !Number.isInteger(annee) || !Number.isInteger(mois) || mois < 1 || mois > 12) {
+    const cabinet = await prisma.cabinet.findUnique({
+      where: { id: cabinetId },
+    });
+    if (
+      !cabinet ||
+      !Number.isInteger(annee) ||
+      !Number.isInteger(mois) ||
+      mois < 1 ||
+      mois > 12
+    ) {
       return;
     }
     const reglages = await parametres();
     const maintenant = new Date();
-    const echeanceLe = echeanceSaisie ? new Date(echeanceSaisie) : new Date(maintenant);
-    if (!echeanceSaisie) echeanceLe.setDate(echeanceLe.getDate() + reglages.delaiPaiementJours);
+    const echeanceLe = echeanceSaisie
+      ? new Date(echeanceSaisie)
+      : new Date(maintenant);
+    if (!echeanceSaisie)
+      echeanceLe.setDate(echeanceLe.getDate() + reglages.delaiPaiementJours);
     if (Number.isNaN(echeanceLe.getTime())) return;
 
     const dernier = await prisma.factureEtablissement.findFirst({
@@ -1023,7 +1149,9 @@ export async function enregistrerFactureEtablissementManuelle(f: FormData) {
 export async function annulerFactureEtablissement(f: FormData) {
   await exigerSession();
   const id = texte(f, "id");
-  const facture = await prisma.factureEtablissement.findUnique({ where: { id } });
+  const facture = await prisma.factureEtablissement.findUnique({
+    where: { id },
+  });
   if (!facture || facture.payeeLe || facture.annuleeLe) return;
 
   await prisma.$transaction([
@@ -1058,13 +1186,18 @@ export async function retablirFactureEtablissement(f: FormData) {
     const seances = await seancesARetablir(facture, tx);
     if (!seances) return;
 
-    await tx.factureEtablissement.update({ where: { id }, data: { annuleeLe: null } });
+    await tx.factureEtablissement.update({
+      where: { id },
+      data: { annuleeLe: null },
+    });
     for (const s of seances) {
       await tx.session.update({
         where: { id: s.id },
         data: {
           factureId: id,
-          amountCents: Math.round((s.durationMin / 60) * facture.tarifHoraireCents!),
+          amountCents: Math.round(
+            (s.durationMin / 60) * facture.tarifHoraireCents!,
+          ),
         },
       });
     }
@@ -1115,10 +1248,17 @@ export async function marquerFacturePayee(factureId: string) {
 
   const maintenant = new Date();
   await prisma.$transaction([
-    prisma.factureEtablissement.update({ where: { id: factureId }, data: { payeeLe: maintenant } }),
+    prisma.factureEtablissement.update({
+      where: { id: factureId },
+      data: { payeeLe: maintenant },
+    }),
     prisma.session.updateMany({
       where: { factureId },
-      data: { paymentStatus: "PAID", paidAt: maintenant, paymentMethod: "ELECTRONIC" },
+      data: {
+        paymentStatus: "PAID",
+        paidAt: maintenant,
+        paymentMethod: "ELECTRONIC",
+      },
     }),
   ]);
 

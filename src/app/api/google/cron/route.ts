@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { synchroniser } from "@/lib/google-sync";
+import { envoyerRappels } from "@/lib/rappels";
 
 /**
  * Passage quotidien de secours (voir vercel.json). Les synchronisations
@@ -18,5 +19,9 @@ export async function GET(req: Request) {
   if (req.headers.get("authorization") !== `Bearer ${secret}`) {
     return new Response("Non autorisé.", { status: 401 });
   }
-  return NextResponse.json(await synchroniser());
+  // Même tâche quotidienne (05 h) : après la synchronisation, les rappels des
+  // rendez-vous de demain. Un échec de l'un ne doit pas empêcher l'autre.
+  const google = await synchroniser().catch((e) => ({ erreur: String(e) }));
+  const rappels = await envoyerRappels().catch((e) => ({ erreur: String(e) }));
+  return NextResponse.json({ google, rappels });
 }

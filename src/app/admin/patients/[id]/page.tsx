@@ -1,12 +1,20 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
-import { CabinetTag, EtatPaiement, HorsQuota, RegimeTag, StatutSeance } from "@/components/tags";
+import {
+  CabinetTag,
+  EtatPaiement,
+  HorsQuota,
+  RegimeTag,
+  StatutSeance,
+} from "@/components/tags";
 import { BoutonEnregistrer } from "@/components/BoutonEnregistrer";
 import { Notes } from "@/components/Notes";
 import { Encaisser } from "@/components/Encaisser";
 import { RecuInami } from "@/components/RecuInami";
 import { FormulairePatient } from "@/components/FormulairePatient";
+import { DonneesPersonnelles } from "@/components/DonneesPersonnelles";
+import { Documents } from "@/components/Documents";
 import { montantSeanceCents, payeurDe } from "@/lib/tarifs";
 import { AnnulerAbsence } from "@/components/AnnulerAbsence";
 import { AnnulerSeance } from "@/components/AnnulerSeance";
@@ -15,7 +23,12 @@ import { BasculeVisio } from "@/components/BasculeVisio";
 import { NoteSeance } from "@/components/NoteSeance";
 import { cleNotesPresente, dechiffrer } from "@/lib/chiffrement";
 import { creerSeanceDepuisFormulaire, enregistrerPatient } from "@/lib/actions";
-import { plafondConventionne, reseauPpl, seancesHorsQuota, seancesSurDouzeMois } from "@/lib/quotas";
+import {
+  plafondConventionne,
+  reseauPpl,
+  seancesHorsQuota,
+  seancesSurDouzeMois,
+} from "@/lib/quotas";
 import {
   euros,
   fmtDateCourte,
@@ -42,15 +55,22 @@ function age(naissance: Date | null) {
 
 export default async function FichePatient({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ rgpd?: string; doc?: string }>;
 }) {
   const { id } = await params;
+  const { rgpd, doc } = await searchParams;
   const patient = await prisma.patient.findUnique({
     where: { id },
     include: {
       sessions: { orderBy: { startsAt: "desc" }, include: { cabinet: true } },
       patientNotes: { orderBy: { createdAt: "desc" } },
+      documents: {
+        select: { id: true, nom: true, taille: true, createdAt: true },
+        orderBy: { createdAt: "desc" },
+      },
       cabinet: true,
       tarif: true,
     },
@@ -100,12 +120,19 @@ export default async function FichePatient({
   const maintenant = new Date();
   const conventionne = patient.scheme === "CONVENTIONNE";
   const plafondInami = conventionne ? plafondConventionne(patient) : null;
-  const faitesInami = conventionne ? seancesSurDouzeMois(patient.sessions, maintenant) : 0;
-  const prevuesInami = conventionne
-    ? patient.sessions.filter((s) => s.status === "SCHEDULED" && s.startsAt > maintenant).length
+  const faitesInami = conventionne
+    ? seancesSurDouzeMois(patient.sessions, maintenant)
     : 0;
-  const quotaAtteint = plafondInami !== null && faitesInami + prevuesInami >= plafondInami;
-  const horsQuota = conventionne ? seancesHorsQuota(patient.sessions, patient) : new Set<string>();
+  const prevuesInami = conventionne
+    ? patient.sessions.filter(
+        (s) => s.status === "SCHEDULED" && s.startsAt > maintenant,
+      ).length
+    : 0;
+  const quotaAtteint =
+    plafondInami !== null && faitesInami + prevuesInami >= plafondInami;
+  const horsQuota = conventionne
+    ? seancesHorsQuota(patient.sessions, patient)
+    : new Set<string>();
   const libelleReseau = conventionne
     ? `${patient.pplType === "TRAITEMENT" ? "traitement" : "soutien"} · réseau ${
         reseauPpl(patient) === "ENFANTS" ? "enfants" : "adultes"
@@ -182,7 +209,9 @@ export default async function FichePatient({
           </h1>
           <p className="mt-2 flex flex-wrap items-center gap-2">
             <RegimeTag scheme={patient.scheme} />
-            {libelleReseau && <span className="text-xs text-ink-muted">{libelleReseau}</span>}
+            {libelleReseau && (
+              <span className="text-xs text-ink-muted">{libelleReseau}</span>
+            )}
             {patient.cabinet && <CabinetTag cabinet={patient.cabinet} />}
           </p>
         </div>
@@ -190,10 +219,11 @@ export default async function FichePatient({
 
       {quotaAtteint && (
         <p className="rounded-[10px] border border-due/40 bg-due-soft px-4 py-2.5 text-sm text-due">
-          Plafond INAMI atteint : {faitesInami} séance{faitesInami > 1 ? "s" : ""} sur les
-          douze derniers mois et {prevuesInami} prévue{prevuesInami > 1 ? "s" : ""}, pour{" "}
-          {plafondInami} remboursées ({libelleReseau}).
-          Une séance de plus ne sera pas prise en charge par la convention.
+          Plafond INAMI atteint : {faitesInami} séance
+          {faitesInami > 1 ? "s" : ""} sur les douze derniers mois et{" "}
+          {prevuesInami} prévue{prevuesInami > 1 ? "s" : ""}, pour{" "}
+          {plafondInami} remboursées ({libelleReseau}). Une séance de plus ne
+          sera pas prise en charge par la convention.
         </p>
       )}
 
@@ -356,7 +386,9 @@ export default async function FichePatient({
                 <CabinetTag cabinet={s.cabinet} />
                 <span className="flex flex-1 flex-wrap items-center gap-2">
                   <StatutSeance status={s.status} />
-                  {(s.status === "SCHEDULED" || s.visio) && <BasculeVisio id={s.id} visio={s.visio} />}
+                  {(s.status === "SCHEDULED" || s.visio) && (
+                    <BasculeVisio id={s.id} visio={s.visio} />
+                  )}
                   {horsQuota.has(s.id) && <HorsQuota />}
                 </span>
                 {isBillable(s.status) && (
@@ -431,6 +463,19 @@ export default async function FichePatient({
           body: n.body,
           date: fmtDateCourte.format(n.createdAt),
         }))}
+      />
+
+      <Documents
+        patientId={patient.id}
+        documents={patient.documents}
+        cle={cleNotesPresente()}
+        code={doc}
+      />
+
+      <DonneesPersonnelles
+        id={patient.id}
+        anonymise={Boolean(patient.anonymiseAt)}
+        code={rgpd}
       />
     </div>
   );

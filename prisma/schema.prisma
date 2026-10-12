@@ -292,6 +292,15 @@ model Patient {
   /// du patient, et se régénère si besoin.
   jetonRdv String? @unique @map("jeton_rdv")
 
+  /// Rappels de rendez-vous par e-mail, la veille. Décochable par patient : un
+  /// parent qui préfère être appelé, un adulte qui ne veut aucun message.
+  rappelsEmail Boolean   @default(true) @map("rappels_email")
+  /// Date à laquelle le dossier a été anonymisé (droit à l'effacement) : les
+  /// séances et leurs montants restent pour la comptabilité, plus rien d'autre.
+  anonymiseAt  DateTime? @map("anonymise_at")
+
+  documents DocumentPatient[]
+
   sessions     Session[]
   patientNotes Note[]
 
@@ -334,6 +343,11 @@ model Session {
   facture         FactureEtablissement? @relation(fields: [factureId], references: [id], onDelete: SetNull)
   /// Vrai si la séance a été prise par le patient depuis le site.
   reserveeEnLigne Boolean               @default(false) @map("reservee_en_ligne")
+  /// Rappel de la veille déjà parti : il ne part qu'une fois.
+  rappelEnvoyeAt  DateTime?             @map("rappel_envoye_at")
+  /// Jeton du lien public de cette séance (annulation par le patient). Propre
+  /// à la séance, créé quand on en a besoin ; il ne donne accès à rien d'autre.
+  jetonPublic     String?               @unique @map("jeton_public")
   /// Séance à distance. Le lieu reste celui de rattachement (facturation,
   /// statistiques) ; l'agenda Google affiche « visio » au lieu de l'adresse.
   visio           Boolean               @default(false)
@@ -425,6 +439,11 @@ model Parametres {
   /// Message affiché quand les rendez-vous sont fermés (facultatif : un texte
   /// par défaut sert à défaut).
   rdvMessage         String? @map("rdv_message")
+  /// Faux : les inconnus ne peuvent plus demander de rendez-vous, seulement
+  /// s'inscrire sur la liste d'attente. Les patients munis de leur lien
+  /// personnel réservent comme avant.
+  nouveauxPatients   Boolean @default(true) @map("nouveaux_patients")
+  nouveauxPatientsMessage String? @map("nouveaux_patients_message")
   iban               String?
   /// Délai de paiement en jours, pour calculer l'échéance à l'émission.
   delaiPaiementJours Int     @default(30) @map("delai_paiement_jours")
@@ -639,4 +658,40 @@ model ReinitialisationMdp {
   createdAt DateTime  @default(now()) @map("created_at")
 
   @@map("reinitialisations_mdp")
+}
+
+/// Une personne qui souhaite être rappelée quand une place se libère : elle a
+/// laissé ses coordonnées pendant que les nouveaux patients n'étaient pas
+/// acceptés. Rien de clinique — le motif se dira au téléphone.
+model AttenteRdv {
+  id        String   @id @default(cuid())
+  firstName String   @map("first_name")
+  lastName  String   @map("last_name")
+  phone     String
+  email     String?
+  message   String?
+  /// Faux une fois la personne rappelée ou la demande classée.
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([active, createdAt])
+  @@map("attente_rdv")
+}
+
+/// Un document joint à un dossier (convention, consentement, courrier à
+/// l'école). Le contenu est chiffré (AES-256-GCM, clé NOTES_KEY) avant d'entrer
+/// en base : une copie de la base seule ne livre aucun document.
+model DocumentPatient {
+  id        String   @id @default(cuid())
+  patientId String   @map("patient_id")
+  patient   Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  nom       String
+  mime      String
+  /// Taille du fichier d'origine, en octets.
+  taille    Int
+  contenu   Bytes
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([patientId])
+  @@map("documents_patient")
 }

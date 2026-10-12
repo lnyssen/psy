@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { creneauxDisponibles } from "@/lib/creneaux";
 import { parametres } from "@/lib/parametres";
 import { SITE } from "@/lib/site";
+import { ListeAttente } from "@/components/ListeAttente";
 import { debutDeJour } from "@/lib/format";
 import { synchroniser } from "@/lib/google-sync";
 import { PriseRdv } from "@/components/PriseRdv";
@@ -36,7 +37,9 @@ export default async function RendezVous({
     return (
       <div className="px-6 py-14 md:py-20">
         <div className="mx-auto max-w-3xl">
-          <h1 className="font-display text-4xl tracking-tight text-titre">Prendre rendez-vous</h1>
+          <h1 className="font-display text-4xl tracking-tight text-titre">
+            Prendre rendez-vous
+          </h1>
           <p className="mt-6 max-w-2xl text-lg leading-relaxed">
             {reglagesRdv.rdvMessage ||
               "La prise de rendez-vous en ligne est fermée pour le moment."}
@@ -62,6 +65,47 @@ export default async function RendezVous({
         </div>
       </div>
     );
+  }
+
+  // Nouveaux patients fermés : seuls ceux qui arrivent avec un lien personnel
+  // valable voient les créneaux ; les autres voient la liste d'attente.
+  if (!reglagesRdv.nouveauxPatients) {
+    const connu = p
+      ? await prisma.patient.findUnique({
+          where: { jetonRdv: p },
+          select: { id: true },
+        })
+      : null;
+    if (!connu) {
+      return (
+        <div className="px-6 py-14 md:px-10 md:py-20 lg:px-14">
+          <div className="mx-auto max-w-3xl">
+            <h1 className="font-display text-4xl tracking-tight text-titre">
+              Prendre rendez-vous
+            </h1>
+            <p className="mt-6 max-w-2xl text-lg leading-relaxed">
+              {reglagesRdv.nouveauxPatientsMessage ||
+                "Je ne prends pas de nouveaux patients pour le moment. Laissez vos coordonnées : je vous rappellerai si une place se libère."}
+            </p>
+            <div className="mt-8">
+              <ListeAttente />
+            </div>
+            <p className="mt-8 text-sm text-ink-muted">
+              Vous êtes déjà suivi(e) ? Utilisez le lien personnel qui vous a
+              été transmis, ou téléphonez au{" "}
+              <a
+                href={`tel:${SITE.telephoneLien}`}
+                className="underline underline-offset-4"
+                data-numeric
+              >
+                {SITE.telephone}
+              </a>
+              .
+            </p>
+          </div>
+        </div>
+      );
+    }
   }
 
   const cabinets = await prisma.cabinet.findMany({
@@ -93,23 +137,23 @@ export default async function RendezVous({
   return (
     <div className="px-6 py-14 md:py-20">
       <div className="mx-auto max-w-5xl">
-      <PriseRdv
-      cabinets={cabinets.map((c) => ({
-        id: c.id,
-        nom: c.nom,
-        adresse: adresseCabinet(c),
-        colorHex: c.colorHex,
-        fillHex: c.fillHex,
-        vividHex: c.vividHex,
-      }))}
-      cabinetChoisi={choisi.id}
-      jours={jours}
-      jeton={patient ? (p ?? null) : null}
-      nomConnu={patient ? `${patient.firstName} ${patient.lastName}` : null}
-        lienInvalide={Boolean(p) && !patient}
-        isoDebut={debut.toISOString()}
-        isoFin={fin.toISOString()}
-      />
+        <PriseRdv
+          cabinets={cabinets.map((c) => ({
+            id: c.id,
+            nom: c.nom,
+            adresse: adresseCabinet(c),
+            colorHex: c.colorHex,
+            fillHex: c.fillHex,
+            vividHex: c.vividHex,
+          }))}
+          cabinetChoisi={choisi.id}
+          jours={jours}
+          jeton={patient ? (p ?? null) : null}
+          nomConnu={patient ? `${patient.firstName} ${patient.lastName}` : null}
+          lienInvalide={Boolean(p) && !patient}
+          isoDebut={debut.toISOString()}
+          isoFin={fin.toISOString()}
+        />
       </div>
     </div>
   );

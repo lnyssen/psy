@@ -26,8 +26,20 @@ const MOIS_COURT = Array.from({ length: 12 }, (_, m) =>
 );
 
 /** Case d'un croisement mois × cabinet. */
-type Case_ = { facture: number; encaisse: number; du: number; retard: number; actes: number };
-const vide = (): Case_ => ({ facture: 0, encaisse: 0, du: 0, retard: 0, actes: 0 });
+type Case_ = {
+  facture: number;
+  encaisse: number;
+  du: number;
+  retard: number;
+  actes: number;
+};
+const vide = (): Case_ => ({
+  facture: 0,
+  encaisse: 0,
+  du: 0,
+  retard: 0,
+  actes: 0,
+});
 const cumuler = (a: Case_, b: Case_): Case_ => ({
   facture: a.facture + b.facture,
   encaisse: a.encaisse + b.encaisse,
@@ -51,7 +63,11 @@ const cumuler = (a: Case_, b: Case_): Case_ => ({
  * L'écart entre les deux, c'est le dû et le retard. Le graphique porte le
  * facturé — c'est l'activité ; la table porte les deux, c'est la trésorerie.
  */
-export default async function Finance({ searchParams }: { searchParams: Promise<Params> }) {
+export default async function Finance({
+  searchParams,
+}: {
+  searchParams: Promise<Params>;
+}) {
   const params = await searchParams;
 
   const toutes = await prisma.session.findMany({
@@ -60,12 +76,13 @@ export default async function Finance({ searchParams }: { searchParams: Promise<
   // Le montant d'une séance n'est figé qu'à l'encaissement : d'ici là, c'est le
   // tarif de la fiche qui le dit, comme en facturation. Sans ce repli, toute
   // séance non payée comptait pour zéro et le « reste dû » mentait.
-  const valeur = (s: (typeof toutes)[number]) => s.amountCents ?? montantSeanceCents(s.patient) ?? 0;
+  const valeur = (s: (typeof toutes)[number]) =>
+    s.amountCents ?? montantSeanceCents(s.patient) ?? 0;
   const seances = toutes.filter((s) => isBillable(s.status));
 
-  const anneesConnues = [...new Set(seances.map((s) => partiesJour(s.startsAt).annee))].sort(
-    (a, b) => a - b,
-  );
+  const anneesConnues = [
+    ...new Set(seances.map((s) => partiesJour(s.startsAt).annee)),
+  ].sort((a, b) => a - b);
   const anneeCourante = partiesJour(new Date()).annee;
   if (!anneesConnues.includes(anneeCourante)) anneesConnues.push(anneeCourante);
   anneesConnues.sort((a, b) => a - b);
@@ -79,10 +96,14 @@ export default async function Finance({ searchParams }: { searchParams: Promise<
   const utilises = cabinets.filter(
     (c) =>
       c.actif ||
-      seances.some((s) => s.cabinetId === c.id && partiesJour(s.startsAt).annee === annee),
+      seances.some(
+        (s) => s.cabinetId === c.id && partiesJour(s.startsAt).annee === annee,
+      ),
   );
 
-  const delAnnee = seances.filter((s) => partiesJour(s.startsAt).annee === annee);
+  const delAnnee = seances.filter(
+    (s) => partiesJour(s.startsAt).annee === annee,
+  );
 
   // Matrice mois × cabinet.
   const grille: Record<string, Case_[]> = {};
@@ -185,11 +206,17 @@ export default async function Finance({ searchParams }: { searchParams: Promise<
   const cartes = [
     { t: "Facturé", v: euros(totalAnnee.facture) },
     { t: "Encaissé", v: euros(totalAnnee.encaisse), ton: "text-paid" },
-    { t: "Reste dû", v: euros(totalAnnee.du + totalAnnee.retard), ton: "text-due" },
+    {
+      t: "Reste dû",
+      v: euros(totalAnnee.du + totalAnnee.retard),
+      ton: "text-due",
+    },
     { t: "Actes", v: String(totalAnnee.actes) },
     {
       t: "Moyenne / mois",
-      v: euros(moisAvecActes ? Math.round(totalAnnee.facture / moisAvecActes) : 0),
+      v: euros(
+        moisAvecActes ? Math.round(totalAnnee.facture / moisAvecActes) : 0,
+      ),
     },
   ];
 
@@ -199,45 +226,60 @@ export default async function Finance({ searchParams }: { searchParams: Promise<
         <div>
           <h1 className="font-display text-3xl tracking-tight">Finance</h1>
           <p className="mt-2 text-sm text-ink-muted">
-            L’année {annee}, mois par mois et par cabinet. Séances facturables uniquement — heure
-            de Bruxelles.
+            L’année {annee}, mois par mois et par cabinet. Séances facturables
+            uniquement — heure de Bruxelles.
           </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
-        <Link
-          href="/admin/statistiques"
-          className="rounded-full border border-line-strong px-4 py-2 text-sm font-medium transition-colors hover:border-accent hover:text-accent-text"
-        >
-          Statistiques d’activité
-        </Link>
-        <nav aria-label="Année" className="flex items-center gap-1 rounded-full bg-sunken p-1">
-          {anneesConnues.map((a) => (
-            <Link
-              key={a}
-              href={`/admin/finance?annee=${a}`}
-              aria-current={a === annee ? "page" : undefined}
-              className={`rounded-full px-3.5 py-1.5 text-[13px] font-medium transition-colors ${
-                a === annee
-                  ? "bg-accent text-accent-contrast"
-                  : "text-ink-muted hover:text-accent-text"
-              }`}
-              data-numeric
-            >
-              {a}
-            </Link>
-          ))}
-        </nav>
+          <Link
+            href="/admin/statistiques"
+            className="rounded-full border border-line-strong px-4 py-2 text-sm font-medium transition-colors hover:border-accent hover:text-accent-text"
+          >
+            Statistiques d’activité
+          </Link>
+          <Link
+            href="/admin/ppl"
+            className="rounded-full border border-line-strong px-4 py-2 text-sm font-medium transition-colors hover:border-accent hover:text-accent-text"
+          >
+            Première ligne (trimestre)
+          </Link>
+          <nav
+            aria-label="Année"
+            className="flex items-center gap-1 rounded-full bg-sunken p-1"
+          >
+            {anneesConnues.map((a) => (
+              <Link
+                key={a}
+                href={`/admin/finance?annee=${a}`}
+                aria-current={a === annee ? "page" : undefined}
+                className={`rounded-full px-3.5 py-1.5 text-[13px] font-medium transition-colors ${
+                  a === annee
+                    ? "bg-accent text-accent-contrast"
+                    : "text-ink-muted hover:text-accent-text"
+                }`}
+                data-numeric
+              >
+                {a}
+              </Link>
+            ))}
+          </nav>
         </div>
       </header>
 
       <dl className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
         {cartes.map((c) => (
-          <div key={c.t} className="rounded-[14px] border border-line bg-surface px-5 py-4">
+          <div
+            key={c.t}
+            className="rounded-[14px] border border-line bg-surface px-5 py-4"
+          >
             <dt className="text-[11px] font-semibold tracking-[0.1em] text-ink-muted uppercase">
               {c.t}
             </dt>
-            <dd className={`mt-1.5 font-mono text-xl font-semibold ${c.ton ?? ""}`} data-numeric>
+            <dd
+              className={`mt-1.5 font-mono text-xl font-semibold ${c.ton ?? ""}`}
+              data-numeric
+            >
               {c.v}
             </dd>
           </div>
@@ -269,7 +311,10 @@ export default async function Finance({ searchParams }: { searchParams: Promise<
           className="mt-5 flex items-end gap-1 border-b border-line-strong/60 pb-2 sm:gap-2"
         >
           {parMois.map((m, i) => (
-            <div key={i} className="flex min-w-0 flex-1 flex-col items-center gap-2">
+            <div
+              key={i}
+              className="flex min-w-0 flex-1 flex-col items-center gap-2"
+            >
               <span
                 className="font-mono text-[10px] text-ink-muted tabular-nums"
                 data-numeric
@@ -295,13 +340,15 @@ export default async function Finance({ searchParams }: { searchParams: Promise<
                   );
                 })}
               </div>
-              <span className="text-[10px] text-ink-muted">{MOIS_COURT[i]}</span>
+              <span className="text-[10px] text-ink-muted">
+                {MOIS_COURT[i]}
+              </span>
             </div>
           ))}
         </div>
         <p className="mt-3 text-[11px] text-ink-muted">
-          Montants en euros, arrondis à l’unité sur les étiquettes. Hauteur rapportée au meilleur
-          mois de l’année ({euros(plafond)}).
+          Montants en euros, arrondis à l’unité sur les étiquettes. Hauteur
+          rapportée au meilleur mois de l’année ({euros(plafond)}).
         </p>
       </section>
 
@@ -311,7 +358,10 @@ export default async function Finance({ searchParams }: { searchParams: Promise<
       <ul className="flex flex-col gap-2 md:hidden">
         {parMois.map((m, i) =>
           m.actes === 0 ? null : (
-            <li key={i} className="rounded-[14px] border border-line bg-surface px-4 py-3.5">
+            <li
+              key={i}
+              className="rounded-[14px] border border-line bg-surface px-4 py-3.5"
+            >
               <div className="flex items-baseline justify-between gap-3">
                 <p className="font-medium capitalize">{MOIS[i]}</p>
                 <p className="font-mono text-sm font-semibold" data-numeric>
@@ -321,7 +371,10 @@ export default async function Finance({ searchParams }: { searchParams: Promise<
               <dl className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs">
                 <div className="flex gap-1.5">
                   <dt className="text-ink-muted">encaissé</dt>
-                  <dd className="font-mono font-semibold text-paid" data-numeric>
+                  <dd
+                    className="font-mono font-semibold text-paid"
+                    data-numeric
+                  >
                     {euros(m.encaisse)}
                   </dd>
                 </div>
@@ -358,7 +411,8 @@ export default async function Finance({ searchParams }: { searchParams: Promise<
       <div className="hidden rounded-[14px] border border-line bg-surface md:block">
         <table className="w-full border-collapse text-sm">
           <caption className="sr-only">
-            Montants facturés et encaissés par mois et par cabinet, année {annee}
+            Montants facturés et encaissés par mois et par cabinet, année{" "}
+            {annee}
           </caption>
           <thead>
             <tr className="border-b border-line bg-sunken text-[11px] tracking-[0.1em] text-ink-muted uppercase">
@@ -366,7 +420,11 @@ export default async function Finance({ searchParams }: { searchParams: Promise<
                 Mois
               </th>
               {utilises.map((c) => (
-                <th key={c.id} scope="col" className="px-3 py-2.5 text-right font-semibold">
+                <th
+                  key={c.id}
+                  scope="col"
+                  className="px-3 py-2.5 text-right font-semibold"
+                >
                   {c.nom}
                 </th>
               ))}
@@ -392,7 +450,10 @@ export default async function Finance({ searchParams }: { searchParams: Promise<
                   m.actes === 0 ? "text-ink-muted/60" : "hover:bg-sunken/60"
                 }`}
               >
-                <th scope="row" className="px-5 py-2.5 text-left font-medium capitalize">
+                <th
+                  scope="row"
+                  className="px-5 py-2.5 text-left font-medium capitalize"
+                >
                   {MOIS[i]}
                 </th>
                 {utilises.map((c) => (
@@ -401,7 +462,9 @@ export default async function Finance({ searchParams }: { searchParams: Promise<
                     className="px-3 py-2.5 text-right font-mono text-xs whitespace-nowrap"
                     data-numeric
                   >
-                    {grille[c.id][i].facture > 0 ? euros(grille[c.id][i].facture) : "—"}
+                    {grille[c.id][i].facture > 0
+                      ? euros(grille[c.id][i].facture)
+                      : "—"}
                   </td>
                 ))}
                 <td
@@ -422,7 +485,10 @@ export default async function Finance({ searchParams }: { searchParams: Promise<
                 >
                   {m.du + m.retard > 0 ? euros(m.du + m.retard) : "—"}
                 </td>
-                <td className="px-5 py-2.5 text-right font-mono whitespace-nowrap" data-numeric>
+                <td
+                  className="px-5 py-2.5 text-right font-mono whitespace-nowrap"
+                  data-numeric
+                >
                   {m.actes || "—"}
                 </td>
               </tr>
@@ -442,7 +508,10 @@ export default async function Finance({ searchParams }: { searchParams: Promise<
                   {euros(total.facture)}
                 </td>
               ))}
-              <td className="px-3 py-3 text-right font-mono whitespace-nowrap" data-numeric>
+              <td
+                className="px-3 py-3 text-right font-mono whitespace-nowrap"
+                data-numeric
+              >
                 {euros(totalAnnee.facture)}
               </td>
               <td
@@ -457,7 +526,10 @@ export default async function Finance({ searchParams }: { searchParams: Promise<
               >
                 {euros(totalAnnee.du + totalAnnee.retard)}
               </td>
-              <td className="px-5 py-3 text-right font-mono whitespace-nowrap" data-numeric>
+              <td
+                className="px-5 py-3 text-right font-mono whitespace-nowrap"
+                data-numeric
+              >
                 {totalAnnee.actes}
               </td>
             </tr>
@@ -490,9 +562,9 @@ export default async function Finance({ searchParams }: { searchParams: Promise<
       <ResultatNet annee={annee} lignes={resultat} total={resultatAnnee} />
 
       <p className="text-xs text-ink-muted">
-        Une séance pas encore payée compte au tarif de la fiche du patient ; une séance
-        conventionnée, au montant versé par l’INAMI. Le fuseau retenu est {FUSEAU} — une séance
-        de fin de soirée reste dans son mois.
+        Une séance pas encore payée compte au tarif de la fiche du patient ; une
+        séance conventionnée, au montant versé par l’INAMI. Le fuseau retenu est{" "}
+        {FUSEAU} — une séance de fin de soirée reste dans son mois.
       </p>
     </div>
   );
@@ -510,7 +582,12 @@ function Repartition({
   reference,
 }: {
   titre: string;
-  lignes: { cle: string; etiquette: React.ReactNode; total: Case_; teinte?: string }[];
+  lignes: {
+    cle: string;
+    etiquette: React.ReactNode;
+    total: Case_;
+    teinte?: string;
+  }[];
   reference: number;
 }) {
   return (
@@ -526,7 +603,10 @@ function Repartition({
               <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
                 {etiquette}
                 <p className="text-xs text-ink-muted">
-                  <span className="font-mono font-semibold text-ink" data-numeric>
+                  <span
+                    className="font-mono font-semibold text-ink"
+                    data-numeric
+                  >
                     {euros(total.facture)}
                   </span>{" "}
                   · {total.actes} acte{total.actes > 1 ? "s" : ""} ·{" "}
@@ -550,7 +630,12 @@ function Repartition({
   );
 }
 
-type LigneResultat = { seances: number; factures: number; depenses: number; net: number };
+type LigneResultat = {
+  seances: number;
+  factures: number;
+  depenses: number;
+  net: number;
+};
 
 /** Recettes moins dépenses, mois par mois : la vue que demande le comptable.
  *  Les recettes sont celles facturées (pas seulement encaissées), en
@@ -565,19 +650,23 @@ function ResultatNet({
   total: LigneResultat;
 }) {
   const montant = (n: number) => (n === 0 ? "—" : euros(n));
-  const colonnes: { cle: keyof LigneResultat; titre: string; ton?: string }[] = [
-    { cle: "seances", titre: "Séances" },
-    { cle: "factures", titre: "Établissements" },
-    { cle: "depenses", titre: "Dépenses" },
-    { cle: "net", titre: "Résultat" },
-  ];
+  const colonnes: { cle: keyof LigneResultat; titre: string; ton?: string }[] =
+    [
+      { cle: "seances", titre: "Séances" },
+      { cle: "factures", titre: "Établissements" },
+      { cle: "depenses", titre: "Dépenses" },
+      { cle: "net", titre: "Résultat" },
+    ];
   return (
     <section className="rounded-[14px] border border-line bg-surface">
       <div className="flex flex-wrap items-baseline justify-between gap-3 px-5 pt-5">
         <h2 className="text-[11px] font-semibold tracking-[0.1em] text-ink-muted uppercase">
           Résultat {annee} : recettes facturées moins dépenses
         </h2>
-        <p className={`font-mono text-xl font-semibold ${total.net < 0 ? "text-overdue" : ""}`} data-numeric>
+        <p
+          className={`font-mono text-xl font-semibold ${total.net < 0 ? "text-overdue" : ""}`}
+          data-numeric
+        >
           {euros(total.net)}
         </p>
       </div>
@@ -590,7 +679,11 @@ function ResultatNet({
                 Mois
               </th>
               {colonnes.map((c) => (
-                <th key={c.cle} scope="col" className="px-3 py-2.5 text-right font-semibold last:pr-5">
+                <th
+                  key={c.cle}
+                  scope="col"
+                  className="px-3 py-2.5 text-right font-semibold last:pr-5"
+                >
                   {c.titre}
                 </th>
               ))}
@@ -598,13 +691,17 @@ function ResultatNet({
           </thead>
           <tbody>
             {lignes.map((l, i) => {
-              const vide = l.seances === 0 && l.factures === 0 && l.depenses === 0;
+              const vide =
+                l.seances === 0 && l.factures === 0 && l.depenses === 0;
               return (
                 <tr
                   key={i}
                   className={`border-b border-line ${vide ? "text-ink-muted/60" : "hover:bg-sunken/60"}`}
                 >
-                  <th scope="row" className="px-5 py-2 text-left font-medium capitalize">
+                  <th
+                    scope="row"
+                    className="px-5 py-2 text-left font-medium capitalize"
+                  >
                     {MOIS[i]}
                   </th>
                   {colonnes.map((c) => (
@@ -615,7 +712,9 @@ function ResultatNet({
                       } ${c.cle === "net" ? "font-semibold" : ""}`}
                       data-numeric
                     >
-                      {c.cle === "depenses" && l.depenses > 0 ? `− ${euros(l.depenses)}` : montant(l[c.cle])}
+                      {c.cle === "depenses" && l.depenses > 0
+                        ? `− ${euros(l.depenses)}`
+                        : montant(l[c.cle])}
                     </td>
                   ))}
                 </tr>
@@ -635,7 +734,9 @@ function ResultatNet({
                   }`}
                   data-numeric
                 >
-                  {c.cle === "depenses" && total.depenses > 0 ? `− ${euros(total.depenses)}` : montant(total[c.cle])}
+                  {c.cle === "depenses" && total.depenses > 0
+                    ? `− ${euros(total.depenses)}`
+                    : montant(total[c.cle])}
                 </td>
               ))}
             </tr>

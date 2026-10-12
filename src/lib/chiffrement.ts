@@ -39,18 +39,61 @@ export function cleNotesPresente() {
   }
 }
 
-export function chiffrer(clair: string, nom: NomCle = "GOOGLE_TOKEN_KEY"): string {
+export function chiffrer(
+  clair: string,
+  nom: NomCle = "GOOGLE_TOKEN_KEY",
+): string {
   const iv = randomBytes(12);
   const c = createCipheriv("aes-256-gcm", cle(nom), iv);
   const chiffre = Buffer.concat([c.update(clair, "utf8"), c.final()]);
   const tag = c.getAuthTag();
-  return ["v1", iv, tag, chiffre].map((p) => (typeof p === "string" ? p : p.toString("base64url"))).join(".");
+  return ["v1", iv, tag, chiffre]
+    .map((p) => (typeof p === "string" ? p : p.toString("base64url")))
+    .join(".");
 }
 
-export function dechiffrer(stocke: string, nom: NomCle = "GOOGLE_TOKEN_KEY"): string {
+export function dechiffrer(
+  stocke: string,
+  nom: NomCle = "GOOGLE_TOKEN_KEY",
+): string {
   const [version, iv, tag, chiffre] = stocke.split(".");
-  if (version !== "v1" || !iv || !tag || !chiffre) throw new Error("Secret stocké illisible.");
-  const d = createDecipheriv("aes-256-gcm", cle(nom), Buffer.from(iv, "base64url"));
+  if (version !== "v1" || !iv || !tag || !chiffre)
+    throw new Error("Secret stocké illisible.");
+  const d = createDecipheriv(
+    "aes-256-gcm",
+    cle(nom),
+    Buffer.from(iv, "base64url"),
+  );
   d.setAuthTag(Buffer.from(tag, "base64url"));
-  return Buffer.concat([d.update(Buffer.from(chiffre, "base64url")), d.final()]).toString("utf8");
+  return Buffer.concat([
+    d.update(Buffer.from(chiffre, "base64url")),
+    d.final(),
+  ]).toString("utf8");
+}
+
+/**
+ * Chiffrement d'un contenu binaire (document joint) : iv (12 octets), tag
+ * d'authentification (16 octets), puis le contenu chiffré. Même algorithme que
+ * pour le texte, mais en octets bruts — pas de base64 pour des fichiers de
+ * plusieurs mégaoctets.
+ */
+export function chiffrerOctets(
+  clair: Buffer,
+  nom: NomCle = "NOTES_KEY",
+): Buffer {
+  const iv = randomBytes(12);
+  const c = createCipheriv("aes-256-gcm", cle(nom), iv);
+  const chiffre = Buffer.concat([c.update(clair), c.final()]);
+  return Buffer.concat([iv, c.getAuthTag(), chiffre]);
+}
+
+export function dechiffrerOctets(
+  stocke: Uint8Array,
+  nom: NomCle = "NOTES_KEY",
+): Buffer {
+  const b = Buffer.from(stocke);
+  if (b.length < 29) throw new Error("Contenu stocké illisible.");
+  const d = createDecipheriv("aes-256-gcm", cle(nom), b.subarray(0, 12));
+  d.setAuthTag(b.subarray(12, 28));
+  return Buffer.concat([d.update(b.subarray(28)), d.final()]);
 }
