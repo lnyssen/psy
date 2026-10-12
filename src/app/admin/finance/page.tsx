@@ -409,7 +409,7 @@ export default async function Finance({
         )}
       </ul>
 
-      <div className="hidden rounded-[14px] border border-line bg-surface md:block">
+      <div className="hidden overflow-hidden rounded-[14px] border border-line bg-surface md:block">
         <table className="w-full border-collapse text-sm">
           <caption className="sr-only">
             Montants facturés et encaissés par mois et par cabinet, année{" "}
@@ -475,13 +475,13 @@ export default async function Finance({
                   {m.facture > 0 ? euros(m.facture) : "—"}
                 </td>
                 <td
-                  className="px-3 py-2.5 text-right font-mono whitespace-nowrap text-paid"
+                  className={`px-3 py-2.5 text-right font-mono whitespace-nowrap ${m.encaisse > 0 ? "text-paid" : "text-ink-muted"}`}
                   data-numeric
                 >
                   {m.encaisse > 0 ? euros(m.encaisse) : "—"}
                 </td>
                 <td
-                  className="px-3 py-2.5 text-right font-mono whitespace-nowrap text-due"
+                  className={`px-3 py-2.5 text-right font-mono whitespace-nowrap ${m.du + m.retard > 0 ? "text-due" : "text-ink-muted"}`}
                   data-numeric
                 >
                   {m.du + m.retard > 0 ? euros(m.du + m.retard) : "—"}

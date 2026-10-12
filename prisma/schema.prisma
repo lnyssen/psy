@@ -453,6 +453,10 @@ model Parametres {
   /// Mention légale complémentaire de la société (RPM…), reprise sous son
   /// numéro d'entreprise sur la facture.
   mentionLegale      String? @map("mention_legale")
+  /// Couleur d'accent du site et de l'outil, choisie dans une palette dont
+  /// chaque teinte a ses contrastes vérifiés (voir lib/accent.ts). Violet par
+  /// défaut, la couleur de marque.
+  accent             String  @default("violet")
 
   @@map("parametres")
 }

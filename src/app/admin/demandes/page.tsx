@@ -53,8 +53,7 @@ export default async function Demandes() {
                 </span>
               </div>
               <p className="mt-1 text-sm text-ink-muted" data-numeric>
-                {d.email}
-                {d.phone ? ` · ${d.phone}` : ""}
+                {[d.email, d.phone].filter(Boolean).join(" · ")}
               </p>
               {d.message && (
                 <p className="mt-3 rounded-[14px] bg-sunken px-4 py-3 text-sm whitespace-pre-wrap">
@@ -113,8 +112,7 @@ export default async function Demandes() {
                   {a.firstName} {a.lastName}
                 </span>
                 <span className="text-ink-muted" data-numeric>
-                  {a.phone}
-                  {a.email ? ` · ${a.email}` : ""}
+                  {[a.phone, a.email].filter(Boolean).join(" · ")}
                 </span>
                 <span className="text-xs text-ink-muted" data-numeric>
                   inscrit le {fmtJourLong.format(a.createdAt)}

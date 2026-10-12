@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useSyncExternalStore } from "react";
 import { IconLune, IconSoleil } from "@/components/icons";
 
 /**
@@ -11,12 +11,23 @@ import { IconLune, IconSoleil } from "@/components/icons";
  * réponse. Un choix conservé côté navigateur seulement obligerait à corriger le
  * thème après coup, avec un éclair blanc à chaque chargement.
  */
+/** Le thème réellement affiché, lu sur la page : en mode « automatique » il vient
+ *  du réglage de l'appareil, que ni le cookie ni le serveur ne connaissent. */
+function abonner(rappel: () => void) {
+  const o = new MutationObserver(rappel);
+  o.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+  return () => o.disconnect();
+}
+
 export function Theme({ initial }: { initial: "light" | "dark" }) {
-  const [theme, setTheme] = useState(initial);
+  const theme = useSyncExternalStore(
+    abonner,
+    () => (document.documentElement.dataset.theme === "dark" ? "dark" : "light"),
+    () => initial,
+  );
 
   function basculer() {
     const suivant = theme === "dark" ? "light" : "dark";
-    setTheme(suivant);
     document.documentElement.dataset.theme = suivant;
     // Un an : c'est une préférence, pas une session.
     document.cookie = `theme=${suivant}; path=/; max-age=31536000; samesite=lax`;

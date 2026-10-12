@@ -7,6 +7,7 @@ import {
   startAuthentication,
 } from "@simplewebauthn/browser";
 import { seConnecter } from "@/lib/auth-actions";
+import { cibleApresConnexion } from "@/lib/acces-constantes";
 import { IconCadenas } from "@/components/icons";
 
 /**
@@ -57,8 +58,7 @@ export function Connexion({
         })
       ).json();
       if (!r.ok) throw new Error(r.message);
-      window.location.href =
-        suite.startsWith("/") && !suite.startsWith("//") ? suite : "/admin";
+      window.location.href = cibleApresConnexion(suite);
     } catch (e) {
       const annule =
         e instanceof Error &&

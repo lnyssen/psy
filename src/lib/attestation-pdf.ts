@@ -91,14 +91,27 @@ export async function construireAttestation(p: ParamsAttestation): Promise<Attes
     orderBy: { startsAt: "asc" },
     include: { cabinet: true },
   });
-  if (seances.length === 0)
+  if (seances.length === 0) {
+    const periode = `entre le ${fmtJourMoisAn.format(debut)} et le ${fmtJourMoisAn.format(instantBruxelles(p.au, "00:00")!)}`;
+    if (avecMontants) {
+      // Le cas fréquent : la séance est bien honorée, mais pas encore marquée
+      // payée. Le dire, plutôt qu'un « aucune séance » qui semble faux.
+      const honorees = await prisma.session.count({
+        where: { patientId: patient.id, status: "ATTENDED", startsAt: { gte: debut, lt: fin } },
+      });
+      if (honorees > 0)
+        return {
+          ok: false,
+          statut: 404,
+          message: `${honorees} séance${honorees > 1 ? "s" : ""} honorée${honorees > 1 ? "s" : ""} ${periode}, mais ${honorees > 1 ? "aucune n’est marquée payée" : "elle n’est pas marquée payée"} : les montants réglés ne figurent que pour les séances payées. Encaissez-${honorees > 1 ? "les" : "la"} dans Facturation, ou décochez « Mentionner les montants réglés ».`,
+        };
+    }
     return {
       ok: false,
       statut: 404,
-      message: avecMontants
-        ? "Aucune séance honorée et payée sur cette période."
-        : "Aucune séance honorée sur cette période.",
+      message: `Aucune séance honorée ${periode}. Vérifiez les dates : une séance d’aujourd’hui est comprise si « Au » est la date du jour.`,
     };
+  }
 
   const reglages = await prisma.parametres.findUnique({ where: { id: "global" } });
   const pdf = await PDFDocument.create();

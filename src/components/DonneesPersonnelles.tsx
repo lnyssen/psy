@@ -22,7 +22,7 @@ const MESSAGES: Record<string, { ok: boolean; texte: string }> = {
   "suppr-comptable": {
     ok: false,
     texte:
-      "Ce patient a des séances passées ou facturées : elles sont des pièces comptables et ne peuvent pas être supprimées. Anonymisez le dossier à la place.",
+      "Ce patient a des séances passées ou facturées. Supprimez-les d’abord, une à une (menu ⋯ de chaque ligne de l’historique), ou anonymisez le dossier pour garder les montants.",
   },
 };
 
@@ -160,10 +160,12 @@ export function DonneesPersonnelles({
             </form>
           ) : (
             <p className="text-xs text-ink-muted">
-              Ce patient a des séances passées ou facturées : ce sont des pièces
-              comptables à conserver pendant sept ans, la fiche ne peut donc pas
-              être supprimée. L’anonymisation ci-dessus efface tout ce qui
-              l’identifie et garde les montants.
+              Ce patient a des séances passées ou facturées : la fiche ne se
+              supprime qu’une fois celles-ci supprimées, une à une, avec le menu
+              « ⋯ » de chaque ligne de l’historique. Si ces montants doivent
+              rester dans votre comptabilité (conservation de sept ans),
+              l’anonymisation ci-dessus efface tout ce qui identifie le patient
+              et les garde.
             </p>
           )}
         </div>

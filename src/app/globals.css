@@ -146,10 +146,11 @@
 }
 
 /*
- * Thème sombre — bascule explicite, jamais déduite du système : la préférence
- * appartient à l'utilisatrice et se conserve dans un cookie, ce qui permet de
- * rendre la bonne version dès le serveur, sans le clignotement blanc d'une
- * bascule faite après coup en JavaScript.
+ * Thème sombre — choix explicite de l'utilisatrice, conservé dans un cookie, ce
+ * qui permet de rendre la bonne version dès le serveur, sans le clignotement
+ * blanc d'une bascule faite après coup en JavaScript. Le choix « automatique »
+ * (Réglages › Apparence) est la seule exception : un petit script avant le
+ * premier affichage lit alors le réglage de l'appareil.
  *
  * Palette distincte plutôt qu'inversion : fonds proches du noir mais teintés
  * violet, cohérents avec la marque, plutôt qu'un gris neutre. Contrastes
@@ -300,6 +301,20 @@ html {
   .grain::after {
     display: none;
   }
+}
+
+/* Taille de l'interface (Réglages › Apparence), par appareil. Tout le gabarit
+   se mesure en rem : changer la taille de base le met à l'échelle d'un bloc. */
+/* Cases à cocher, boutons radio et curseurs natifs : à la couleur d'accent. */
+html {
+  accent-color: var(--color-accent);
+}
+
+html[data-taille="petite"] {
+  font-size: 93.75%;
+}
+html[data-taille="grande"] {
+  font-size: 112.5%;
 }
 
 body {
@@ -515,7 +530,10 @@ html[data-curseur-rond] select {
     align-items: center;
     justify-content: center;
     min-height: 2.5rem;
-    padding-inline: 1rem;
+    /* Les boutons-icônes ronds (⋯, flèches de semaine) ont une largeur fixe :
+       leur ajouter du remplissage écrasait le pictogramme. On les veut juste
+       aussi larges que hauts. */
+    min-width: 2.5rem;
   }
 }
 
@@ -532,4 +550,22 @@ html[data-curseur-rond] select {
 .outil ::placeholder {
   color: var(--color-ink-muted);
   opacity: 1;
+}
+
+/*
+ * Listes déroulantes de l'outil : la flèche native se colle au bord arrondi du
+ * champ et ne se déplace pas avec le remplissage. On la remplace par un chevron
+ * dessiné, posé à une distance du bord qui suit la courbure du champ. Deux
+ * versions selon le thème, la flèche devant rester lisible sur le fond.
+ */
+.outil select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8' fill='none' stroke='%231b1464' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M1 1.5 6 6.5 11 1.5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 1.1rem center;
+  background-size: 12px 8px;
+  padding-right: 2.75rem;
+}
+:root[data-theme="dark"] .outil select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8' fill='none' stroke='%23ece9f2' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M1 1.5 6 6.5 11 1.5'/%3E%3C/svg%3E");
 }

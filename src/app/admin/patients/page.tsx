@@ -190,7 +190,7 @@ export default async function Patients({
                   className={`text-sm font-semibold ${du > 0 ? "text-due" : "text-ink-muted"}`}
                   data-numeric
                 >
-                  {du > 0 ? euros(du) : "—"}
+                  {du > 0 ? euros(du) : ""}
                 </span>
               </span>
               <span className="flex flex-wrap items-center gap-2">
@@ -211,7 +211,7 @@ export default async function Patients({
         ))}
       </ul>
 
-      <div className="hidden rounded-[14px] border border-line bg-surface md:block">
+      <div className="hidden overflow-hidden rounded-[14px] border border-line bg-surface md:block">
         <table className="w-full border-collapse text-sm">
           <thead>
             <tr className="border-b border-line bg-sunken text-[11px] tracking-[0.1em] text-ink-muted uppercase">

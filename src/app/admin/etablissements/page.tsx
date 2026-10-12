@@ -136,7 +136,7 @@ export default async function Etablissements({
               <IconChevronDroite />
             </Link>
           </div>
-          <h2 className="text-lg font-semibold tracking-tight capitalize" data-numeric>
+          <h2 className="text-lg font-semibold tracking-tight" data-numeric>
             À facturer — {MOIS_LABEL.format(debut)}
           </h2>
         </div>

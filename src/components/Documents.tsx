@@ -1,3 +1,4 @@
+import { ChampFichier } from "@/components/ChampFichier";
 import { ajouterDocument, supprimerDocument } from "@/lib/documents-actions";
 import { TAILLE_MAX_DOCUMENT } from "@/lib/documents-constantes";
 import { fmtJourMoisAn } from "@/lib/format";
@@ -106,14 +107,13 @@ export function Documents({
           className="mt-4 flex flex-wrap items-center gap-3"
         >
           <input type="hidden" name="patientId" value={patientId} />
-          <label className="min-w-52 flex-1">
+          <label className="basis-full sm:min-w-52 sm:flex-1 sm:basis-0">
             <span className="sr-only">Fichier à joindre</span>
-            <input
-              type="file"
+            <ChampFichier
               name="fichier"
               required
               accept=".pdf,.png,.jpg,.jpeg,.webp,.txt,.docx,.odt"
-              className="w-full text-sm file:mr-3 file:rounded-full file:border file:border-line file:bg-surface file:px-4 file:py-2 file:text-sm file:font-medium"
+              libelle="Fichier à joindre"
             />
           </label>
           <button

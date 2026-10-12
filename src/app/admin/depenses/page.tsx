@@ -1,3 +1,4 @@
+import { ChampFichier } from "@/components/ChampFichier";
 import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { CabinetTag } from "@/components/tags";
@@ -326,11 +327,11 @@ export default async function Depenses({
                     <div>
                       <label>
                         <span className={libelleChamp}>{d.photoMime ? "Remplacer le reçu" : "Ajouter un reçu"}</span>
-                        <input
+                        <ChampFichier
                           name="photo"
-                          type="file"
                           accept="image/*,application/pdf"
-                          className={`mt-1 ${champ} file:mr-3 file:rounded-full file:border-0 file:bg-accent-soft file:px-3 file:py-1 file:text-xs file:font-medium file:text-accent-text`}
+                          libelle={d.photoMime ? "Remplacer le reçu" : "Ajouter un reçu"}
+                          className="mt-1"
                         />
                       </label>
                       {d.photoMime && (

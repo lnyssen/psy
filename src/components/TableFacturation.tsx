@@ -199,7 +199,7 @@ export function TableFacturation({
         ))}
       </ul>
 
-      <div className="hidden rounded-[14px] border border-line bg-surface md:block">
+      <div className="hidden overflow-hidden rounded-[14px] border border-line bg-surface md:block">
         <table className="w-full border-collapse text-sm">
           <caption className="sr-only">Séances facturables</caption>
           <thead>

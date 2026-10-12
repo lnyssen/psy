@@ -7,7 +7,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { COOKIE_SESSION, creerJeton, optionsCookie } from "@/lib/session";
 import { exigerSession } from "@/lib/garde";
-import { LONGUEUR_MINIMALE } from "@/lib/acces-constantes";
+import { LONGUEUR_MINIMALE, cibleApresConnexion } from "@/lib/acces-constantes";
 import {
   adresseDuSite,
   definirMotDePasse,
@@ -36,7 +36,7 @@ export async function seConnecter(
   }
 
   const motDePasse = String(f.get("motDePasse") ?? "");
-  const suite = String(f.get("suite") ?? "/");
+  const suite = String(f.get("suite") ?? "");
 
   if (!(await motDePasseValide(motDePasse))) return "Mot de passe incorrect.";
 
@@ -45,7 +45,7 @@ export async function seConnecter(
 
   // Ne rediriger que vers un chemin interne : une valeur venue de l'URL ne doit
   // jamais pouvoir emmener ailleurs.
-  redirect(suite.startsWith("/") && !suite.startsWith("//") ? suite : "/admin");
+  redirect(cibleApresConnexion(suite));
 }
 
 /**

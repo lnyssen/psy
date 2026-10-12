@@ -3,7 +3,7 @@
  * une base fictive (voir seed-documentation.ts) : jamais de données réelles.
  *
  *   npm i --no-save puppeteer-core
- *   DATABASE_URL=postgresql://docs@localhost:5544/docs SMTP_HOST= … next start -p 3100
+ *   DATABASE_URL=postgresql://docs@localhost:5544/docs DIRECT_URL=$DATABASE_URL SMTP_HOST= … next start -p 3100
  *   (SMTP_HOST vide : `next start` charge .env.production et ses vrais
  *   identifiants SMTP ; vide, aucun e-mail ne peut partir pendant les essais.)
  *   npx tsx scripts/capturer-documentation.ts
@@ -122,7 +122,7 @@ async function main() {
 
     for (const [nom, id] of [
       ["reglages-ouverture", "ouverture"], ["reglages-rythme", "rythme"], ["reglages-horaires", "horaires"], ["reglages-tarifs", "tarifs"],
-      ["reglages-identite", "identite"], ["reglages-securite", "securite"], ["reglages-sauvegardes", "sauvegardes"], ["reglages-lieux", "lieux"],
+      ["reglages-identite", "identite"], ["reglages-apparence", "apparence"], ["reglages-securite", "securite"], ["reglages-sauvegardes", "sauvegardes"], ["reglages-lieux", "lieux"],
     ] as const) {
       await capturer(page, nom, "/admin/reglages", { selecteur: `#${id}`, hauteurMax: nom === "reglages-lieux" ? 1400 : undefined });
     }

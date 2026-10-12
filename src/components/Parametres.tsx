@@ -66,7 +66,7 @@ export function RendezVousEnLigne({ valeurs }: { valeurs: ParametresType }) {
           <textarea
             name="rdvMessage"
             defaultValue={valeurs.rdvMessage ?? ""}
-            rows={2}
+            rows={3}
             placeholder="Je ne prends pas de nouveaux rendez-vous pour le moment."
             className={`mt-1 ${champLarge.replace("rounded-full", "rounded-[14px]")} resize-y leading-snug`}
           />
@@ -103,7 +103,7 @@ export function RendezVousEnLigne({ valeurs }: { valeurs: ParametresType }) {
             <textarea
               name="nouveauxPatientsMessage"
               defaultValue={valeurs.nouveauxPatientsMessage ?? ""}
-              rows={2}
+              rows={3}
               placeholder="Je ne prends pas de nouveaux patients pour le moment. Laissez vos coordonnées : je vous rappellerai si une place se libère."
               className={`mt-1 ${champLarge.replace("rounded-full", "rounded-[14px]")} resize-y leading-snug`}
             />
@@ -290,7 +290,7 @@ export function Identite({ valeurs }: { valeurs: ParametresType }) {
         <input type="hidden" name="groupe" value="identite" />
 
         <fieldset className="flex flex-col gap-3">
-          <legend className="text-sm font-semibold">
+          <legend className="mb-3 pr-3 text-sm font-semibold">
             Numéros professionnels
           </legend>
           <div className="grid gap-4 sm:grid-cols-2">
@@ -317,7 +317,7 @@ export function Identite({ valeurs }: { valeurs: ParametresType }) {
         </fieldset>
 
         <fieldset className="flex flex-col gap-3 border-t border-line pt-5">
-          <legend className="text-sm font-semibold">Société</legend>
+          <legend className="pr-3 text-sm font-semibold">Société</legend>
           <label>
             <span className={libelleChamp}>
               Adresse du siège — une ligne par ligne
@@ -339,7 +339,7 @@ export function Identite({ valeurs }: { valeurs: ParametresType }) {
         </fieldset>
 
         <fieldset className="flex flex-col gap-3 border-t border-line pt-5">
-          <legend className="text-sm font-semibold">
+          <legend className="pr-3 text-sm font-semibold">
             Facturation à un établissement
           </legend>
           <div className="grid gap-4 sm:grid-cols-2">

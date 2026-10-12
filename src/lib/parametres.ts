@@ -19,6 +19,7 @@ export type Parametres = {
   delaiPaiementJours: number;
   adresseSiege: string | null;
   mentionLegale: string | null;
+  accent: string;
 };
 
 const PAR_DEFAUT: Parametres = {
@@ -40,6 +41,7 @@ const PAR_DEFAUT: Parametres = {
   delaiPaiementJours: 30,
   adresseSiege: null,
   mentionLegale: null,
+  accent: "violet",
 };
 
 /** Les paramètres tiennent en une ligne, créée à la volée si elle manque : on

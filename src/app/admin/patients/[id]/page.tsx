@@ -20,6 +20,7 @@ import { SEUIL_ABSENCES, compterAbsences } from "@/lib/absences";
 import { texteCoordonnees } from "@/lib/contact";
 import { EnvoyerRecu } from "@/components/EnvoyerRecu";
 import { MenuPlus } from "@/components/MenuPlus";
+import { SupprimerSeance } from "@/components/SupprimerSeance";
 import { Attestation } from "@/components/Attestation";
 import { seanceAVenir, seancePieceComptable } from "@/lib/suppression-patient";
 import { montantSeanceCents, payeurDe } from "@/lib/tarifs";
@@ -293,10 +294,10 @@ export default async function FichePatient({
         <div className="flex items-start justify-between gap-3">
           <h2 className="sr-only">Coordonnées</h2>
           <dl className="grid flex-1 gap-x-8 gap-y-3 sm:grid-cols-2 lg:grid-cols-1">
-            {coordonnees.map((c) => (
-              // Sur téléphone, un champ vide ne prend pas de place : on le
-              // retrouve dans « Modifier la fiche ».
-              <div key={c.t} className={c.v ? "" : "hidden sm:block"}>
+            {coordonnees
+              .filter((c) => c.v)
+              .map((c) => (
+              <div key={c.t}>
                 <dt className="text-[11px] font-semibold tracking-[0.1em] text-ink-muted uppercase">
                   {c.t}
                 </dt>
@@ -304,12 +305,25 @@ export default async function FichePatient({
                   className={`mt-0.5 text-sm ${c.mono ? "font-mono" : ""}`}
                   data-numeric
                 >
-                  {c.v || <span className="text-ink-muted">—</span>}
+                  {c.v}
                 </dd>
               </div>
             ))}
           </dl>
         </div>
+
+        {coordonnees.some((c) => !c.v) && (
+          // Les champs vides ne prennent plus de place : on dit seulement ce qui
+          // manque, au lieu d'une pile de tirets.
+          <p className="mt-3 text-xs text-ink-muted">
+            Non renseigné :{" "}
+            {coordonnees
+              .filter((c) => !c.v)
+              .map((c) => c.t.toLowerCase())
+              .join(", ")}
+            .
+          </p>
+        )}
 
         <ContactRapide
           texte={texteCoordonnees(patient)}
@@ -439,33 +453,41 @@ export default async function FichePatient({
                 key={s.id}
                 className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-line px-5 py-3.5 last:border-b-0"
               >
-                <time className="w-32 shrink-0 font-mono text-xs" data-numeric>
+                {/* Deux blocs : qui et quand à gauche, argent et gestes à droite.
+                    Sur téléphone ils s'empilent proprement au lieu de se
+                    fragmenter pastille par pastille. */}
+                <span className="flex flex-wrap items-center gap-x-3 gap-y-2 sm:flex-1">
+                <time className="shrink-0 font-mono text-xs sm:w-32" data-numeric>
                   {fmtDateCourte.format(s.startsAt)} ·{" "}
                   {fmtHeure.format(s.startsAt)}
                 </time>
                 <CabinetTag cabinet={s.cabinet} />
-                <span className="flex flex-1 flex-wrap items-center gap-2">
+                <span className="flex flex-wrap items-center gap-2">
                   <StatutSeance status={s.status} />
                   {(s.status === "SCHEDULED" || s.visio) && (
                     <BasculeVisio id={s.id} visio={s.visio} />
                   )}
                   {horsQuota.has(s.id) && <HorsQuota />}
                 </span>
+                </span>
+                <span className="ml-auto flex flex-wrap items-center justify-end gap-x-3 gap-y-2">
                 {isBillable(s.status) && (
-                  <span className="font-mono text-sm" data-numeric>
-                    {euros(s.amountCents ?? montant)}
-                  </span>
+                  <>
+                    <span className="font-mono text-sm" data-numeric>
+                      {euros(s.amountCents ?? montant)}
+                    </span>
+                    <EtatPaiement
+                      status={s.status}
+                      payment={s.paymentStatus}
+                      methode={s.paymentMethod}
+                      payeur={payeur}
+                    />
+                  </>
                 )}
-                <EtatPaiement
-                  status={s.status}
-                  payment={s.paymentStatus}
-                  methode={s.paymentMethod}
-                  payeur={payeur}
-                />
                 {/* Les actions forment un seul bloc : il tient sur la ligne ou passe
                     en entier à la suivante, au lieu de s'éparpiller bouton par
                     bouton. */}
-                <span className="ml-auto flex flex-wrap items-center justify-end gap-2">
+                <span className="flex flex-wrap items-center justify-end gap-2">
                   {isBillable(s.status) &&
                     s.paymentStatus !== "PAID" &&
                     (payeur === "INAMI" ? (
@@ -479,23 +501,30 @@ export default async function FichePatient({
                     ) : (
                       <AnnulerSeance id={s.id} />
                     ))}
-                  {((s.paymentStatus === "PAID" && payeur === "PATIENT") ||
-                    s.status === "NO_SHOW") && (
-                    <MenuPlus>
-                      {s.status === "NO_SHOW" && <AnnulerAbsence id={s.id} />}
-                      {s.paymentStatus === "PAID" && payeur === "PATIENT" && (
-                        <>
-                          <a
-                            href={`/api/recu/${s.id}`}
-                            className="rounded-full border border-line-strong px-2.5 py-0.5 text-[11px] font-medium transition-colors hover:border-accent hover:text-accent-text"
-                          >
-                            reçu PDF
-                          </a>
-                          <EnvoyerRecu id={s.id} dejaEnvoye={Boolean(s.receiptAt)} />
-                        </>
-                      )}
-                    </MenuPlus>
-                  )}
+                  {/* Le menu « ⋯ » est là pour toute séance : reçu et envoi si elle
+                      est payée, annulation d'une absence, et, toujours,
+                      suppression (payée ou non). */}
+                  <MenuPlus>
+                    {s.status === "NO_SHOW" && <AnnulerAbsence id={s.id} />}
+                    {s.paymentStatus === "PAID" && payeur === "PATIENT" && (
+                      <>
+                        <a
+                          href={`/api/recu/${s.id}`}
+                          className="rounded-full border border-line-strong px-2.5 py-0.5 text-[11px] font-medium transition-colors hover:border-accent hover:text-accent-text"
+                        >
+                          reçu PDF
+                        </a>
+                        <EnvoyerRecu id={s.id} dejaEnvoye={Boolean(s.receiptAt)} />
+                      </>
+                    )}
+                    <SupprimerSeance
+                      id={s.id}
+                      quand={`${fmtDateCourte.format(s.startsAt)} · ${fmtHeure.format(s.startsAt)}`}
+                      montant={isBillable(s.status) ? euros(s.amountCents ?? montant) : null}
+                      payee={s.paymentStatus === "PAID" && isBillable(s.status)}
+                    />
+                  </MenuPlus>
+                </span>
                 </span>
                 {(s.status === "ATTENDED" || s.note) && (
                   <NoteSeance

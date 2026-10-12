@@ -89,7 +89,7 @@ export function PriseRdv({
                 }`}
               >
                 <span className="font-semibold">{c.nom}</span>
-                <span className="mt-0.5 text-xs opacity-90">{c.adresse}</span>
+                <span className="mt-0.5 text-xs">{c.adresse}</span>
               </Link>
             );
           })}

@@ -82,3 +82,44 @@ export async function basculerVisio(id: string) {
   if (s.patientId) revalidatePath(`/admin/patients/${s.patientId}`);
   synchroniserApres();
 }
+
+/**
+ * Supprime une séance pour de bon, payée ou non : une saisie par erreur, un
+ * essai, un doublon. Elle disparaît de l'historique du patient, de la
+ * facturation, des chiffres de l'année, du quota INAMI et de l'agenda (Google
+ * suit à la synchronisation). Irréversible : l'écran demande une confirmation.
+ *
+ * Seule exception : une séance déjà portée sur une facture d'établissement
+ * numérotée. Cette facture est une pièce émise, qui ne bouge plus ; il faut
+ * d'abord l'annuler (voir lib/actions.ts, annuler une facture).
+ */
+export async function supprimerSeance(id: string) {
+  await exigerSession();
+  const s = await prisma.session.findUnique({
+    where: { id },
+    select: { patientId: true, factureId: true },
+  });
+  if (!s) return { ok: false as const, message: "Séance introuvable." };
+  if (s.factureId)
+    return {
+      ok: false as const,
+      message:
+        "Cette séance figure sur une facture d’établissement : annulez d’abord la facture.",
+    };
+
+  await prisma.session.delete({ where: { id } });
+  // L'événement Google de cette séance devient orphelin : la synchronisation le retire.
+  synchroniserApres();
+  for (const c of [
+    "/admin",
+    "/admin/semaine",
+    "/admin/facturation",
+    "/admin/finance",
+    "/admin/statistiques",
+    "/admin/ppl",
+    "/admin/patients",
+  ])
+    revalidatePath(c);
+  if (s.patientId) revalidatePath(`/admin/patients/${s.patientId}`);
+  return { ok: true as const };
+}

@@ -1,7 +1,8 @@
 "use client";
 
+import { ChampFichier } from "@/components/ChampFichier";
 import Link from "next/link";
-import { useRef, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 import { analyserImport, importerPatients, type AnalyseImport, type ResultatImport } from "@/lib/import-actions";
 import type { ChampImport } from "@/lib/import-patients";
 
@@ -13,7 +14,7 @@ const select =
   "w-full rounded-full border border-line bg-surface px-3 py-1.5 text-xs";
 
 export function ImportPatients({ champs }: { champs: Champ[] }) {
-  const entree = useRef<HTMLInputElement>(null);
+  const [cleChamp, setCleChamp] = useState(0);
   const [fichier, setFichier] = useState<File | null>(null);
   const [analyse, setAnalyse] = useState<Extract<AnalyseImport, { ok: true }> | null>(null);
   const [mapping, setMapping] = useState<(ChampImport | "")[]>([]);
@@ -54,7 +55,7 @@ export function ImportPatients({ champs }: { champs: Champ[] }) {
       setResultat(r);
       setAnalyse(null);
       setFichier(null);
-      if (entree.current) entree.current.value = "";
+      setCleChamp((k) => k + 1);
     });
   }
 
@@ -73,10 +74,9 @@ export function ImportPatients({ champs }: { champs: Champ[] }) {
     <div className="flex flex-col gap-6">
       <section className="flex max-w-2xl flex-col gap-3 rounded-[14px] border border-line bg-surface p-5">
         <h2 className="text-sm font-semibold">2. Choisis le fichier</h2>
-        <input
-          ref={entree}
-          type="file"
-          aria-label="Fichier Excel des patients (.xlsx)"
+        <ChampFichier
+          key={cleChamp}
+          libelle="Fichier Excel des patients (.xlsx)"
           accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
           onChange={(e) => {
             setFichier(e.target.files?.[0] ?? null);
@@ -84,7 +84,6 @@ export function ImportPatients({ champs }: { champs: Champ[] }) {
             setResultat(null);
             setErreur(null);
           }}
-          className="text-sm file:mr-3 file:rounded-full file:border file:border-line file:bg-surface file:px-4 file:py-2 file:text-sm file:font-medium"
         />
         <div>
           <button type="button" disabled={!fichier || enCours} onClick={() => analyser(null)} className={bouton}>

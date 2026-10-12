@@ -17,6 +17,10 @@ cd "$(dirname "$0")/.."
 PG_DIR=/tmp/docs-pg
 export LC_ALL=en_US.UTF-8
 export DATABASE_URL=postgresql://docs@localhost:5544/docs
+# La CLI Prisma lit DIRECT_URL en priorité, et .env.local y met la base Neon :
+# sans cette ligne, `prisma migrate deploy` migrerait Neon au lieu de la base
+# jetable.
+export DIRECT_URL="$DATABASE_URL"
 # `next start` charge .env.production, donc les vrais identifiants SMTP : sans
 # cette ligne, un clic sur « envoyer par e-mail » dans l'outil de test écrirait
 # vraiment, depuis la vraie boîte. Vide, l'envoi est inerte.

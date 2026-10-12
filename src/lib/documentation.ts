@@ -79,7 +79,7 @@ export const PAGES_DOC: PageDoc[] = [
           {
             t: "p",
             texte:
-              "Sans aucun geste pendant 30 minutes, l'outil se verrouille de lui-même (un message prévient une minute avant ; **Rester connecté** le repousse). Il faut alors le mot de passe ou Face ID pour reprendre.",
+              "Sans aucun geste pendant 30 minutes, l'outil se verrouille de lui-même (un message prévient une minute avant ; **Rester connecté** le repousse). Il faut alors le mot de passe ou Face ID pour reprendre, et vous revenez directement dans l'outil (pas sur le site public).",
           },
         ],
       },
@@ -107,7 +107,7 @@ export const PAGES_DOC: PageDoc[] = [
           {
             t: "p",
             texte:
-              "Tout en bas du menu, sous un trait, **Réglages** et **Documentation** (cette page) ; juste en dessous, le **thème** clair ou sombre (la lune) et le **cadenas**. La flèche en haut replie la barre pour gagner de la place. La page où vous êtes est sur fond violet pâle. Sur la page **Documentation**, le bouton **Version imprimable (PDF)** réunit tout ce guide sur une seule page, avec couverture et table des matières : **Imprimer** ouvre la boîte d'impression, qui permet aussi d'**Enregistrer en PDF**.",
+              "Tout en bas du menu, sous un trait, **Réglages** et **Documentation** (cette page) ; juste en dessous, le **thème** clair ou sombre (la lune ; **Réglages › Couleur et affichage** ajoute « automatique ») et le **cadenas**. La flèche en haut replie la barre pour gagner de la place. La page où vous êtes est sur fond violet pâle. Sur la page **Documentation**, le bouton **Version imprimable (PDF)** réunit tout ce guide sur une seule page, avec couverture et table des matières : **Imprimer** ouvre la boîte d'impression, qui permet aussi d'**Enregistrer en PDF**.",
           },
           {
             t: "p",
@@ -373,6 +373,11 @@ export const PAGES_DOC: PageDoc[] = [
             texte:
               "Le **lien personnel de réservation** (en bas de **Modifier la fiche**) est celui que reçoit le patient pour réserver lui-même un créneau sans passer par une demande : ne le diffusez pas ailleurs.",
           },
+          {
+            t: "p",
+            texte:
+              "**Supprimer une séance** : le menu **⋯**, à droite de chaque ligne de l'historique, propose **supprimer la séance**, payée ou non — une saisie par erreur, un essai, un doublon. Un premier clic indique ce qui va disparaître (le rendez-vous, son montant, le reçu éventuel) ; **Supprimer** le fait pour de bon, **Garder** renonce. La séance quitte l'historique, la facturation, les chiffres de l'année, le plafond INAMI et l'agenda (Google suit). C'est irréversible, et refusé pour une séance portée sur une facture d'établissement : annulez d'abord la facture.",
+          },
         ],
       },
       {
@@ -480,7 +485,7 @@ export const PAGES_DOC: PageDoc[] = [
             items: [
               "**D'exporter le dossier** : un fichier qui regroupe tout ce que l'outil sait du patient. Les notes de séance, cliniques, n'y figurent que si vous choisissez **Exporter avec les notes de séance**.",
               "**D'anonymiser le dossier** : le nom, les coordonnées, le numéro national, les notes et les documents sont effacés. Les séances et leurs montants restent, rattachés à « Dossier anonymisé », car ce sont des pièces comptables à conserver. Il faut taper ANONYMISER pour confirmer, et c'est refusé tant qu'un rendez-vous à venir existe.",
-              "**De supprimer le patient** : la fiche, ses notes, ses documents et ses rendez-vous à venir disparaissent pour de bon (et de l'agenda Google). Il faut taper SUPPRIMER pour confirmer. C'est prévu pour une fiche créée par erreur, un doublon ou une personne jamais venue : dès que le patient a une séance passée ou facturée, la suppression est refusée, car ce sont des pièces comptables à conserver sept ans. Il reste alors l'anonymisation.",
+              "**De supprimer le patient** : la fiche, ses notes, ses documents et ses rendez-vous à venir disparaissent pour de bon (et de l'agenda Google). Il faut taper SUPPRIMER pour confirmer. C'est prévu pour une fiche créée par erreur, un doublon ou une personne jamais venue : dès que le patient a une séance passée ou facturée, la suppression est refusée : supprimez d'abord ces séances (menu **⋯** de chaque ligne de l'historique, voir ci-dessous), ou **anonymisez** le dossier si ces montants doivent rester dans votre comptabilité (conservation de sept ans).",
             ],
           },
           { t: "attention", texte: "L'anonymisation et la suppression sont irréversibles." },
@@ -768,7 +773,7 @@ export const PAGES_DOC: PageDoc[] = [
   {
     slug: "reglages",
     titre: "Réglages",
-    resume: "Rythme, horaires, tarifs, identité, sécurité, sauvegardes, lieux.",
+    resume: "Rythme, horaires, tarifs, identité, sécurité, sauvegardes, lieux, couleur et affichage.",
     sections: [
       {
         id: "vue",
@@ -777,7 +782,7 @@ export const PAGES_DOC: PageDoc[] = [
           img(
             "reglages",
             "La page Réglages",
-            "Un sommaire à gauche, quatre groupes : Rendez-vous, Finance, Sécurité, Lieux et connexions.",
+            "Un sommaire à gauche, cinq groupes : Rendez-vous, Finance, Sécurité, Lieux et connexions, Affichage.",
           ),
           {
             t: "p",
@@ -897,6 +902,32 @@ export const PAGES_DOC: PageDoc[] = [
             t: "p",
             texte:
               "Cabinets et établissements : nom, adresse, couleur (choisie dans une palette vérifiée), **Accès** (une ligne par moyen de transport, affichée sur le site), et pour un établissement facturé à l'heure, le tarif horaire et le **Plafond hebdomadaire**. Deux cases décident si le lieu est proposé à la création d'une séance et s'il est **visible sur le site public**.",
+          },
+        ],
+      },
+      {
+        id: "apparence",
+        titre: "Couleur et affichage",
+        blocs: [
+          img(
+            "reglages-apparence",
+            "Le bloc Couleur et affichage",
+            "La couleur s'essaie tout de suite ; elle ne vaut pour tout le monde qu'une fois enregistrée.",
+          ),
+          {
+            t: "p",
+            texte:
+              "**Couleur d'accent du site et de l'outil** : huit teintes au choix (violet, indigo, bleu, turquoise, vert, rose, corail, ardoise). Elle colore les boutons, les liens, les pastilles actives et les bandeaux de titre, **sur le site public comme dans l'outil**. Chaque teinte a été calculée pour que les textes restent lisibles, en clair comme en sombre. Cliquez sur une couleur pour l'essayer, puis sur **Enregistrer la couleur** : sans cela, un rechargement de la page revient à la couleur précédente.",
+          },
+          {
+            t: "attention",
+            texte:
+              "Les couleurs des cabinets (Uccle, Auderghem, École) et des paiements (vert payé, ambre dû, rouge en retard) ne changent pas : elles ont un sens. Une teinte proche de l'une d'elles peut s'y confondre. Les PDF (reçus, attestations, factures), l'icône de l'application installée et son écran de lancement gardent le violet.",
+          },
+          {
+            t: "p",
+            texte:
+              "**Sur cet appareil** : le **thème** (clair, sombre, ou **automatique**, qui suit le réglage de l'appareil) et la **taille de l'interface** (petite, normale, grande : environ 6 % de moins ou 12 % de plus). Ces deux choix s'appliquent tout de suite et ne valent que pour l'ordinateur ou le téléphone sur lequel vous les faites : chaque appareil garde les siens.",
           },
         ],
       },

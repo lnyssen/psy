@@ -1,9 +1,8 @@
 "use client";
 
+import { ChampFichier } from "@/components/ChampFichier";
 import { useState } from "react";
 
-const champ =
-  "w-full rounded-full border border-line bg-surface px-3.5 py-2 text-sm placeholder:text-ink-muted/60";
 const libelleChamp = "block text-[11px] font-semibold tracking-[0.1em] text-ink-muted uppercase";
 
 /**
@@ -51,13 +50,13 @@ export function DepensePhotoOCR() {
       {/* capture="environment" ouvre directement l'appareil photo arrière sur
           téléphone plutôt que la pellicule : photographier au comptoir, pas
           retrouver une image plus tard. */}
-      <input
+      <ChampFichier
         name="photo"
-        type="file"
         accept="image/*,application/pdf"
         capture="environment"
         onChange={onChange}
-        className={`mt-1 ${champ} file:mr-3 file:rounded-full file:border-0 file:bg-accent-soft file:px-3 file:py-1 file:text-xs file:font-medium file:text-accent-text`}
+        libelle="Photo du reçu"
+        className="mt-1"
       />
       {statut === "lecture" && (
         <span className="mt-1.5 block text-xs text-ink-muted">Lecture du reçu…</span>

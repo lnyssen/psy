@@ -9,7 +9,7 @@ import {
   supprimerCategorieDepense,
   supprimerTarif,
 } from "@/lib/actions";
-import { euros, parLibelle } from "@/lib/format";
+import { parLibelle } from "@/lib/format";
 import { Horaires } from "@/components/Horaires";
 import {
   Identite,
@@ -21,6 +21,9 @@ import { GoogleAgenda } from "@/components/GoogleAgenda";
 import { Securite } from "@/components/Securite";
 import { StatutSauvegarde } from "@/components/StatutSauvegarde";
 import { InstallerApplication } from "@/components/InstallerApplication";
+import { Apparence } from "@/components/Apparence";
+import { accentValide } from "@/lib/accent";
+import { cookies } from "next/headers";
 
 export const dynamic = "force-dynamic";
 
@@ -53,6 +56,9 @@ export default async function Reglages({
     prisma.indisponibilite.findMany({ orderBy: { debut: "asc" } }),
   ]);
   const valeurs = await parametres();
+  const jar = await cookies();
+  const themeCookie = jar.get("theme")?.value;
+  const tailleCookie = jar.get("taille")?.value;
   const patientsParTarif = new Map(
     (
       await prisma.patient.groupBy({ by: ["tarifId"], _count: { _all: true } })
@@ -97,6 +103,10 @@ export default async function Reglages({
         ["google", "Google Agenda"],
         ["application", "Application sur le téléphone"],
       ],
+    },
+    {
+      titre: "Affichage",
+      liens: [["apparence", "Couleur et affichage"]],
     },
   ];
 
@@ -439,7 +449,7 @@ export default async function Reglages({
                       className="flex flex-col gap-3"
                     >
                       <input type="hidden" name="id" value={c.id} />
-                      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_2fr_1.5fr]">
                         <label>
                           <span className={libelleChamp}>Nom</span>
                           <input
@@ -449,7 +459,7 @@ export default async function Reglages({
                             className={`mt-1 ${champ}`}
                           />
                         </label>
-                        <label className="lg:col-span-2">
+                        <label>
                           <span className={libelleChamp}>Rue et numéro</span>
                           <input
                             name="addressLine"
@@ -542,7 +552,7 @@ export default async function Reglages({
                             className={`mt-1 ${champ}`}
                           />
                         </label>
-                        <label className="flex items-end gap-2 pb-2 text-sm">
+                        <label className="flex items-center gap-2 self-end pb-2 text-sm">
                           <input
                             type="checkbox"
                             name="factureInstitution"
@@ -591,7 +601,7 @@ export default async function Reglages({
                           <input
                             name="mentionLegaleClient"
                             defaultValue={c.mentionLegaleClient ?? ""}
-                            placeholder="TVA NA — RPM 0000.000.000"
+                            placeholder="TVA, RPM…"
                             className={`mt-1 ${champ}`}
                           />
                         </label>
@@ -666,7 +676,7 @@ export default async function Reglages({
               className="rounded-[14px] border border-dashed border-line-strong bg-surface px-5 py-4"
             >
               <p className="mb-3 text-sm font-semibold">Ajouter un lieu</p>
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_2fr_1.5fr]">
                 <label>
                   <span className={libelleChamp}>Nom</span>
                   <input
@@ -676,7 +686,7 @@ export default async function Reglages({
                     className={`mt-1 ${champ}`}
                   />
                 </label>
-                <label className="lg:col-span-2">
+                <label>
                   <span className={libelleChamp}>Rue et numéro</span>
                   <input
                     name="addressLine"
@@ -744,7 +754,7 @@ export default async function Reglages({
                     className={`mt-1 ${champ}`}
                   />
                 </label>
-                <label className="flex items-end gap-2 pb-2 text-sm">
+                <label className="flex items-center gap-2 self-end pb-2 text-sm">
                   <input type="checkbox" name="factureInstitution" />
                   Facturé à l’heure à un établissement
                 </label>
@@ -788,6 +798,17 @@ export default async function Reglages({
           <GoogleAgenda retour={google} />
 
           <InstallerApplication />
+
+          <section id="apparence" className="flex scroll-mt-6 flex-col gap-4">
+            <TitreSection>Couleur et affichage</TitreSection>
+            <Apparence
+              accentInitial={accentValide(valeurs.accent)}
+              themeInitial={
+                themeCookie === "dark" || themeCookie === "auto" ? themeCookie : "light"
+              }
+              tailleInitiale={tailleCookie === "petite" || tailleCookie === "grande" ? tailleCookie : "normale"}
+            />
+          </section>
         </div>
       </div>
     </div>
