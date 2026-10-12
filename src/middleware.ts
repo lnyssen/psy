@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { COOKIE_SESSION, jetonValide } from "@/lib/session";
+import { COOKIE_SESSION, creerJeton, jetonValide, optionsCookie } from "@/lib/session";
 import { demoOuverte } from "@/lib/demo";
 
 /**
@@ -43,7 +43,23 @@ export async function middleware(req: NextRequest) {
   // Démonstration ouverte : la garde est levée, pas retirée. Voir lib/demo.ts.
   if (demoOuverte()) return NextResponse.next();
 
-  if (await jetonValide(req.cookies.get(COOKIE_SESSION)?.value)) return NextResponse.next();
+  if (await jetonValide(req.cookies.get(COOKIE_SESSION)?.value)) {
+    const reponse = NextResponse.next();
+    // Session glissante : seuls les gestes réels la prolongent — une page
+    // chargée en entier, un envoi (action serveur, signal d'activité). Pas les
+    // requêtes GET que le navigateur lance seul, comme le préchargement des
+    // liens : Next retire ses en-têtes de préchargement avant l'intergiciel,
+    // on ne peut donc pas les reconnaître, mais elles n'acceptent jamais du
+    // HTML. Une page laissée ouverte ne doit pas rester vivante parce qu'elle
+    // précharge. Les changements de page sans rechargement, eux, sont couverts
+    // par le signal que la page envoie toutes les cinq minutes d'activité.
+    const geste =
+      req.method !== "GET" ||
+      (req.headers.get("accept") ?? "").includes("text/html");
+    if (geste)
+      reponse.cookies.set(COOKIE_SESSION, await creerJeton(), optionsCookie);
+    return reponse;
+  }
 
   const vers = url.clone();
   vers.pathname = "/connexion";

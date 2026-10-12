@@ -36,7 +36,13 @@ export function courrielConfigure() {
   return Boolean(process.env.SMTP_HOST);
 }
 
-export async function envoyerCourriel(m: { a: string; sujet: string; texte: string; repondreA?: string }) {
+export async function envoyerCourriel(m: {
+  a: string;
+  sujet: string;
+  texte: string;
+  repondreA?: string;
+  pieces?: { nom: string; contenu: Buffer; type: string }[];
+}) {
   const t = transport();
   if (!t) return false;
   try {
@@ -46,6 +52,11 @@ export async function envoyerCourriel(m: { a: string; sujet: string; texte: stri
       replyTo: m.repondreA,
       subject: m.sujet,
       text: m.texte,
+      attachments: m.pieces?.map((p) => ({
+        filename: p.nom,
+        content: p.contenu,
+        contentType: p.type,
+      })),
     });
     return true;
   } catch (e) {

@@ -79,7 +79,7 @@ export const PAGES_DOC: PageDoc[] = [
           {
             t: "p",
             texte:
-              "Sans action de votre part, une session se ferme d'elle-même au bout de 8 heures.",
+              "Sans aucun geste pendant 30 minutes, l'outil se verrouille de lui-même (un message prévient une minute avant ; **Rester connecté** le repousse). Il faut alors le mot de passe ou Face ID pour reprendre.",
           },
         ],
       },
@@ -574,7 +574,7 @@ export const PAGES_DOC: PageDoc[] = [
             t: "etapes",
             items: [
               "Pour un patient privé qui paie, cliquez sur **espèces** ou **carte** à la fin de la ligne : la séance passe en « payé » et le mode de paiement est mémorisé.",
-              "Le bouton **reçu PDF** apparaît alors : il produit le reçu à remettre au patient, avec tous les champs obligatoires.",
+              "Le bouton **reçu PDF** apparaît alors : il produit le reçu à remettre au patient, avec tous les champs obligatoires Deux boutons le suivent : **envoyer par e-mail** joint le PDF à un message envoyé au patient (ou à ses parents s'il n'a pas d'adresse ; le bouton devient **renvoyer par e-mail** et la fiche indique « déjà envoyé »), et **partager** ouvre la feuille de partage du téléphone — WhatsApp, SMS, Mail — avec le PDF (sur ordinateur, le fichier se télécharge).",
               "Pour une séance conventionnée, le patient ne doit rien : cliquez sur **reçu de l'INAMI** quand l'INAMI a versé le montant.",
               "Pour une absence que vous ne souhaitez pas facturer, **annuler l'absence** la rend non due, tout en gardant la trace.",
             ],

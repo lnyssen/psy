@@ -12,7 +12,11 @@
  * n'existe pas.
  */
 const NOM_COOKIE = "amapsy_session";
-const DUREE_MS = 8 * 60 * 60 * 1000; // une journée de consultation
+// Une session ne vit que trente minutes, mais se prolonge à chaque activité :
+// l'intergiciel renouvelle le cookie à chaque requête de l'outil, et la page
+// signale elle-même les gestes qui n'en produisent pas (taper une note).
+// Trente minutes sans rien : la session est caduque, côté serveur aussi.
+export const DUREE_MS = 30 * 60 * 1000;
 
 export const COOKIE_SESSION = NOM_COOKIE;
 

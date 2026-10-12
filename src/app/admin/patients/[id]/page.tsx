@@ -15,6 +15,7 @@ import { RecuInami } from "@/components/RecuInami";
 import { FormulairePatient } from "@/components/FormulairePatient";
 import { DonneesPersonnelles } from "@/components/DonneesPersonnelles";
 import { Documents } from "@/components/Documents";
+import { EnvoyerRecu } from "@/components/EnvoyerRecu";
 import { seanceAVenir, seancePieceComptable } from "@/lib/suppression-patient";
 import { montantSeanceCents, payeurDe } from "@/lib/tarifs";
 import { AnnulerAbsence } from "@/components/AnnulerAbsence";
@@ -424,6 +425,9 @@ export default async function FichePatient({
                   >
                     reçu PDF
                   </a>
+                )}
+                {s.paymentStatus === "PAID" && payeur === "PATIENT" && (
+                  <EnvoyerRecu id={s.id} dejaEnvoye={Boolean(s.receiptAt)} />
                 )}
                 {(s.status === "ATTENDED" || s.note) && (
                   <NoteSeance

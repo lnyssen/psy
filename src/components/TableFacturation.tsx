@@ -11,6 +11,7 @@ import { EnTeteTri, type Params } from "@/components/filtres";
 import { euros, fmtDateCourte, nomComplet, type CabinetVue } from "@/lib/format";
 import { marquerPayeLot, marquerRecuInamiLot } from "@/lib/actions";
 import { RecuInami } from "@/components/RecuInami";
+import { EnvoyerRecu } from "@/components/EnvoyerRecu";
 import type { Payeur } from "@/lib/tarifs";
 
 export type LigneFacture = {
@@ -165,12 +166,15 @@ export function TableFacturation({
                   />
                   {l.paymentStatus === "PAID" ? (
                     l.payeur === "INAMI" ? null : (
+                    <>
                     <a
                       href={`/api/recu/${l.id}`}
                       className="rounded-full border border-line-strong px-3 py-1 text-[11px] font-medium"
                     >
                       reçu PDF
                     </a>
+                    <EnvoyerRecu id={l.id} />
+                    </>
                     )
                   ) : (
                     <>
@@ -257,12 +261,15 @@ export function TableFacturation({
                     />
                     {l.paymentStatus === "PAID" ? (
                       l.payeur === "INAMI" ? null : (
+                      <>
                       <a
                         href={`/api/recu/${l.id}`}
                         className="rounded-full border border-line-strong px-2.5 py-0.5 text-[11px] font-medium transition-colors hover:border-accent hover:text-accent-text"
                       >
                         reçu PDF
                       </a>
+                      <EnvoyerRecu id={l.id} />
+                      </>
                       )
                     ) : (
                       <>

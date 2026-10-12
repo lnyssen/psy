@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import type { Metadata } from "next";
 import { BarreLaterale } from "@/components/BarreLaterale";
 import { Nav } from "@/components/Nav";
+import { VerrouInactivite } from "@/components/VerrouInactivite";
 import { prisma } from "@/lib/db";
 import { demoOuverte } from "@/lib/demo";
 import { statutSauvegarde } from "@/lib/sauvegardes";
@@ -48,6 +49,8 @@ export default async function AdminLayout({
 
   return (
     <div className="flex min-h-screen">
+      {/* Pas pendant la démonstration ouverte : il n'y a rien à verrouiller. */}
+      {!ouverte && <VerrouInactivite />}
       <BarreLaterale
         theme={theme}
         demandesEnAttente={enAttente}
