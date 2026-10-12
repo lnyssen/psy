@@ -170,6 +170,11 @@ export const PAGES_DOC: PageDoc[] = [
           {
             t: "p",
             texte:
+              "Quand deux séances se chevauchent, leurs cartes se placent côte à côte : sur une carte étroite, le **nom** passe à la ligne (deux au plus) et seule l'heure de début s'affiche. **Survolez** une carte (ou sélectionnez-la au clavier) pour l'élargir : elle passe devant sa voisine et montre l'heure de fin, le lieu et ses boutons.",
+          },
+          {
+            t: "p",
+            texte:
               "**Imprimer**, à côté de « Cette semaine », ouvre une feuille de route simple de la semaine : pour chaque jour, l'heure, le nom, le lieu et la visio. **Imprimer la journée**, sur Aujourd'hui, fait de même pour un seul jour. La feuille ne montre ni téléphone, ni note, ni montant ; le bouton **Imprimer** de cette page ouvre la boîte d'impression, qui permet aussi d'enregistrer en PDF.",
           },
           {
@@ -250,6 +255,11 @@ export const PAGES_DOC: PageDoc[] = [
             texte:
               "Pour une absence que vous choisissez de ne pas facturer, utilisez **annuler l'absence** dans Facturation : la trace de l'absence reste pour vos statistiques, mais elle n'est plus due.",
           },
+          {
+            t: "p",
+            texte:
+              "**Un clic de trop ?** Après **honorée**, **absente**, **annuler** (un rendez-vous ou une absence), **espèces**, **carte** ou **reçu de l'INAMI** — y compris sur plusieurs séances à la fois — un message apparaît en haut de l'écran pendant huit secondes : « Séance marquée honorée · **Annuler** ». Un clic sur **Annuler** remet les séances exactement comme elles étaient (statut, paiement, montant). Le message reste tant que vous le survolez, et **Échap** le ferme. Une séance déjà portée sur une facture d'établissement n'est jamais modifiée.",
+          },
         ],
       },
       {
@@ -298,7 +308,7 @@ export const PAGES_DOC: PageDoc[] = [
   {
     slug: "patients",
     titre: "Patients",
-    resume: "Dossiers, import Excel, doublons, documents et droits RGPD.",
+    resume: "Dossiers, documents, attestations, import Excel, doublons et droits RGPD.",
     sections: [
       {
         id: "liste",
@@ -351,7 +361,7 @@ export const PAGES_DOC: PageDoc[] = [
           {
             t: "p",
             texte:
-              "En haut : le nom, le régime, le cabinet, puis une rangée de compteurs : nombre de séances, heures, ce qui a été encaissé ou reçu de l'INAMI, ce qui reste dû ou à recevoir. Pour un patient conventionné, **INAMI, 12 mois** montre où il en est de son plafond (par exemple 4 / 10). Dessous, deux colonnes sur ordinateur (tout s'empile sur téléphone) : à gauche les **coordonnées**, à droite les boutons **Nouvelle séance** (pour ce patient) et **Modifier la fiche** (dont le **lien personnel de réservation**, en bas du formulaire), l'**historique des séances**, les notes, les documents et, tout en bas, les données personnelles. Sous les coordonnées, **Copier les coordonnées** met nom, téléphones, e-mails et adresse dans le presse-papiers (pour les coller dans un message ou un événement d'agenda), et **Appeler** et **WhatsApp** apparaissent pour chaque numéro connu (patient, mère, père). Deux absences non excusées ou plus sur les douze derniers mois sont signalées par un bandeau sur la fiche et par une pastille **2 absences** dans la liste des patients.",
+              "En haut : le nom, le régime, le cabinet, puis une rangée de compteurs : nombre de séances, heures, ce qui a été encaissé ou reçu de l'INAMI, ce qui reste dû ou à recevoir. Pour un patient conventionné, **INAMI, 12 mois** montre où il en est de son plafond (par exemple 4 / 10). Dessous, deux colonnes sur ordinateur (tout s'empile sur téléphone) : à gauche les **coordonnées**, à droite les boutons **Nouvelle séance** (pour ce patient), **Modifier la fiche** et **Attestation** (dont le **lien personnel de réservation**, en bas du formulaire), l'**historique des séances**, les notes, les documents et, tout en bas, les données personnelles. Sous les coordonnées, **Copier les coordonnées** met nom, téléphones, e-mails et adresse dans le presse-papiers (pour les coller dans un message ou un événement d'agenda), et **Appeler** et **WhatsApp** apparaissent pour chaque numéro connu (patient, mère, père). Deux absences non excusées ou plus sur les douze derniers mois sont signalées par un bandeau sur la fiche et par une pastille **2 absences** dans la liste des patients.",
           },
           img(
             "patient-modifier",
@@ -379,6 +389,37 @@ export const PAGES_DOC: PageDoc[] = [
             t: "note",
             texte:
               "Chaque document est chiffré avant d'être enregistré : une copie de la base de données ne donnerait accès à aucun contenu. Il se télécharge d'un clic sur son nom, jamais affiché dans la page. La clé de chiffrement se garde précieusement : la perdre, c'est perdre les documents.",
+          },
+        ],
+      },
+      {
+        id: "attestation",
+        titre: "Attestation de présence",
+        blocs: [
+          img(
+            "patient-attestation",
+            "Le formulaire d'attestation d'une fiche",
+            "Le bouton **Attestation** s'ouvre en tête de la fiche, à côté de Nouvelle séance et de Modifier la fiche.",
+          ),
+          {
+            t: "p",
+            texte:
+              "Une mutuelle, une assurance, un employeur ou une école demande parfois de prouver que le patient a consulté. **Attestation** produit un PDF qui le dit, aux dates de ses séances **honorées**, sans rien révéler de leur contenu. Il reprend vos numéros (entreprise, INAMI, visa, Commission des psychologues) saisis dans **Réglages › Identité et facturation**.",
+          },
+          {
+            t: "etapes",
+            items: [
+              "Ouvrez la fiche du patient et cliquez sur **Attestation**.",
+              "Choisissez la période (**Du** / **Au**) ; par défaut, du 1er janvier à aujourd'hui.",
+              "Si vous le souhaitez, écrivez **Pour** qui elle est (« la mutuelle », « l'école »…) : la phrase figure sur le document.",
+              "Pour un patient privé, cochez **Mentionner les montants réglés** si l'organisme le demande : seules les séances **payées** figurent alors, avec le total réglé. Un patient conventionné ne paie rien : la case n'existe pas.",
+              "Cliquez sur **Ouvrir le PDF** pour le vérifier, **Envoyer par e-mail** pour l'adresser au patient (ou à ses parents s'il n'a pas d'adresse), ou **Partager** pour le passer par WhatsApp, SMS ou Mail depuis un téléphone.",
+            ],
+          },
+          {
+            t: "note",
+            texte:
+              "L'attestation se compose à chaque fois d'après les séances : rien n'est enregistré, et il n'y a donc rien à supprimer. Si aucune séance honorée ne tombe dans la période, l'outil le dit au lieu de produire une page vide. Une liste longue continue sur une deuxième page.",
           },
         ],
       },
@@ -605,10 +646,15 @@ export const PAGES_DOC: PageDoc[] = [
         id: "relances",
         titre: "Relancer les impayés",
         blocs: [
+          img(
+            "facturation-relances",
+            "Le bloc Relances de la page Facturation",
+            "Une ligne par famille : ancienneté, total dû et les façons de relancer.",
+          ),
           {
             t: "p",
             texte:
-              "Le bloc **Relances** de la page Facturation regroupe les impayés par famille. Chaque ligne indique l'ancienneté de l'impayé (en rouge au-delà de 30 jours) et propose trois façons de relancer : **préparer la relance** ouvre votre messagerie avec un e-mail déjà rédigé (séances, montants, IBAN, formule de politesse) que vous relisez avant de l'envoyer ; **envoyer** l'expédie directement depuis l'outil, après confirmation ; **WhatsApp** ouvre la conversation avec le même texte. Rien ne part jamais tout seul : une relance d'argent auprès d'une famille se fait avec tact, l'outil prépare, vous décidez.",
+              "Le bloc **Relances** de la page Facturation regroupe les impayés par famille. Chaque ligne indique l'ancienneté de l'impayé (en rouge au-delà de 30 jours) et propose trois façons de relancer : **préparer la relance** ouvre votre messagerie avec un e-mail déjà rédigé (séances, montants, IBAN, formule de politesse) que vous relisez avant de l'envoyer ; **envoyer** l'expédie directement depuis l'outil, après confirmation ; **WhatsApp** ouvre la conversation avec le même texte. **QR de paiement** affiche un code QR de virement (montant total dû, communication « Séances » et nom du patient) : le patient le scanne avec l'application de sa banque, sans rien recopier — pratique au cabinet, sur votre écran. Il faut un **IBAN valide** dans **Réglages › Identité et facturation** ; le code est aussi joint automatiquement à l'e-mail envoyé avec **envoyer**. Rien ne part jamais tout seul : une relance d'argent auprès d'une famille se fait avec tact, l'outil prépare, vous décidez.",
           },
         ],
       },

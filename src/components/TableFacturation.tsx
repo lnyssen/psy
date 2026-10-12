@@ -10,6 +10,7 @@ import { AnnulerAbsence } from "@/components/AnnulerAbsence";
 import { EnTeteTri, type Params } from "@/components/filtres";
 import { euros, fmtDateCourte, nomComplet, type CabinetVue } from "@/lib/format";
 import { marquerPayeLot, marquerRecuInamiLot } from "@/lib/actions";
+import { avecAnnulation } from "@/components/AnnulationGeste";
 import { RecuInami } from "@/components/RecuInami";
 import { EnvoyerRecu } from "@/components/EnvoyerRecu";
 import type { Payeur } from "@/lib/tarifs";
@@ -91,7 +92,13 @@ export function TableFacturation({
 
   const recuInamiLot = () =>
     demarrer(async () => {
-      const r = await marquerRecuInamiLot(retenusInami.map((l) => l.id));
+      const ids = retenusInami.map((l) => l.id);
+      const r = await avecAnnulation(
+        ids,
+        `${ids.length} séance${ids.length > 1 ? "s" : ""} marquée${ids.length > 1 ? "s" : ""} reçue${ids.length > 1 ? "s" : ""} de l’INAMI`,
+        () => marquerRecuInamiLot(ids),
+        (x) => x.ok,
+      );
       if (!r.ok) {
         setErreur(r.message);
         return;
@@ -103,9 +110,12 @@ export function TableFacturation({
 
   const encaisserLot = (methode: "CASH" | "ELECTRONIC") =>
     demarrer(async () => {
-      const r = await marquerPayeLot(
-        retenusPrives.map((l) => l.id),
-        methode,
+      const ids = retenusPrives.map((l) => l.id);
+      const r = await avecAnnulation(
+        ids,
+        `${ids.length} séance${ids.length > 1 ? "s" : ""} encaissée${ids.length > 1 ? "s" : ""}`,
+        () => marquerPayeLot(ids, methode),
+        (x) => x.ok,
       );
       if (!r.ok) {
         setErreur(r.message);

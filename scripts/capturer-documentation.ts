@@ -3,7 +3,9 @@
  * une base fictive (voir seed-documentation.ts) : jamais de données réelles.
  *
  *   npm i --no-save puppeteer-core
- *   DATABASE_URL=postgresql://docs@localhost:5544/docs … next start -p 3100
+ *   DATABASE_URL=postgresql://docs@localhost:5544/docs SMTP_HOST= … next start -p 3100
+ *   (SMTP_HOST vide : `next start` charge .env.production et ses vrais
+ *   identifiants SMTP ; vide, aucun e-mail ne peut partir pendant les essais.)
  *   npx tsx scripts/capturer-documentation.ts
  *
  * Les images sont converties en WebP dans public/documentation/.
@@ -100,12 +102,17 @@ async function main() {
       await capturer(page, "patient-documents", lien, { selecteur: "#documents" });
       await capturer(page, "patient-rgpd", lien, { ouvrir: "Données personnelles", selecteur: "#donnees" });
     }
+    // L'attestation, sur un patient privé : la case « montants » y figure.
+    await page.goto(`${BASE}/admin/patients`, { waitUntil: "load" });
+    const lienPrive = await page.evaluate(() => [...document.querySelectorAll("a")].find((a) => a.textContent?.includes("Lucas Martin"))?.getAttribute("href"));
+    if (lienPrive) await capturer(page, "patient-attestation", lienPrive, { ouvrir: "Attestation", selecteur: "#attestation" });
     await capturer(page, "patient-nouveau", "/admin/patients/nouveau", { pleine: true });
     await capturer(page, "import", "/admin/patients/import");
     await capturer(page, "doublons", "/admin/patients/doublons");
 
     await capturer(page, "demandes", "/admin/demandes");
     await capturer(page, "facturation", "/admin/facturation");
+    await capturer(page, "facturation-relances", "/admin/facturation", { selecteur: "#relances" });
     await capturer(page, "etablissements", "/admin/etablissements");
     await capturer(page, "depenses", "/admin/depenses");
     await capturer(page, "finance", "/admin/finance");

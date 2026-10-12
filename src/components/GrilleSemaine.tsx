@@ -733,19 +733,27 @@ function Bloc({
           borderColor: "color-mix(in srgb, var(--cab-vif) 45%, transparent)",
         } as React.CSSProperties
       }
-      className={`teinte-cabinet group absolute flex cursor-grab overflow-hidden rounded-lg border transition-shadow hover:shadow-[0_2px_8px_rgba(39,39,87,0.10)] active:cursor-grabbing ${
+      // @container : la carte adapte son contenu à sa propre largeur — deux
+      // séances côte à côte n'ont pas la place de montrer l'heure de fin. Au
+      // survol ou au focus, elle s'élargit et passe devant sa voisine pour se
+      // lire en entier.
+      className={`teinte-cabinet @container group absolute flex cursor-grab overflow-hidden rounded-lg border transition-shadow hover:z-30 hover:min-w-56 hover:shadow-[0_4px_14px_rgba(39,39,87,0.22)] focus-within:z-30 focus-within:min-w-56 active:cursor-grabbing ${
         seance.conflit ? "ring-2 ring-overdue/70" : ""
       }`}
     >
       <span aria-hidden="true" className="filet-cabinet w-[5px] shrink-0" />
       <Link
         href={seance.patientId ? `/admin/patients/${seance.patientId}` : "/admin/etablissements"}
+        title={`${seance.nom} — ${hhmm(seance.minutes)}–${hhmm(seance.minutes + seance.duree)} — ${seance.cabinetNom}${seance.visio ? " (visio)" : ""}`}
         className="flex min-w-0 flex-1 flex-col gap-[3px] overflow-hidden px-2 py-1.5"
       >
         <span className="shrink-0 truncate text-[12.5px] leading-[1.25] font-bold" data-numeric>
-          {hhmm(seance.minutes)}–{hhmm(seance.minutes + seance.duree)}
+          {hhmm(seance.minutes)}
+          <span className="@max-[9rem]:hidden">–{hhmm(seance.minutes + seance.duree)}</span>
         </span>
-        <span className="shrink-0 truncate text-[12px] leading-tight font-medium">
+        {/* Le nom est ce qu'on cherche : sur une carte étroite il passe à la
+            ligne (deux au plus) au lieu d'être coupé après quelques lettres. */}
+        <span className="shrink-0 truncate text-[12px] leading-tight font-medium @max-[9rem]:line-clamp-2 @max-[9rem]:break-words @max-[9rem]:whitespace-normal">
           {seance.nom}
         </span>
         {/* Cabinet, alerte et paiement sur une seule ligne : un bloc de

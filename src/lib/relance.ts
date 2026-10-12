@@ -11,6 +11,8 @@ export type Relance = {
   telephone: string | null;
   seances: { date: string; montant: string }[];
   total: string;
+  /** Le même total, en centimes : c'est lui qui part dans le code QR. */
+  totalCents: number;
   /** Ancienneté de la plus vieille séance impayée, en jours. */
   depuisJours: number;
 };
@@ -64,6 +66,7 @@ export async function relancesImpayees(patientId?: string): Promise<Relance[]> {
           montant: euros(montant(s)),
         })),
         total: euros(liste.reduce((n, s) => n + montant(s), 0)),
+        totalCents: liste.reduce((n, s) => n + montant(s), 0),
         depuisJours: Math.floor(
           (maintenant - liste[0].startsAt.getTime()) / (24 * 3600 * 1000),
         ),
@@ -75,7 +78,7 @@ export async function relancesImpayees(patientId?: string): Promise<Relance[]> {
 }
 
 /** Texte de la relance : le même pour l'e-mail, le message WhatsApp et l'envoi. */
-export function texteRelance(r: Relance, iban: string | null) {
+export function texteRelance(r: Relance, iban: string | null, avecQr = false) {
   return [
     "Bonjour,",
     "",
@@ -88,6 +91,9 @@ export function texteRelance(r: Relance, iban: string | null) {
     `Total : ${r.total}`,
     ...(iban
       ? ["", `Vous pouvez effectuer le virement sur le compte ${iban}, en mentionnant le nom de ${r.nom}.`]
+      : []),
+    ...(avecQr
+      ? ["", "Le code QR joint à ce message permet de payer depuis l’application de votre banque, sans rien recopier."]
       : []),
     "",
     "Si le paiement a déjà été fait, merci de ne pas tenir compte de ce message.",

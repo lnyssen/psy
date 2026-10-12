@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { annulerSeance } from "@/lib/actions";
+import { avecAnnulation } from "@/components/AnnulationGeste";
 
 /** Annule un rendez-vous à venir (voir le commentaire de l'action) : passe
  *  la séance en « annulée à temps », sans la supprimer. */
@@ -16,7 +17,7 @@ export function AnnulerSeance({ id, className = "" }: { id: string; className?: 
       disabled={enCours}
       onClick={() =>
         demarrer(async () => {
-          await annulerSeance(id);
+          await avecAnnulation([id], "Rendez-vous annulé", () => annulerSeance(id));
           router.refresh();
         })
       }

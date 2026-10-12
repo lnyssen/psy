@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { annulerAbsence } from "@/lib/actions";
+import { avecAnnulation } from "@/components/AnnulationGeste";
 
 /** Annule le caractère facturable d'une absence non excusée : la praticienne
  *  choisit de ne pas réclamer le montant, sans perdre la trace que c'était
@@ -17,7 +18,7 @@ export function AnnulerAbsence({ id }: { id: string }) {
       disabled={enCours}
       onClick={() =>
         demarrer(async () => {
-          await annulerAbsence(id);
+          await avecAnnulation([id], "Absence annulée : elle n’est plus due", () => annulerAbsence(id));
           router.refresh();
         })
       }

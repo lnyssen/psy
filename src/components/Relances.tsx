@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { EnvoyerRelance } from "@/components/EnvoyerRelance";
 import { lienWhatsApp } from "@/lib/contact";
+import { ibanValide } from "@/lib/epc-qr";
 import { sujetRelance, texteRelance, type Relance } from "@/lib/relance";
 
 /**
@@ -22,11 +23,12 @@ export function Relances({ relances, iban }: { relances: Relance[]; iban: string
   };
 
   return (
-    <section>
+    <section id="relances">
       <h2 className="mb-1 text-sm font-semibold">Relances</h2>
       <p className="mb-3 text-xs text-ink-muted">
-        Tout ce que chaque patient doit encore, tous cabinets confondus. Le bouton prépare un
-        e-mail dans votre messagerie, à relire avant de l’envoyer.
+        Tout ce que chaque patient doit encore, tous cabinets confondus. « Préparer la relance »
+        ouvre votre messagerie avec un e-mail à relire ; « envoyer » l’expédie avec un code QR de
+        paiement joint ; « QR de paiement » l’affiche, pour que le patient le scanne au cabinet.
       </p>
       <ul className="overflow-hidden rounded-[14px] border border-line bg-surface">
         {relances.map((r) => (
@@ -60,6 +62,16 @@ export function Relances({ relances, iban }: { relances: Relance[]; iban: string
                 </a>
                 <EnvoyerRelance patientId={r.patientId} nom={r.nom} adresses={r.adresses} />
               </>
+            )}
+            {ibanValide(iban) && (
+              <a
+                href={`/api/relance/${r.patientId}/qr`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="rounded-full border border-line-strong px-3 py-1 text-xs font-medium transition-colors hover:border-accent hover:text-accent-text"
+              >
+                QR de paiement
+              </a>
             )}
             {(() => {
               const wa = lienWhatsApp(r.telephone, texteRelance(r, iban));

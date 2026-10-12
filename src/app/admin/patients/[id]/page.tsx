@@ -20,6 +20,7 @@ import { SEUIL_ABSENCES, compterAbsences } from "@/lib/absences";
 import { texteCoordonnees } from "@/lib/contact";
 import { EnvoyerRecu } from "@/components/EnvoyerRecu";
 import { MenuPlus } from "@/components/MenuPlus";
+import { Attestation } from "@/components/Attestation";
 import { seanceAVenir, seancePieceComptable } from "@/lib/suppression-patient";
 import { montantSeanceCents, payeurDe } from "@/lib/tarifs";
 import { AnnulerAbsence } from "@/components/AnnulerAbsence";
@@ -43,6 +44,7 @@ import {
   formatDuree,
   heuresTotales,
   isBillable,
+  isoJour,
   nomComplet,
 } from "@/lib/format";
 
@@ -414,6 +416,14 @@ export default async function FichePatient({
 
           </div>
         </details>
+        {!patient.anonymiseAt && (
+          <Attestation
+            patientId={patient.id}
+            prive={patient.scheme === "PRIVE"}
+            duInitial={`${isoJour(maintenant).slice(0, 4)}-01-01`}
+            auInitial={isoJour(maintenant)}
+          />
+        )}
       </div>
 
       <section>

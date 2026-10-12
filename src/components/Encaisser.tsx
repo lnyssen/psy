@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { marquerPaye } from "@/lib/actions";
+import { avecAnnulation } from "@/components/AnnulationGeste";
 
 /** Encaissement : le mode de paiement est demandé au moment du geste, parce
  *  que le reçu doit le mentionner. */
@@ -12,7 +13,12 @@ export function Encaisser({ id }: { id: string }) {
 
   const payer = (methode: "CASH" | "ELECTRONIC") =>
     demarrer(async () => {
-      await marquerPaye(id, methode);
+      await avecAnnulation(
+        [id],
+        `Séance encaissée (${methode === "CASH" ? "espèces" : "carte"})`,
+        () => marquerPaye(id, methode),
+        (r) => r.ok,
+      );
       router.refresh();
     });
 

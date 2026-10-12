@@ -17,6 +17,10 @@ cd "$(dirname "$0")/.."
 PG_DIR=/tmp/docs-pg
 export LC_ALL=en_US.UTF-8
 export DATABASE_URL=postgresql://docs@localhost:5544/docs
+# `next start` charge .env.production, donc les vrais identifiants SMTP : sans
+# cette ligne, un clic sur « envoyer par e-mail » dans l'outil de test écrirait
+# vraiment, depuis la vraie boîte. Vide, l'envoi est inerte.
+export SMTP_HOST=""
 
 [ -f .env.local ] || { echo "Il manque .env.local (AUTH_SECRET)."; exit 1; }
 AUTH_SECRET="$(grep '^AUTH_SECRET=' .env.local | cut -d= -f2- | tr -d '"')"

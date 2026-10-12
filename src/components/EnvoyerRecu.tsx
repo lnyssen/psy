@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { envoyerRecuParCourriel } from "@/lib/recu-actions";
+import { partagerPdf } from "@/lib/partager-pdf";
 
 const bouton =
   "rounded-full border border-line-strong px-2.5 py-0.5 text-[11px] font-medium transition-colors hover:border-accent hover:text-accent-text disabled:opacity-40";
@@ -28,29 +29,9 @@ export function EnvoyerRecu({
   async function partager() {
     setPartage(true);
     setRetour(null);
-    try {
-      const r = await fetch(`/api/recu/${id}`);
-      if (!r.ok) throw new Error(await r.text());
-      const nom =
-        /filename="([^"]+)"/.exec(r.headers.get("content-disposition") ?? "")?.[1] ??
-        "recu.pdf";
-      const fichier = new File([await r.blob()], nom, { type: "application/pdf" });
-      if (navigator.canShare?.({ files: [fichier] })) {
-        await navigator.share({ files: [fichier], title: "Reçu d’honoraires" });
-      } else {
-        const lien = document.createElement("a");
-        lien.href = URL.createObjectURL(fichier);
-        lien.download = nom;
-        lien.click();
-        URL.revokeObjectURL(lien.href);
-      }
-    } catch (e) {
-      // Fermer la feuille de partage est un choix, pas une erreur.
-      if (!(e instanceof DOMException && e.name === "AbortError"))
-        setRetour({ ok: false, texte: "Le partage a échoué." });
-    } finally {
-      setPartage(false);
-    }
+    const r = await partagerPdf(`/api/recu/${id}`, "Reçu d’honoraires");
+    if (!r.ok) setRetour({ ok: false, texte: r.message ?? "Le partage a échoué." });
+    setPartage(false);
   }
 
   return (

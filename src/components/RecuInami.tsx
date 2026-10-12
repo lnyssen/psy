@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { marquerRecuInami } from "@/lib/actions";
+import { avecAnnulation } from "@/components/AnnulationGeste";
 
 /** Séance conventionnée : l'INAMI a versé le tarif conventionné. Pas de mode de
  *  paiement à choisir — c'est un virement, et le patient n'a rien payé. */
@@ -15,7 +16,7 @@ export function RecuInami({ id }: { id: string }) {
       disabled={enCours}
       onClick={() =>
         demarrer(async () => {
-          await marquerRecuInami(id);
+          await avecAnnulation([id], "Reçu de l’INAMI enregistré", () => marquerRecuInami(id), (r) => r.ok);
           router.refresh();
         })
       }

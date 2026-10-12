@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { statuerSeances } from "@/lib/seance-actions";
+import { avecAnnulation } from "@/components/AnnulationGeste";
 
 /** Les deux gestes qui rendent une séance passée facturable : venue, ou
  *  absente sans excuse (voir lib/seance-actions.ts). Avec plusieurs ids, les
@@ -13,7 +14,12 @@ export function StatuerSeance({ ids, groupe = false }: { ids: string[]; groupe?:
 
   const statuer = (statut: "ATTENDED" | "NO_SHOW") =>
     demarrer(async () => {
-      await statuerSeances(ids, statut);
+      const n = ids.length;
+      const message =
+        statut === "ATTENDED"
+          ? n > 1 ? `${n} séances marquées honorées` : "Séance marquée honorée"
+          : "Séance marquée absente";
+      await avecAnnulation(ids, message, () => statuerSeances(ids, statut));
       router.refresh();
     });
 
