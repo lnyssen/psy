@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { verrouiller } from "@/lib/auth-actions";
-import { ENTREES, ENTREES_BAS, estActif } from "@/components/entrees";
+import { ENTREES, ENTREES_BAS, compteurDe, estActif } from "@/components/entrees";
 import { Recherche } from "@/components/Recherche";
 import { Theme } from "@/components/Theme";
 import {
@@ -32,11 +32,14 @@ import {
 export function BarreLaterale({
   theme,
   demandesEnAttente,
+  aStatuer,
   replieeInitial,
   ouverte,
 }: {
   theme: "light" | "dark";
   demandesEnAttente: number;
+  /** Séances passées encore sans statut : elles ne se facturent pas. */
+  aStatuer: number;
   replieeInitial: boolean;
   /** Démonstration sans mot de passe : il n'y a plus rien à verrouiller. */
   ouverte: boolean;
@@ -143,6 +146,7 @@ export function BarreLaterale({
       >
         {ENTREES.map(({ href, label, Icone }) => {
           const actif = estActif(href, pathname);
+          const n = compteurDe(href, demandesEnAttente, aStatuer);
           return (
             <Link
               key={href}
@@ -158,12 +162,12 @@ export function BarreLaterale({
             >
               <span className="relative shrink-0">
                 <Icone />
-                {href === "/admin/demandes" && demandesEnAttente > 0 && repliee && (
+                {n.nb > 0 && repliee && (
                   <span
                     aria-hidden="true"
-                    className="absolute -top-1.5 -right-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-overdue px-1 text-[9px] font-bold text-white"
+                    className={`absolute -top-1.5 -right-1.5 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[9px] font-bold ${n.classe}`}
                   >
-                    {demandesEnAttente}
+                    {n.nb}
                   </span>
                 )}
               </span>
@@ -189,19 +193,19 @@ export function BarreLaterale({
                 </span>
               )}
 
-              {href === "/admin/demandes" && demandesEnAttente > 0 && !repliee && (
+              {n.nb > 0 && !repliee && (
                 <span
                   aria-hidden="true"
                   className={`ml-auto flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[11px] font-bold ${
-                    actif ? "bg-white/25 text-white" : "bg-overdue text-white"
+                    actif ? "bg-white/25 text-white" : n.classe
                   }`}
                 >
-                  {demandesEnAttente}
+                  {n.nb}
                 </span>
               )}
-              {href === "/admin/demandes" && demandesEnAttente > 0 && (
+              {n.nb > 0 && (
                 <span className="sr-only">
-                  {demandesEnAttente} demande{demandesEnAttente > 1 ? "s" : ""} en attente
+                  {n.nb} {n.nb > 1 ? n.pluriel : n.singulier}
                 </span>
               )}
             </Link>

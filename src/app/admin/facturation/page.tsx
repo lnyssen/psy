@@ -5,10 +5,11 @@ import { FiltresMobile } from "@/components/FiltresMobile";
 import { TableFacturation, type LigneFacture } from "@/components/TableFacturation";
 import { OngletsFacturation } from "@/components/OngletsFacturation";
 import { cabinetsActifs, optionsCabinet } from "@/lib/cabinets";
-import { euros, fmtDateCourte, isBillable, nomComplet } from "@/lib/format";
+import { euros, isBillable } from "@/lib/format";
 import { montantSeanceCents, payeurDe } from "@/lib/tarifs";
 import { Pagination, pageDe, tailleDePage } from "@/components/Pagination";
 import { Relances } from "@/components/Relances";
+import { relancesImpayees } from "@/lib/relance";
 import { parametres } from "@/lib/parametres";
 
 export const dynamic = "force-dynamic";
@@ -107,47 +108,10 @@ export default async function Facturation({ searchParams }: { searchParams: Prom
   }));
   const ligneActuelles = lignes.slice((page - 1) * taille, page * taille);
 
-  // Relances : par patient (une famille, pour un enfant), tout ce qu'il doit
-  // encore, quels que soient les filtres de la table — une relance qui
-  // oublierait la séance d'un autre cabinet serait à refaire.
+  // Relances : voir lib/relance.ts — tout ce que chaque patient doit, tous
+  // filtres confondus.
   const { iban } = await parametres();
-  const impayees = (
-    await prisma.session.findMany({
-      where: {
-        patientId: { not: null },
-        status: { in: ["ATTENDED", "NO_SHOW"] },
-        paymentStatus: { not: "PAID" },
-        patient: { scheme: "PRIVE" },
-      },
-      include: { patient: { include: { tarif: true } } },
-    })
-  ).filter((s) => s.patient !== null && isBillable(s.status) && payeurDe(s.patient.scheme) === "PATIENT");
-  const parPatient = new Map<string, typeof impayees>();
-  for (const s of impayees) {
-    const liste = parPatient.get(s.patientId!) ?? [];
-    liste.push(s);
-    parPatient.set(s.patientId!, liste);
-  }
-  const relances = [...parPatient.values()]
-    .map((liste) => {
-      liste.sort((a, b) => a.startsAt.getTime() - b.startsAt.getTime());
-      const p = liste[0].patient!;
-      const total = liste.reduce((n, s) => n + (s.amountCents ?? montantSeanceCents(s.patient) ?? 0), 0);
-      return {
-        patientId: p.id,
-        nom: nomComplet(p),
-        adresses: [...new Set([p.emailMother, p.emailFather, p.email].filter((e): e is string => !!e))],
-        telephone: p.phoneMother ?? p.phoneFather ?? p.phone,
-        seances: liste.map((s) => ({
-          date: fmtDateCourte.format(s.startsAt),
-          montant: euros(s.amountCents ?? montantSeanceCents(s.patient) ?? 0),
-        })),
-        total: euros(total),
-        totalCents: total,
-        plusAncienne: liste[0].startsAt.getTime(),
-      };
-    })
-    .sort((a, b) => a.plusAncienne - b.plusAncienne);
+  const relances = await relancesImpayees();
 
   return (
     <div className="flex flex-col gap-7">

@@ -15,6 +15,9 @@ import { RecuInami } from "@/components/RecuInami";
 import { FormulairePatient } from "@/components/FormulairePatient";
 import { DonneesPersonnelles } from "@/components/DonneesPersonnelles";
 import { Documents } from "@/components/Documents";
+import { ContactRapide } from "@/components/ContactRapide";
+import { SEUIL_ABSENCES, compterAbsences } from "@/lib/absences";
+import { texteCoordonnees } from "@/lib/contact";
 import { EnvoyerRecu } from "@/components/EnvoyerRecu";
 import { seanceAVenir, seancePieceComptable } from "@/lib/suppression-patient";
 import { montantSeanceCents, payeurDe } from "@/lib/tarifs";
@@ -120,6 +123,7 @@ export default async function FichePatient({
   // soumis. On compte aussi les rendez-vous déjà posés : l'alerte se lève
   // avant de créer la séance de trop, pas après.
   const maintenant = new Date();
+  const absences = compterAbsences(patient.sessions, maintenant);
   const conventionne = patient.scheme === "CONVENTIONNE";
   const plafondInami = conventionne ? plafondConventionne(patient) : null;
   const faitesInami = conventionne
@@ -219,6 +223,12 @@ export default async function FichePatient({
         </div>
       </header>
 
+      {absences >= SEUIL_ABSENCES && (
+        <p className="rounded-[10px] border border-due/40 bg-due-soft px-4 py-2.5 text-sm text-due">
+          {absences} absences non excusées sur les douze derniers mois.
+        </p>
+      )}
+
       {quotaAtteint && (
         <p className="rounded-[10px] border border-due/40 bg-due-soft px-4 py-2.5 text-sm text-due">
           Plafond INAMI atteint : {faitesInami} séance
@@ -309,6 +319,15 @@ export default async function FichePatient({
             ))}
           </dl>
         </div>
+
+        <ContactRapide
+          texte={texteCoordonnees(patient)}
+          numeros={[
+            { libelle: "", tel: patient.phone },
+            { libelle: "mère", tel: patient.phoneMother },
+            { libelle: "père", tel: patient.phoneFather },
+          ].filter((n): n is { libelle: string; tel: string } => Boolean(n.tel))}
+        />
 
         <details className="mt-4 border-t border-line pt-4">
           <summary className="w-fit cursor-pointer list-none rounded-full border border-line-strong px-5 py-2 text-sm font-medium transition-colors hover:border-accent hover:text-accent-text">

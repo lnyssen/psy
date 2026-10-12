@@ -95,7 +95,7 @@ export const PAGES_DOC: PageDoc[] = [
           {
             t: "liste",
             items: [
-              "**Aujourd'hui** : ce qui vous attend aujourd'hui, et les séances passées à trancher.",
+              "**Aujourd'hui** : ce qui vous attend aujourd'hui, et les séances passées à trancher. Un compteur ambre sur cette entrée indique combien de séances passées n'ont pas encore de statut, d'où que vous soyez dans l'outil : sans statut, une séance ne se facture pas.",
               "**Agenda** : la semaine, les séances, la création de rendez-vous.",
               "**Patients** : les dossiers.",
               "**Facturation** : ce qui est dû, encaissé, et la facturation aux établissements.",
@@ -157,6 +157,11 @@ export const PAGES_DOC: PageDoc[] = [
             "L'agenda de la semaine",
             "Une colonne par jour, une couleur par lieu.",
           ),
+          {
+            t: "p",
+            texte:
+              "**Imprimer**, à côté de « Cette semaine », ouvre une feuille de route simple de la semaine : pour chaque jour, l'heure, le nom, le lieu et la visio. **Imprimer la journée**, sur Aujourd'hui, fait de même pour un seul jour. La feuille ne montre ni téléphone, ni note, ni montant ; le bouton **Imprimer** de cette page ouvre la boîte d'impression, qui permet aussi d'enregistrer en PDF.",
+          },
           {
             t: "p",
             texte:
@@ -336,7 +341,7 @@ export const PAGES_DOC: PageDoc[] = [
           {
             t: "p",
             texte:
-              "En haut : le nom, le régime, le cabinet. Puis le bouton **Nouvelle séance** (pour ce patient), ses coordonnées, et des compteurs : nombre de séances, heures, ce qui a été encaissé ou reçu de l'INAMI, ce qui reste dû ou à recevoir. Pour un patient conventionné, **INAMI, 12 mois** montre où il en est de son plafond (par exemple 4 / 10). Plus bas : l'historique des séances, ses notes, ses documents et, tout en bas, ses données personnelles.",
+              "En haut : le nom, le régime, le cabinet. Puis le bouton **Nouvelle séance** (pour ce patient), ses coordonnées, et des compteurs : nombre de séances, heures, ce qui a été encaissé ou reçu de l'INAMI, ce qui reste dû ou à recevoir. Pour un patient conventionné, **INAMI, 12 mois** montre où il en est de son plafond (par exemple 4 / 10). Plus bas : l'historique des séances, ses notes, ses documents et, tout en bas, ses données personnelles. Sous les coordonnées, **Copier les coordonnées** met nom, téléphones, e-mails et adresse dans le presse-papiers (pour les coller dans un message ou un événement d'agenda), et **Appeler** et **WhatsApp** apparaissent pour chaque numéro connu (patient, mère, père). Deux absences non excusées ou plus sur les douze derniers mois sont signalées par un bandeau sur la fiche et par une pastille **2 absences** dans la liste des patients.",
           },
           img(
             "patient-modifier",
@@ -593,7 +598,7 @@ export const PAGES_DOC: PageDoc[] = [
           {
             t: "p",
             texte:
-              "Le bloc **Relances** de la page Facturation regroupe les impayés par famille. Son bouton n'envoie rien tout seul : il ouvre votre messagerie avec un e-mail déjà rédigé (séances, montants, IBAN, formule de politesse) que vous relisez et envoyez vous-même. Une relance d'argent auprès d'une famille se fait avec tact : l'outil prépare, vous décidez.",
+              "Le bloc **Relances** de la page Facturation regroupe les impayés par famille. Chaque ligne indique l'ancienneté de l'impayé (en rouge au-delà de 30 jours) et propose trois façons de relancer : **préparer la relance** ouvre votre messagerie avec un e-mail déjà rédigé (séances, montants, IBAN, formule de politesse) que vous relisez avant de l'envoyer ; **envoyer** l'expédie directement depuis l'outil, après confirmation ; **WhatsApp** ouvre la conversation avec le même texte. Rien ne part jamais tout seul : une relance d'argent auprès d'une famille se fait avec tact, l'outil prépare, vous décidez.",
           },
         ],
       },

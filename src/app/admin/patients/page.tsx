@@ -2,7 +2,8 @@ import Link from "next/link";
 import type { CareScheme } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { trouverDoublons } from "@/lib/doublons";
-import { CabinetTag, RegimeTag } from "@/components/tags";
+import { AbsencesTag, CabinetTag, RegimeTag } from "@/components/tags";
+import { SEUIL_ABSENCES, compterAbsences } from "@/lib/absences";
 import {
   EnTeteTri,
   GroupeFiltre,
@@ -45,6 +46,7 @@ export default async function Patients({
   const enrichis = patients.map((p) => ({
     p,
     seances: p.sessions.length,
+    absences: compterAbsences(p.sessions),
     // Ce que DOIT le patient : jamais une séance conventionnée, que paie l'INAMI.
     du:
       payeurDe(p.scheme) === "INAMI"
@@ -176,7 +178,7 @@ export default async function Patients({
 
       {/* Cartes empilées sous 900 px, pour la même raison que la facturation. */}
       <ul className="flex flex-col gap-2 md:hidden">
-        {pageActuelle.map(({ p, seances, du }) => (
+        {pageActuelle.map(({ p, seances, du, absences }) => (
           <li key={p.id}>
             <Link
               href={`/admin/patients/${p.id}`}
@@ -194,6 +196,7 @@ export default async function Patients({
               <span className="flex flex-wrap items-center gap-2">
                 {p.cabinet && <CabinetTag cabinet={p.cabinet} />}
                 <RegimeTag scheme={p.scheme} />
+                {absences >= SEUIL_ABSENCES && <AbsencesTag n={absences} />}
                 <span className="text-xs text-ink-muted" data-numeric>
                   {seances} séance{seances > 1 ? "s" : ""}
                 </span>
@@ -243,7 +246,7 @@ export default async function Patients({
             </tr>
           </thead>
           <tbody>
-            {pageActuelle.map(({ p, seances, du }) => (
+            {pageActuelle.map(({ p, seances, du, absences }) => (
               <tr
                 key={p.id}
                 className="border-b border-line last:border-b-0 hover:bg-sunken/60"
@@ -255,6 +258,11 @@ export default async function Patients({
                   >
                     {nomComplet(p)}
                   </Link>
+                  {absences >= SEUIL_ABSENCES && (
+                    <span className="ml-2 align-middle">
+                      <AbsencesTag n={absences} />
+                    </span>
+                  )}
                 </td>
                 <td className="px-3 py-3">
                   {p.cabinet ? <CabinetTag cabinet={p.cabinet} /> : "—"}

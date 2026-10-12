@@ -47,3 +47,27 @@ export function estActif(href: string, pathname: string) {
   if (href === "/admin/facturation") return pathname.startsWith("/admin/facturation") || pathname.startsWith("/admin/etablissements");
   return pathname.startsWith(href);
 }
+
+/**
+ * Compteur affiché sur une entrée du menu, s'il y en a un : les demandes de
+ * rendez-vous en attente (rouge) et les séances passées à statuer sur
+ * « Aujourd'hui » (ambre) — l'une comme l'autre dorment sans bruit, et une
+ * séance sans statut ne se facture pas.
+ */
+export function compteurDe(href: string, demandes: number, aStatuer: number) {
+  if (href === "/admin/demandes")
+    return {
+      nb: demandes,
+      singulier: "demande en attente",
+      pluriel: "demandes en attente",
+      classe: "bg-overdue text-white",
+    };
+  if (href === "/admin")
+    return {
+      nb: aStatuer,
+      singulier: "séance à statuer",
+      pluriel: "séances à statuer",
+      classe: "bg-due-soft text-due ring-1 ring-due/40",
+    };
+  return { nb: 0, singulier: "", pluriel: "", classe: "" };
+}

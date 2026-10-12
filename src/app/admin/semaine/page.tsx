@@ -228,6 +228,12 @@ export default async function Semaine({ searchParams }: { searchParams: Promise<
           >
             Cette semaine
           </Link>
+          <Link
+            href={`/admin/imprimer?semaine=${isoJour(lundi)}${params.cabinet ? `&cabinet=${params.cabinet}` : ""}`}
+            className="rounded-full border border-line-strong px-3.5 py-1.5 text-xs font-medium text-ink-muted transition-colors hover:border-accent hover:text-accent-text"
+          >
+            Imprimer
+          </Link>
         </header>
 
         <details className="rounded-[14px] open:border open:border-dashed open:border-line-strong open:bg-surface open:px-5 open:py-3">

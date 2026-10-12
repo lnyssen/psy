@@ -43,6 +43,11 @@ export default async function AdminLayout({
   const enAttente = await prisma.demandeRdv.count({
     where: { statut: "EN_ATTENTE" },
   });
+  // Séances passées restées sans statut : elles ne se facturent pas, et rien ne
+  // le signale ailleurs que sur « Aujourd'hui ».
+  const aStatuer = await prisma.session.count({
+    where: { status: "SCHEDULED", startsAt: { lt: new Date() } },
+  });
   const ouverte = demoOuverte();
   // Une sauvegarde qui ne tourne plus ne fait aucun bruit : on le dit en haut.
   const sauvegarde = await statutSauvegarde();
@@ -54,6 +59,7 @@ export default async function AdminLayout({
       <BarreLaterale
         theme={theme}
         demandesEnAttente={enAttente}
+        aStatuer={aStatuer}
         replieeInitial={repliee}
         ouverte={ouverte}
       />
@@ -62,7 +68,12 @@ export default async function AdminLayout({
           lieu de rester dans ses limites, et la page entière défilerait de
           côté — ce que l'outil s'interdit partout ailleurs. */}
       <div className="flex min-w-0 flex-1 flex-col">
-        <Nav theme={theme} demandesEnAttente={enAttente} ouverte={ouverte} />
+        <Nav
+          theme={theme}
+          demandesEnAttente={enAttente}
+          aStatuer={aStatuer}
+          ouverte={ouverte}
+        />
         {/* Un bandeau, et non une mention discrète en pied de page : tant que
             le mot de passe est levé, il faut qu'on ne puisse pas l'oublier —
             ni celui qui montre l'outil, ni celui qui le reprend en main. */}

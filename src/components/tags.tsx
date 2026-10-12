@@ -66,6 +66,18 @@ export function RegimeTag({ scheme }: { scheme: CareScheme }) {
   return <Tag tone={scheme === "PRIVE" ? "neutre" : "contour"}>{SCHEME_LABEL[scheme]}</Tag>;
 }
 
+/** Signal discret : deux absences non excusées ou plus sur douze mois. */
+export function AbsencesTag({ n }: { n: number }) {
+  return (
+    <Tag
+      tone="contour"
+      titre={`${n} absences non excusées sur les douze derniers mois`}
+    >
+      <span className="font-semibold text-due">{n} absences</span>
+    </Tag>
+  );
+}
+
 export function CabinetTag({ cabinet }: { cabinet: CabinetVue }) {
   return (
     <span

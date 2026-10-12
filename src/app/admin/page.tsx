@@ -28,6 +28,7 @@ import {
   formatDuree,
   heuresTotales,
   isBillable,
+  isoJour,
   minutesDeJour,
   nomSeance,
   partiesJour,
@@ -109,12 +110,20 @@ export default async function Aujourdhui({ searchParams }: { searchParams: Promi
             ))}
           </p>
         </div>
-        <Link
-          href="/admin/semaine"
-          className="rounded-full border border-line-strong px-5 py-2.5 text-sm font-medium transition-colors hover:border-accent hover:text-accent-text"
-        >
-          Voir l’agenda
-        </Link>
+        <div className="sans-impression flex flex-wrap items-center gap-3">
+          <Link
+            href={`/admin/imprimer?jour=${isoJour(debut)}${params.cabinet ? `&cabinet=${params.cabinet}` : ""}`}
+            className="rounded-full border border-line-strong px-5 py-2.5 text-sm font-medium transition-colors hover:border-accent hover:text-accent-text"
+          >
+            Imprimer la journée
+          </Link>
+          <Link
+            href="/admin/semaine"
+            className="rounded-full border border-line-strong px-5 py-2.5 text-sm font-medium transition-colors hover:border-accent hover:text-accent-text"
+          >
+            Voir l’agenda
+          </Link>
+        </div>
       </header>
 
       <FiltresMobile
