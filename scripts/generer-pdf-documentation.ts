@@ -2,9 +2,10 @@
  * PDF de la documentation, à partir de la page imprimable de l'outil
  * (/admin/documentation/complete) tournant sur la base fictive des captures.
  *
- *   npm i --no-save puppeteer-core
- *   DATABASE_URL=postgresql://docs@localhost:5544/docs … next start -p 3100
- *   AUTH_SECRET=… npx tsx scripts/generer-pdf-documentation.ts
+ * Le plus simple : `bash scripts/pdf-documentation.sh`, qui prépare la base
+ * jetable, lance l'outil et appelle ce script. Seul, il suppose l'outil déjà
+ * lancé sur le port 3100 (voir capturer-documentation.ts) et AUTH_SECRET dans
+ * l'environnement.
  *
  * Écrit exports/Documentation-Amapsy.pdf (ignoré par git : il se régénère).
  */
