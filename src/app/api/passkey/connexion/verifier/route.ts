@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { adresseDuSite, consommerDefi } from "@/lib/acces";
 import { adresseDe, tropd } from "@/lib/limite";
 import { COOKIE_SESSION, creerJeton, optionsCookie } from "@/lib/session";
+import { noterConnexion } from "@/lib/appareils";
 
 /** Fin de la connexion par appareil : si la signature est bonne, la session s'ouvre. */
 export async function POST(req: Request) {
@@ -44,6 +45,7 @@ export async function POST(req: Request) {
       data: { counter: verification.authenticationInfo.newCounter, lastUsedAt: new Date() },
     });
     (await cookies()).set(COOKIE_SESSION, await creerJeton(), optionsCookie);
+    await noterConnexion("Face ID, Touch ID ou empreinte");
     return Response.json({ ok: true });
   } catch (e) {
     console.error("Connexion par appareil impossible :", e);

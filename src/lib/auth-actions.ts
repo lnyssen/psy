@@ -17,6 +17,7 @@ import {
 } from "@/lib/acces";
 import { adresseDe, tropd } from "@/lib/limite";
 import { courrielConfigure, envoyerCourriel } from "@/lib/courriel";
+import { noterConnexion } from "@/lib/appareils";
 
 /**
  * Connexion par mot de passe. Voir lib/acces.ts pour l'origine de l'empreinte
@@ -42,6 +43,7 @@ export async function seConnecter(
 
   const jar = await cookies();
   jar.set(COOKIE_SESSION, await creerJeton(), optionsCookie);
+  await noterConnexion("mot de passe");
 
   // Ne rediriger que vers un chemin interne : une valeur venue de l'URL ne doit
   // jamais pouvoir emmener ailleurs.
@@ -109,6 +111,15 @@ export async function supprimerAppareil(f: FormData) {
   if (id) await prisma.passkey.deleteMany({ where: { id } });
   revalidatePath(RETOUR);
   retour("appareil-retire");
+}
+
+/** Oublier un navigateur connu : sa prochaine connexion redéclenche l'alerte. */
+export async function oublierNavigateur(f: FormData) {
+  await exigerSession();
+  const id = String(f.get("id") ?? "");
+  if (id) await prisma.appareilConnu.deleteMany({ where: { id } });
+  revalidatePath(RETOUR);
+  retour("navigateur-oublie");
 }
 
 // ---------------------------------------------------------------------------

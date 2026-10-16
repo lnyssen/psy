@@ -4,6 +4,7 @@ import { AjouterAppareil } from "@/components/AjouterAppareil";
 import {
   changerMotDePasse,
   enregistrerAdresseRecuperation,
+  oublierNavigateur,
   supprimerAppareil,
 } from "@/lib/auth-actions";
 import { LONGUEUR_MINIMALE } from "@/lib/acces-constantes";
@@ -48,6 +49,10 @@ const MESSAGES: Record<string, { ok: boolean; texte: string }> = {
     ok: false,
     texte: "Cette adresse e-mail n’est pas valable.",
   },
+  "navigateur-oublie": {
+    ok: true,
+    texte: "Navigateur oublié. Sa prochaine connexion sera signalée par e-mail.",
+  },
   "appareil-retire": {
     ok: true,
     texte: "Appareil retiré. Il ne peut plus ouvrir l’outil.",
@@ -61,9 +66,10 @@ const MESSAGES: Record<string, { ok: boolean; texte: string }> = {
  * soit explicite.
  */
 export async function Securite({ code }: { code?: string }) {
-  const [acces, appareils] = await Promise.all([
+  const [acces, appareils, navigateurs] = await Promise.all([
     prisma.acces.findUnique({ where: { id: "global" } }),
     prisma.passkey.findMany({ orderBy: { createdAt: "asc" } }),
+    prisma.appareilConnu.findMany({ orderBy: { derniereVue: "desc" }, take: 12 }),
   ]);
   const message = code ? MESSAGES[code] : undefined;
   const courriel = courrielConfigure();
@@ -225,6 +231,49 @@ export async function Securite({ code }: { code?: string }) {
           )}
 
           <AjouterAppareil nomParDefaut="Mon appareil" />
+        </div>
+      </div>
+
+      <div id="navigateurs" className="flex flex-col gap-3 scroll-mt-6">
+        <h3 className="text-sm font-semibold">Navigateurs déjà connectés</h3>
+        <div className="flex flex-col gap-4 rounded-[14px] border border-line bg-surface px-5 py-5">
+          <p className="text-xs text-ink-muted">
+            Chaque connexion depuis un navigateur inconnu envoie un e-mail à
+            l’adresse de récupération. Un navigateur dont on efface les cookies
+            compte comme un nouveau : c’est une alerte de trop, jamais une de
+            moins. « Oublier » un navigateur le fera de nouveau signaler à sa
+            prochaine connexion.
+          </p>
+          {navigateurs.length === 0 ? (
+            <p className="text-sm text-ink-muted">
+              Aucun navigateur enregistré pour l’instant : le prochain à se
+              connecter sera signalé.
+            </p>
+          ) : (
+            <ul className="overflow-hidden rounded-[12px] border border-line">
+              {navigateurs.map((n) => (
+                <li
+                  key={n.id}
+                  className="flex flex-wrap items-center gap-x-4 gap-y-1 border-b border-line px-4 py-3 last:border-b-0"
+                >
+                  <span className="min-w-40 flex-1 text-sm font-medium">{n.nom}</span>
+                  <span className="text-xs text-ink-muted">
+                    Vu pour la première fois le {fmtJourMoisAn.format(n.premiereVue)} · dernière
+                    connexion le {fmtJourMoisAn.format(n.derniereVue)}
+                  </span>
+                  <form action={oublierNavigateur}>
+                    <input type="hidden" name="id" value={n.id} />
+                    <button
+                      type="submit"
+                      className="rounded-full border border-line-strong px-4 py-1.5 text-sm font-medium text-ink-muted transition-colors hover:border-overdue hover:text-overdue"
+                    >
+                      Oublier
+                    </button>
+                  </form>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       </div>
     </section>

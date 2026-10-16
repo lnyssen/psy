@@ -652,6 +652,20 @@ model Passkey {
   @@map("passkeys")
 }
 
+/// Navigateur déjà connecté à l'outil. Un cookie long (amapsy_appareil) porte
+/// un identifiant aléatoire ; on ne garde que son empreinte. Une connexion sans
+/// appareil connu envoie un e-mail d'alerte à l'adresse de récupération.
+model AppareilConnu {
+  id          String   @id @default(cuid())
+  empreinte   String   @unique
+  /// « Safari sur iPhone » : un libellé lisible, pas le user-agent brut.
+  nom         String
+  premiereVue DateTime @default(now()) @map("premiere_vue")
+  derniereVue DateTime @default(now()) @map("derniere_vue")
+
+  @@map("appareils_connus")
+}
+
 /// Lien de réinitialisation du mot de passe : à usage unique, valable peu de
 /// temps. Seule l'empreinte SHA-256 du jeton est stockée, jamais le jeton.
 model ReinitialisationMdp {
