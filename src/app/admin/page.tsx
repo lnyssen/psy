@@ -4,6 +4,9 @@ import { prisma } from "@/lib/db";
 import { synchroniserApres } from "@/lib/google-sync";
 import { compterAFaire } from "@/lib/google-afaire";
 import { parametres } from "@/lib/parametres";
+import { ACompleter } from "@/components/ACompleter";
+import { configurationACompleter } from "@/lib/configuration-etat";
+import { demoOuverte } from "@/lib/demo";
 import {
   AlerteTrajet,
   CabinetTag,
@@ -62,6 +65,8 @@ export default async function Aujourdhui({ searchParams }: { searchParams: Promi
   synchroniserApres(120_000);
   const maintenant = new Date();
   const googleAFaire = await compterAFaire();
+  // Pas pendant la démonstration : un visiteur n'a rien à y régler.
+  const aCompleter = demoOuverte() ? [] : await configurationACompleter();
   // Le week-end, l'écran montre la prochaine journée travaillée plutôt qu'un
   // vide : c'est ce qu'on vient y chercher un samedi.
   const cible = prochainJourOuvre(maintenant);
@@ -171,6 +176,8 @@ export default async function Aujourdhui({ searchParams }: { searchParams: Promi
           options={optionsCabinet(cabinets)}
         />
       </div>
+
+      <ACompleter points={aCompleter} />
 
       {googleAFaire.lignes > 0 && (
         <Link
