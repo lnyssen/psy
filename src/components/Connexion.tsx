@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState, useState, useSyncExternalStore } from "react";
+import { useActionState, useEffect, useState, useSyncExternalStore } from "react";
 import {
   browserSupportsWebAuthn,
   startAuthentication,
@@ -9,6 +9,7 @@ import {
 import { seConnecter } from "@/lib/auth-actions";
 import { cibleApresConnexion } from "@/lib/acces-constantes";
 import { IconCadenas } from "@/components/icons";
+import { viderHorsLigne } from "@/lib/hors-ligne-client";
 
 /**
  * Écran de connexion, qui fait aussi office d'écran verrouillé.
@@ -30,6 +31,10 @@ export function Connexion({
   reinit?: boolean;
 }) {
   const [erreur, action, enCours] = useActionState(seConnecter, null);
+  // Verrouiller efface aussi la journée gardée pour l'affichage hors connexion.
+  useEffect(() => {
+    if (verrouille) void viderHorsLigne();
+  }, [verrouille]);
   // Faux côté serveur, vrai ou faux côté navigateur selon ce qu'il sait faire.
   const appareil = useSyncExternalStore(
     () => () => {},

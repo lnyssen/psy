@@ -1,10 +1,11 @@
 import Link from "next/link";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import type { Metadata } from "next";
 import { BarreLaterale } from "@/components/BarreLaterale";
 import { Nav } from "@/components/Nav";
 import { VerrouInactivite } from "@/components/VerrouInactivite";
 import { ZoneAnnulation } from "@/components/AnnulationGeste";
+import { SyncHorsLigne } from "@/components/SyncHorsLigne";
 import { prisma } from "@/lib/db";
 import { demoOuverte } from "@/lib/demo";
 import { statutSauvegarde } from "@/lib/sauvegardes";
@@ -34,6 +35,20 @@ export default async function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
+  // Chargée dans un cadre (vue scindée de « Aujourd'hui »), la page n'a besoin
+  // que de son contenu : ni barre de navigation, ni verrou, ni bandeaux. Le
+  // navigateur déclare lui-même le contexte ; la page qui encadre, elle, a tout.
+  if ((await headers()).get("sec-fetch-dest") === "iframe") {
+    const th = (await cookies()).get("theme")?.value === "dark" ? "dark" : "light";
+    return (
+      <div className="outil min-h-screen" data-cadre data-theme={th}>
+        <main id="contenu" className="mx-auto w-full max-w-3xl px-4 py-5 outline-none">
+          {children}
+        </main>
+      </div>
+    );
+  }
+
   const jar = await cookies();
   const theme = jar.get("theme")?.value === "dark" ? "dark" : "light";
   const repliee = jar.get("nav")?.value === "replie";
@@ -66,6 +81,7 @@ export default async function AdminLayout({
       {/* Pas pendant la démonstration ouverte : il n'y a rien à verrouiller. */}
       {!ouverte && <VerrouInactivite />}
       <ZoneAnnulation />
+      <SyncHorsLigne />
       <BarreLaterale
         theme={theme}
         demandesEnAttente={enAttente}

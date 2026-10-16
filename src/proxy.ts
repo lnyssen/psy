@@ -25,6 +25,12 @@ export async function proxy(req: NextRequest) {
   // possible vers /admin).
   if (chemin.startsWith("/api/agenda") || chemin.startsWith("/api/google")) return NextResponse.next();
 
+  // L'affichage hors connexion : une page statique sans donnée et le service
+  // worker qui la sert. Ils doivent répondre à la même adresse sur les deux
+  // domaines (et sans session : la page est précisément celle qu'on ouvre quand
+  // plus rien ne répond), donc ni réécriture vers /admin, ni garde.
+  if (chemin === "/hors-ligne.html" || chemin === "/sw-hors-ligne.js") return NextResponse.next();
+
   // Sur admin.…, la racine est l'outil.
   if (
     surSousDomaineAdmin &&

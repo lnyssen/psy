@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Hors connexion — Amapsy</title>
+<style>
+  :root { --papier:#faf8f5; --carte:#ffffff; --encre:#1b1464; --douce:#5f5f80; --filet:#e4e0d8; --accent:#7f00ff; --alerte:#8a5a00; --alerte-fond:#fbf1dd; }
+  @media (prefers-color-scheme: dark) {
+    :root { --papier:#16141c; --carte:#1f1c27; --encre:#ece9f2; --douce:#a29cb4; --filet:#3a3547; --alerte:#e0a94a; --alerte-fond:#352912; }
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--papier); color:var(--encre); font:16px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  main { max-width: 40rem; margin: 0 auto; padding: 20px 16px 48px; }
+  h1 { font-size: 1.35rem; margin: 0 0 4px; }
+  h2 { font-size: 1.05rem; margin: 28px 0 10px; text-transform: capitalize; }
+  .bandeau { background: var(--alerte-fond); color: var(--alerte); border-radius: 14px; padding: 10px 14px; font-size: .9rem; margin: 12px 0 0; }
+  .douce { color: var(--douce); font-size: .9rem; }
+  ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+  li { background: var(--carte); border: 1px solid var(--filet); border-radius: 14px; padding: 12px 14px; }
+  .heure { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-weight: 600; }
+  .nom { font-size: 1.05rem; font-weight: 600; margin: 2px 0; }
+  .etiquette { display:inline-block; font-size:.75rem; border:1px solid var(--filet); border-radius: 999px; padding: 1px 8px; margin-left: 6px; color: var(--douce); }
+  .actions { display:flex; flex-wrap:wrap; gap:10px; margin-top: 28px; }
+  button { font: inherit; min-height: 44px; padding: 0 18px; border-radius: 999px; border: 1px solid var(--douce); background: transparent; color: var(--encre); }
+  button.principal { background: var(--accent); border-color: var(--accent); color: #fff; }
+  button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Hors connexion</h1>
+  <p class="bandeau" role="status">L’outil ne peut pas se connecter. Voici ce que cet appareil a gardé pour la journée.</p>
+  <div id="contenu" aria-live="polite"></div>
+  <div class="actions">
+    <button type="button" id="reessayer" class="principal">Réessayer la connexion</button>
+    <button type="button" id="effacer">Effacer de cet appareil</button>
+  </div>
+  <p class="douce" style="margin-top:20px">Seuls l’heure, le prénom, l’initiale du nom et le lieu sont gardés ici — ni téléphone, ni montant, ni note. Tout s’efface à la fin de la journée, au verrouillage de l’outil, ou avec le bouton ci-dessus.</p>
+</main>
+<script>
+(function () {
+  var NOM_BASE = "amapsy-hors-ligne";
+  var contenu = document.getElementById("contenu");
+
+  function ouvrir() {
+    return new Promise(function (ok, ko) {
+      var r = indexedDB.open(NOM_BASE, 1);
+      r.onupgradeneeded = function () { r.result.createObjectStore("etat"); };
+      r.onsuccess = function () { ok(r.result); };
+      r.onerror = function () { ko(r.error); };
+    });
+  }
+  function lire(db) {
+    return new Promise(function (ok) {
+      var q = db.transaction("etat").objectStore("etat").get("instantane");
+      q.onsuccess = function () { ok(q.result || null); };
+      q.onerror = function () { ok(null); };
+    });
+  }
+  function vider(db) {
+    return new Promise(function (ok) {
+      var t = db.transaction("etat", "readwrite");
+      t.objectStore("etat").delete("instantane");
+      t.oncomplete = function () { ok(); };
+      t.onerror = function () { ok(); };
+    });
+  }
+  // Le jour tel qu'il se lit à Bruxelles, au format AAAA-MM-JJ.
+  function aujourdhui() {
+    var p = new Intl.DateTimeFormat("fr-BE", { timeZone: "Europe/Brussels", year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(new Date());
+    var v = {}; p.forEach(function (x) { v[x.type] = x.value; });
+    return v.year + "-" + v.month + "-" + v.day;
+  }
+  function el(nom, classe, texte) {
+    var e = document.createElement(nom);
+    if (classe) e.className = classe;
+    if (texte !== undefined) e.textContent = texte;
+    return e;
+  }
+  function message(texte) {
+    contenu.textContent = "";
+    contenu.appendChild(el("p", "douce", texte));
+  }
+  function afficher(d) {
+    if (d.accent) document.documentElement.style.setProperty("--accent", matchMedia("(prefers-color-scheme: dark)").matches ? d.accent.sombre : d.accent.clair);
+    contenu.textContent = "";
+    var genere = new Date(d.genere);
+    contenu.appendChild(el("p", "douce", "Mis à jour à " + genere.toLocaleTimeString("fr-BE", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/Brussels" }) + "."));
+    d.jours.forEach(function (j) {
+      contenu.appendChild(el("h2", "", j.titre));
+      if (!j.seances.length) { contenu.appendChild(el("p", "douce", "Aucune séance.")); return; }
+      var ul = el("ul");
+      j.seances.forEach(function (s) {
+        var li = el("li");
+        li.appendChild(el("div", "heure", s.debut + " – " + s.fin));
+        var nom = el("div", "nom", s.nom);
+        if (s.visio) nom.appendChild(el("span", "etiquette", "visio"));
+        if (s.statut === "honoree") nom.appendChild(el("span", "etiquette", "honorée"));
+        if (s.statut === "absente") nom.appendChild(el("span", "etiquette", "absente"));
+        li.appendChild(nom);
+        li.appendChild(el("div", "douce", s.cabinet + (s.adresse ? " · " + s.adresse : "")));
+        ul.appendChild(li);
+      });
+      contenu.appendChild(ul);
+    });
+  }
+
+  document.getElementById("reessayer").addEventListener("click", function () { location.href = "/admin"; });
+  document.getElementById("effacer").addEventListener("click", function () {
+    ouvrir().then(vider).then(function () { message("Effacé de cet appareil."); });
+  });
+
+  if (!window.indexedDB) { message("Cet appareil n’a rien gardé pour la journée."); return; }
+  ouvrir().then(function (db) {
+    return lire(db).then(function (d) {
+      if (!d) { message("Cet appareil n’a rien gardé pour la journée. Activez l’option dans Réglages, avec une connexion."); return; }
+      // Une journée plus tard, ce qui est gardé n'a plus lieu d'être : on l'efface.
+      if (d.jourReference !== aujourdhui()) {
+        return vider(db).then(function () { message("Les séances gardées datent d’un autre jour : elles ont été effacées. Reconnectez-vous pour les mettre à jour."); });
+      }
+      afficher(d);
+    });
+  }).catch(function () { message("Les séances gardées sur cet appareil sont illisibles."); });
+})();
+</script>
+</body>
+</html>

@@ -21,6 +21,7 @@ import { GoogleAgenda } from "@/components/GoogleAgenda";
 import { Securite } from "@/components/Securite";
 import { StatutSauvegarde } from "@/components/StatutSauvegarde";
 import { InstallerApplication } from "@/components/InstallerApplication";
+import { HorsLigne } from "@/components/HorsLigne";
 import { Apparence } from "@/components/Apparence";
 import { accentValide } from "@/lib/accent";
 import { cookies } from "next/headers";
@@ -798,6 +799,8 @@ export default async function Reglages({
           <GoogleAgenda retour={google} />
 
           <InstallerApplication />
+
+          <HorsLigne />
 
           <section id="apparence" className="flex scroll-mt-6 flex-col gap-4">
             <TitreSection>Couleur et affichage</TitreSection>

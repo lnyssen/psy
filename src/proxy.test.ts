@@ -83,3 +83,20 @@ describe("proxy : sous-domaine admin", () => {
     expect(p.headers.get("x-middleware-rewrite")).toBeNull();
   });
 });
+
+describe("proxy : affichage hors connexion", () => {
+  it("sert la page statique et le service worker sans session, sur les deux domaines", async () => {
+    for (const hote of ["exemple.test", "admin.exemple.test"]) {
+      for (const chemin of ["/hors-ligne.html", "/sw-hors-ligne.js"]) {
+        const r = await proxy(requete(chemin, { hote }));
+        expect(r.status).toBe(200);
+        expect(r.headers.get("x-middleware-rewrite")).toBeNull();
+        expect(r.headers.get("location")).toBeNull();
+      }
+    }
+  });
+
+  it("garde l'instantané derrière la session", async () => {
+    expect((await proxy(requete("/admin/hors-ligne/instantane"))).status).toBe(307);
+  });
+});

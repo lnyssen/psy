@@ -5,6 +5,7 @@ import { synchroniserApres } from "@/lib/google-sync";
 import { compterAFaire } from "@/lib/google-afaire";
 import { parametres } from "@/lib/parametres";
 import { ACompleter } from "@/components/ACompleter";
+import { ATrancher } from "@/components/ATrancher";
 import { configurationACompleter } from "@/lib/configuration-etat";
 import { demoOuverte } from "@/lib/demo";
 import {
@@ -203,61 +204,22 @@ export default async function Aujourdhui({ searchParams }: { searchParams: Promi
           </div>
           {/* Au-delà de trois, la liste se replie : une longue file de séances
               oubliées repoussait la journée en cours sous la ligne de flottaison.
-              En dessous, pas de <details> : sans <summary>, le navigateur
-              afficherait un « Détails » par défaut. */}
-          {aStatuer.length > 3 ? (
-            <details className="mt-3">
-              <summary className="w-fit cursor-pointer text-xs font-medium text-accent-text">
-                Voir les {aStatuer.length} séances
-              </summary>
-            <ul className="mt-2 flex flex-col divide-y divide-line">
-              {aStatuer.slice(0, 20).map((s) => (
-                <li key={s.id} className="flex flex-wrap items-center gap-x-4 gap-y-2 py-2">
-                  <time className="w-32 shrink-0 font-mono text-xs" data-numeric>
-                    {fmtDateCourte.format(s.startsAt)} · {fmtHeure.format(s.startsAt)}
-                  </time>
-                  <Link
-                    href={s.patientId ? `/admin/patients/${s.patientId}` : "/admin/etablissements"}
-                    className="min-w-32 flex-1 text-sm font-medium hover:text-accent-text"
-                  >
-                    {nomSeance(s)}
-                  </Link>
-                  <CabinetTag cabinet={s.cabinet} />
-                  <StatuerSeance ids={[s.id]} />
-                </li>
-              ))}
-            </ul>
-            {aStatuer.length > 20 && (
-              <p className="mt-2 text-xs text-ink-muted">
-                Et {aStatuer.length - 20} autres, plus récentes : elles apparaîtront ici à mesure.
-              </p>
-            )}
-            </details>
-          ) : (
-            <div className="mt-3">
-            <ul className="mt-2 flex flex-col divide-y divide-line">
-              {aStatuer.slice(0, 20).map((s) => (
-                <li key={s.id} className="flex flex-wrap items-center gap-x-4 gap-y-2 py-2">
-                  <time className="w-32 shrink-0 font-mono text-xs" data-numeric>
-                    {fmtDateCourte.format(s.startsAt)} · {fmtHeure.format(s.startsAt)}
-                  </time>
-                  <Link
-                    href={s.patientId ? `/admin/patients/${s.patientId}` : "/admin/etablissements"}
-                    className="min-w-32 flex-1 text-sm font-medium hover:text-accent-text"
-                  >
-                    {nomSeance(s)}
-                  </Link>
-                  <CabinetTag cabinet={s.cabinet} />
-                  <StatuerSeance ids={[s.id]} />
-                </li>
-              ))}
-            </ul>
-            {aStatuer.length > 20 && (
-              <p className="mt-2 text-xs text-ink-muted">
-                Et {aStatuer.length - 20} autres, plus récentes : elles apparaîtront ici à mesure.
-              </p>
-            )}
-            </div>
+              La vue scindée (fiche à droite) vit dans ATrancher. */}
+          <ATrancher
+            replie={aStatuer.length > 3}
+            lignes={aStatuer.slice(0, 20).map((s) => ({
+              id: s.id,
+              patientId: s.patientId,
+              quand: `${fmtDateCourte.format(s.startsAt)} · ${fmtHeure.format(s.startsAt)}`,
+              nom: nomSeance(s),
+              cabinet: <CabinetTag cabinet={s.cabinet} />,
+              statuer: <StatuerSeance ids={[s.id]} />,
+            }))}
+          />
+          {aStatuer.length > 20 && (
+            <p className="mt-2 text-xs text-ink-muted">
+              Et {aStatuer.length - 20} autres, plus récentes : elles apparaîtront ici à mesure.
+            </p>
           )}
         </section>
       )}
