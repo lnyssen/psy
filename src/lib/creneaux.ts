@@ -31,6 +31,8 @@ export type JourCreneaux = { iso: string; creneaux: Creneau[] };
 export async function creneauxDisponibles(
   cabinetId: string,
   semaines?: number,
+  /** Séance qu'on est en train de déplacer : elle ne doit pas se bloquer elle-même. */
+  ignorerSeanceId?: string,
 ): Promise<JourCreneaux[]> {
   const p = await parametres();
   const portee = semaines ?? p.horizonSemaines;
@@ -43,7 +45,11 @@ export async function creneauxDisponibles(
   const [ouvertures, seancesAgenda, conges, demandes, externes] = await Promise.all([
     prisma.disponibilite.findMany({ where: { cabinetId } }),
     prisma.session.findMany({
-      where: { startsAt: { gte: debut, lt: fin }, status: { not: "CANCELLED_IN_TIME" } },
+      where: {
+        startsAt: { gte: debut, lt: fin },
+        status: { not: "CANCELLED_IN_TIME" },
+        ...(ignorerSeanceId ? { id: { not: ignorerSeanceId } } : {}),
+      },
       select: { startsAt: true, durationMin: true, cabinetId: true },
       orderBy: { startsAt: "asc" },
     }),

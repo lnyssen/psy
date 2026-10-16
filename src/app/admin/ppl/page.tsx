@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { JaugeQuota } from "@/components/JaugeQuota";
 import {
   bornesTrimestre,
   suiviPpl,
@@ -204,6 +205,9 @@ export default async function SuiviPpl({
                       data-numeric
                     >
                       {l.utilisees12Mois} / {l.plafond}
+                      <div className="mt-1.5 ml-auto">
+                        <JaugeQuota utilisees={l.utilisees12Mois} plafond={l.plafond} compacte />
+                      </div>
                     </td>
                     <td className="px-3 py-3 text-right font-mono" data-numeric>
                       {euros(l.recuCents + l.aRecevoirCents)}

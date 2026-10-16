@@ -14,6 +14,9 @@ import { parametres } from "@/lib/parametres";
 import { montantSeanceCents, payeurDe } from "@/lib/tarifs";
 import { PALETTE_CABINETS } from "@/lib/palette";
 import { exigerSession } from "@/lib/garde";
+import { creneauxDisponibles } from "@/lib/creneaux";
+import { creneauxLesPlusProches } from "@/lib/creneaux-proches";
+import { creneauEnClair } from "@/lib/courriel";
 import { seancesARetablir } from "@/lib/factures-etablissement";
 
 /**
@@ -47,6 +50,28 @@ export async function deplacerSeance(id: string, isoDebut: string) {
   revalidatePath("/admin/semaine");
   revalidatePath("/admin");
   return { ok: true as const };
+}
+
+/**
+ * Les créneaux libres les plus proches d'une séance à venir, pour la déplacer
+ * d'un clic : même lieu, horaires d'ouverture, congés, trajets et séances déjà
+ * posées pris en compte (c'est le calcul des rendez-vous en ligne). La séance
+ * elle-même n'occupe pas la place qu'elle quitte.
+ */
+export async function creneauxPourDeplacer(seanceId: string) {
+  await exigerSession();
+  const s = await prisma.session.findUnique({
+    where: { id: seanceId },
+    select: { startsAt: true, cabinetId: true, status: true },
+  });
+  if (!s || s.status !== "SCHEDULED")
+    return { ok: false as const, message: "Seule une séance à venir peut être déplacée." };
+  const jours = await creneauxDisponibles(s.cabinetId, 4, seanceId);
+  const isos = creneauxLesPlusProches(jours, s.startsAt);
+  return {
+    ok: true as const,
+    creneaux: isos.map((iso) => ({ iso, libelle: creneauEnClair(new Date(iso)) })),
+  };
 }
 
 export async function ajouterNote(patientId: string, body: string) {

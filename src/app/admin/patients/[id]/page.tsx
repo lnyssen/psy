@@ -9,6 +9,7 @@ import {
   StatutSeance,
 } from "@/components/tags";
 import { BoutonEnregistrer } from "@/components/BoutonEnregistrer";
+import { JaugeQuota } from "@/components/JaugeQuota";
 import { Notes } from "@/components/Notes";
 import { Encaisser } from "@/components/Encaisser";
 import { RecuInami } from "@/components/RecuInami";
@@ -267,6 +268,7 @@ export default async function FichePatient({
                   t: "INAMI, 12 mois",
                   v: `${faitesInami} / ${plafondInami}`,
                   alerte: faitesInami >= plafondInami,
+                  jauge: { utilisees: faitesInami, plafond: plafondInami },
                 },
               ]
             : []),
@@ -284,6 +286,11 @@ export default async function FichePatient({
             >
               {c.v}
             </dd>
+            {"jauge" in c && c.jauge && (
+              <div className="mt-2">
+                <JaugeQuota utilisees={c.jauge.utilisees} plafond={c.jauge.plafond} />
+              </div>
+            )}
           </div>
         ))}
       </dl>

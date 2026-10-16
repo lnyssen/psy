@@ -3,7 +3,12 @@
 import { useRouter } from "next/navigation";
 import { useRef, useState, useTransition } from "react";
 import Link from "next/link";
-import { annulerSeance, creerSeanceDepuisFormulaire, deplacerSeance } from "@/lib/actions";
+import {
+  annulerSeance,
+  creerSeanceDepuisFormulaire,
+  creneauxPourDeplacer,
+  deplacerSeance,
+} from "@/lib/actions";
 import { retirerEvenementGoogle } from "@/lib/google-actions";
 import { IconFermer, IconFlecheBas, IconFlecheHaut, IconPlus } from "@/components/icons";
 import { SelectPatientRecherche } from "@/components/SelectPatientRecherche";
@@ -81,6 +86,15 @@ export function GrilleSemaine({
   // cliquer, donc un bouton par jour plutôt qu'un point dans le vide.
   const [creationMobile, setCreationMobile] = useState<number | null>(null);
   const colonnes = useRef<(HTMLDivElement | null)[]>([]);
+  // Créneaux libres proposés pour une séance : le panneau s'ouvre au-dessus de
+  // la grille, sans fenêtre modale, et reprend le focus à son ouverture.
+  const [proposition, setProposition] = useState<{
+    id: string;
+    nom: string;
+    creneaux: { iso: string; libelle: string }[] | null;
+    message?: string;
+  } | null>(null);
+  const titreProposition = useRef<HTMLHeadingElement | null>(null);
 
   const heures = Array.from({ length: heureFin - heureDebut + 1 }, (_, i) => heureDebut + i);
   const hauteur = (heureFin - heureDebut) * PX_PAR_HEURE + MARGE_HAUT;
@@ -102,6 +116,37 @@ export function GrilleSemaine({
       const r = await deplacerSeance(id, d.toISOString());
       if (!r.ok) setErreur(r.message);
       else router.refresh();
+    });
+  }
+
+  function proposer(id: string, nom: string) {
+    setErreur(null);
+    setProposition({ id, nom, creneaux: null });
+    demarrer(async () => {
+      const r = await creneauxPourDeplacer(id);
+      setProposition({
+        id,
+        nom,
+        creneaux: r.ok ? r.creneaux : [],
+        message: r.ok
+          ? r.creneaux.length === 0
+            ? "Aucun créneau libre dans les quatre prochaines semaines, dans ce lieu."
+            : undefined
+          : r.message,
+      });
+      setTimeout(() => titreProposition.current?.focus(), 0);
+    });
+  }
+
+  function deplacerVers(id: string, iso: string) {
+    setErreur(null);
+    demarrer(async () => {
+      const r = await deplacerSeance(id, iso);
+      if (!r.ok) setErreur(r.message);
+      else {
+        setProposition(null);
+        router.refresh();
+      }
     });
   }
 
@@ -135,6 +180,58 @@ export function GrilleSemaine({
         <p role="alert" className="rounded-full bg-overdue-soft px-4 py-2 text-sm text-overdue">
           {erreur}
         </p>
+      )}
+
+      {proposition && (
+        <section
+          aria-labelledby="titre-proposition"
+          className="rounded-[14px] border border-accent/40 bg-surface px-5 py-4"
+        >
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <h2
+              id="titre-proposition"
+              ref={titreProposition}
+              tabIndex={-1}
+              className="text-sm font-semibold outline-none"
+            >
+              Déplacer {proposition.nom} : créneaux libres les plus proches
+            </h2>
+            <button
+              type="button"
+              onClick={() => setProposition(null)}
+              className="rounded-full border border-line-strong px-4 py-1.5 text-xs font-medium text-ink-muted transition-colors hover:border-accent hover:text-accent-text"
+            >
+              Fermer
+            </button>
+          </div>
+          <div aria-live="polite" className="mt-3">
+            {proposition.creneaux === null ? (
+              <p className="text-sm text-ink-muted">Recherche des créneaux libres…</p>
+            ) : proposition.creneaux.length === 0 ? (
+              <p className="text-sm text-ink-muted">{proposition.message}</p>
+            ) : (
+              <>
+                <ul className="flex flex-wrap gap-2">
+                  {proposition.creneaux.map((c) => (
+                    <li key={c.iso}>
+                      <button
+                        type="button"
+                        onClick={() => deplacerVers(proposition.id, c.iso)}
+                        className="rounded-full border border-line-strong px-4 py-2 text-sm font-medium first-letter:uppercase transition-colors hover:border-accent hover:text-accent-text"
+                      >
+                        {c.libelle}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+                <p className="mt-3 text-xs text-ink-muted">
+                  Calculés comme pour les rendez-vous en ligne : horaires d’ouverture, congés, trajets
+                  et séances déjà posées. Un clic déplace la séance.
+                </p>
+              </>
+            )}
+          </div>
+        </section>
       )}
 
       {/* Aucun défilement interne : la grille tient dans la largeur et c'est la
@@ -282,6 +379,7 @@ export function GrilleSemaine({
                       onSaisir={setSaisie}
                       onDecaler={(pas) => deplacer(seance.id, j.iso, seance.minutes + pas)}
                       onAnnuler={() => annuler(seance.id)}
+                      onProposer={() => proposer(seance.id, seance.nom)}
                       style={{
                         top: ((seance.minutes - heureDebut * 60) / 60) * PX_PAR_HEURE + MARGE_HAUT,
                         height: Math.max((seance.duree / 60) * PX_PAR_HEURE - 3, 34),
@@ -406,6 +504,16 @@ export function GrilleSemaine({
                           className="shrink-0 rounded-full border border-line-strong p-1.5 text-ink-muted transition-colors hover:border-overdue hover:text-overdue"
                         >
                           <IconFermer className="h-3 w-3" />
+                        </button>
+                      )}
+                      {s.aVenir && !s.externe && (
+                        <button
+                          type="button"
+                          onClick={() => proposer(s.id, s.nom)}
+                          aria-label={`Proposer d’autres créneaux pour la séance de ${s.nom}`}
+                          className="shrink-0 rounded-full border border-line-strong px-3 py-1.5 text-xs font-medium text-ink-muted transition-colors hover:border-accent hover:text-accent-text"
+                        >
+                          Déplacer
                         </button>
                       )}
                       {s.aVenir && (
@@ -690,6 +798,7 @@ function Bloc({
   onSaisir,
   onDecaler,
   onAnnuler,
+  onProposer,
   style,
 }: {
   seance: SeanceGrille;
@@ -697,6 +806,7 @@ function Bloc({
   onSaisir: (id: string | null) => void;
   onDecaler: (pas: number) => void;
   onAnnuler: () => void;
+  onProposer: () => void;
   style: React.CSSProperties;
 }) {
   const hhmm = (m: number) =>
@@ -823,6 +933,20 @@ function Bloc({
         >
           <IconFlecheBas className="h-3 w-3" />
         </button>
+        {seance.aVenir && (
+          <button
+            type="button"
+            onClick={onProposer}
+            aria-label={`Proposer d’autres créneaux pour la séance de ${seance.nom}`}
+            title="Proposer d’autres créneaux libres"
+            className="flex h-[22px] w-[22px] items-center justify-center rounded-full border border-line bg-surface text-ink-muted shadow-sm transition-colors hover:border-accent hover:text-accent-text"
+          >
+            <svg width="11" height="11" viewBox="0 0 12 12" aria-hidden="true">
+              <rect x="1.2" y="2.2" width="9.6" height="8.4" rx="1.4" stroke="currentColor" strokeWidth="1.2" fill="none" />
+              <path d="M1.2 5h9.6 M4 1v2.4 M8 1v2.4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" fill="none" />
+            </svg>
+          </button>
+        )}
         {seance.aVenir && (
           <button
             type="button"
