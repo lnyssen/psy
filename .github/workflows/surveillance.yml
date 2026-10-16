@@ -1,0 +1,28 @@
+# Surveillance du site : toutes les 30 minutes, GitHub interroge le site et la
+# base. Si quelque chose ne va pas, l'exécution échoue et GitHub envoie un
+# e-mail au propriétaire du dépôt — c'est le « site en panne » d'Amandine,
+# sans service supplémentaire à payer.
+#
+# Limites à connaître : les exécutions planifiées de GitHub peuvent prendre du
+# retard (parfois une dizaine de minutes) et sont suspendues après 60 jours
+# sans aucune activité sur le dépôt. Un service dédié (UptimeRobot, Better
+# Stack) reste plus précis ; celui-ci est le minimum gratuit.
+name: Surveillance
+
+on:
+  schedule:
+    - cron: "7,37 * * * *"
+  workflow_dispatch: {}
+
+jobs:
+  site:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    env:
+      SITE: https://amandinemonsel.be
+    steps:
+      - name: Le site public répond
+        run: curl --fail --silent --show-error --max-time 20 --retry 2 --retry-delay 10 -o /dev/null "$SITE/"
+      - name: La base répond et la sauvegarde de la nuit est récente
+        run: |
+          curl --fail --silent --show-error --max-time 20 --retry 2 --retry-delay 10 "$SITE/api/sante" | tee /dev/stderr | grep -q '"ok":true'

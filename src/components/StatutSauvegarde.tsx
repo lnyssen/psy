@@ -1,5 +1,5 @@
 import { TitreSection } from "@/components/tags";
-import { statutSauvegarde } from "@/lib/sauvegardes";
+import { statutRestauration, statutSauvegarde } from "@/lib/sauvegardes";
 
 const fmt = new Intl.DateTimeFormat("fr-BE", {
   weekday: "long",
@@ -16,7 +16,7 @@ const fmt = new Intl.DateTimeFormat("fr-BE", {
  * montre.
  */
 export async function StatutSauvegarde() {
-  const s = await statutSauvegarde();
+  const [s, r] = await Promise.all([statutSauvegarde(), statutRestauration()]);
   return (
     <section id="sauvegardes" className="flex flex-col gap-3 scroll-mt-6">
       <TitreSection>Sauvegardes</TitreSection>
@@ -48,6 +48,24 @@ export async function StatutSauvegarde() {
             serveur (30 jours).
             {s.etat === "ancienne" &&
               " Faites vérifier le serveur : les sauvegardes ne se font plus."}
+          </p>
+        </div>
+      )}
+      {r.etat !== "inconnu" && (
+        <div
+          className={`rounded-[14px] border px-5 py-4 text-sm ${
+            r.etat === "ok" ? "border-line bg-surface" : "border-overdue/40 bg-overdue-soft text-overdue"
+          }`}
+        >
+          <p className="font-medium">
+            {r.etat === "ok" && `Dernier test de restauration réussi : ${fmt.format(r.date)}`}
+            {r.etat === "ancien" && `Aucun test de restauration récent. Le dernier date du ${fmt.format(r.date)}`}
+            {r.etat === "echec" && `Le test de restauration a échoué (${fmt.format(r.date)})`}
+          </p>
+          <p className={`mt-1 text-xs ${r.etat === "ok" ? "text-ink-muted" : ""}`}>
+            {r.etat === "echec"
+              ? `${r.motif}. Une sauvegarde qui ne se restaure pas ne protège de rien : faites vérifier le serveur.`
+              : `Une fois par mois, la dernière sauvegarde est restaurée dans une base jetable pour prouver qu’elle fonctionne (${r.patients} patient${r.patients > 1 ? "s" : ""}, ${r.seances} séance${r.seances > 1 ? "s" : ""} retrouvés), puis la copie est supprimée.`}
           </p>
         </div>
       )}

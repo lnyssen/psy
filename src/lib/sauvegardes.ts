@@ -20,6 +20,39 @@ export type StatutSauvegarde =
   | { etat: "inconnu" }
   | { etat: "ok" | "ancienne"; date: Date; tailleMo: number; nombre: number };
 
+/**
+ * Dernier test de restauration (deploy/tester-restauration.sh) : une sauvegarde
+ * qu'on n'a jamais restaurée n'est qu'une promesse. « ancien » : plus de
+ * 40 jours — le test mensuel n'a pas tourné.
+ */
+const CHEMIN_RESTAURATION =
+  process.env.STATUT_RESTAURATION || "/srv/psy/restauration-statut.json";
+const LIMITE_RESTAURATION_MS = 40 * 24 * 3_600_000;
+
+export type StatutRestauration =
+  | { etat: "inconnu" }
+  | { etat: "ok" | "ancien"; date: Date; patients: number; seances: number }
+  | { etat: "echec"; date: Date; motif: string };
+
+export async function statutRestauration(): Promise<StatutRestauration> {
+  try {
+    const brut = JSON.parse(
+      await readFile(/* turbopackIgnore: true */ CHEMIN_RESTAURATION, "utf8"),
+    ) as { date: string; ok: boolean; patients: number; seances: number; motif: string };
+    const date = new Date(brut.date);
+    if (Number.isNaN(date.getTime())) return { etat: "inconnu" };
+    if (!brut.ok) return { etat: "echec", date, motif: String(brut.motif ?? "") };
+    return {
+      etat: Date.now() - date.getTime() > LIMITE_RESTAURATION_MS ? "ancien" : "ok",
+      date,
+      patients: brut.patients,
+      seances: brut.seances,
+    };
+  } catch {
+    return { etat: "inconnu" };
+  }
+}
+
 export async function statutSauvegarde(): Promise<StatutSauvegarde> {
   try {
     const brut = JSON.parse(
