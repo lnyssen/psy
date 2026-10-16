@@ -8,12 +8,13 @@
  * Le cookie ne porte qu'une date d'expiration et sa signature. Il ne contient
  * aucune donnée exploitable, il est httpOnly, SameSite=Lax et Secure hors
  * développement. La signature passe par Web Crypto plutôt que par le module
- * node:crypto : le middleware s'exécute sur le runtime Edge, où ce dernier
- * n'existe pas.
+ * node:crypto : l'ancien « middleware » tournait sur le runtime Edge, où ce
+ * dernier n'existe pas. Le proxy actuel tourne sous Node et accepterait les
+ * deux ; Web Crypto est conservé, il marche partout.
  */
 const NOM_COOKIE = "amapsy_session";
 // Une session ne vit que trente minutes, mais se prolonge à chaque activité :
-// l'intergiciel renouvelle le cookie à chaque requête de l'outil, et la page
+// le proxy renouvelle le cookie à chaque requête de l'outil, et la page
 // signale elle-même les gestes qui n'en produisent pas (taper une note).
 // Trente minutes sans rien : la session est caduque, côté serveur aussi.
 export const DUREE_MS = 30 * 60 * 1000;

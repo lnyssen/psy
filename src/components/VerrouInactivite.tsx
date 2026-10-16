@@ -39,7 +39,7 @@ export function VerrouInactivite() {
       dernierPing.current = Date.now();
       fetch("/admin/ping", { method: "POST", credentials: "same-origin" })
         .then((r) => {
-          // Session déjà expirée côté serveur : l'intergiciel a redirigé.
+          // Session déjà expirée côté serveur : le proxy a redirigé.
           if (r.redirected) router.push("/connexion?verrouille=1");
         })
         .catch(() => {});

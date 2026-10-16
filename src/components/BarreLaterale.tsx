@@ -258,7 +258,7 @@ export function BarreLaterale({
         <Theme initial={theme} />
 
         {/* Pas de cadenas pendant la démonstration : le bouton renverrait vers
-            un écran de connexion que l'intergiciel laisse aussitôt passer, ce
+            un écran de connexion que le proxy laisse aussitôt passer, ce
             qui laisserait croire à une protection qui n'existe plus. */}
         {!ouverte && (
           <form action={verrouiller} className={repliee ? "" : "ml-auto"}>

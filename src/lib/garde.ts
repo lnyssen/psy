@@ -6,13 +6,13 @@ import { COOKIE_SESSION, jetonValide } from "@/lib/session";
 /**
  * La garde au plus près des données.
  *
- * L'intergiciel ne protège que les pages sous /admin. Les routes /api qui
+ * Le proxy ne protège que les pages sous /admin. Les routes /api qui
  * servent reçus, factures, exports et photos n'y passent pas, et une action
  * serveur s'appelle par un simple POST portant son identifiant, quelle que soit
  * la page d'où il part : la documentation de Next demande de les traiter comme
  * des points d'API publics. Chacune vérifie donc la session elle-même.
  *
- * Le mode démonstration lève cette garde comme il lève celle de l'intergiciel
+ * Le mode démonstration lève cette garde comme il lève celle de le proxy
  * (voir lib/demo.ts) : un seul interrupteur, pas deux.
  *
  * Fichier séparé de lib/session.ts : celui-ci tourne aussi en périphérie, où

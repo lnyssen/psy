@@ -16,7 +16,7 @@
  *   — un bandeau le dit à l'écran et robots.txt interdit l'exploration de
  *     /admin, pour qu'aucun moteur n'en garde une copie.
  *
- * La valeur est lue à chaque appel plutôt que figée à l'import : l'intergiciel
+ * La valeur est lue à chaque appel plutôt que figée à l'import : le proxy
  * s'exécute en périphérie, où une constante de module peut survivre au
  * déploiement suivant.
  */

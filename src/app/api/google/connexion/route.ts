@@ -8,7 +8,7 @@ import { COOKIE_SESSION, jetonValide } from "@/lib/session";
 /**
  * Début de l'autorisation Google : renvoie vers l'écran de consentement.
  *
- * Cette route est hors de /admin et échappe donc à l'intergiciel : la session
+ * Cette route est hors de /admin et échappe donc au proxy : la session
  * se vérifie ici, à la main. Sans cela, n'importe qui pourrait brancher son
  * propre compte Google sur l'outil.
  */

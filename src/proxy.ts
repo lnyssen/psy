@@ -14,7 +14,7 @@ import { demoOuverte } from "@/lib/demo";
  * Le flux iCalendar reste ouvert : il porte sa propre authentification par
  * jeton dans l'adresse, un agenda abonné ne sachant pas présenter de cookie.
  */
-export async function middleware(req: NextRequest) {
+export async function proxy(req: NextRequest) {
   const url = req.nextUrl;
   const chemin = url.pathname;
   const hote = req.headers.get("host") ?? "";
@@ -48,7 +48,7 @@ export async function middleware(req: NextRequest) {
     // Session glissante : seuls les gestes réels la prolongent — une page
     // chargée en entier, un envoi (action serveur, signal d'activité). Pas les
     // requêtes GET que le navigateur lance seul, comme le préchargement des
-    // liens : Next retire ses en-têtes de préchargement avant l'intergiciel,
+    // liens : Next retire ses en-têtes de préchargement avant le proxy,
     // on ne peut donc pas les reconnaître, mais elles n'acceptent jamais du
     // HTML. Une page laissée ouverte ne doit pas rester vivante parce qu'elle
     // précharge. Les changements de page sans rechargement, eux, sont couverts
