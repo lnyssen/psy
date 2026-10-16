@@ -94,6 +94,7 @@ export default async function Reglages({
         ["mot-de-passe", "Mot de passe"],
         ["recuperation", "Adresse de récupération"],
         ["appareils", "Face ID et appareils"],
+        ["navigateurs", "Navigateurs connectés"],
         ["sauvegardes", "Sauvegardes"],
       ],
     },
@@ -103,6 +104,7 @@ export default async function Reglages({
         ["lieux", "Lieux"],
         ["google", "Google Agenda"],
         ["application", "Application sur le téléphone"],
+        ["hors-ligne", "Journée sans connexion"],
       ],
     },
     {

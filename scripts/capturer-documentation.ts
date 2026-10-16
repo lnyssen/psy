@@ -6,11 +6,17 @@
  *   DATABASE_URL=postgresql://docs@localhost:5544/docs DIRECT_URL=$DATABASE_URL SMTP_HOST= … next start -p 3100
  *   (SMTP_HOST vide : `next start` charge .env.production et ses vrais
  *   identifiants SMTP ; vide, aucun e-mail ne peut partir pendant les essais.)
+ *   (Le serveur lit aussi STATUT_SAUVEGARDE=/tmp/docs-sauvegarde.json et
+ *   STATUT_RESTAURATION=/tmp/docs-restauration.json, que ce script écrit avec des
+ *   dates du jour, et SMTP_HOST=smtp.example.invalid : « .invalid » ne se résout
+ *   jamais, rien ne peut partir, mais l'envoi d'e-mails paraît branché.)
  *   npx tsx scripts/capturer-documentation.ts
  *
  * Les images sont converties en WebP dans public/documentation/.
  */
 import { createHmac } from "node:crypto";
+import { execFileSync } from "node:child_process";
+import { writeFileSync } from "node:fs";
 import puppeteer, { type Page } from "puppeteer-core";
 import sharp from "sharp";
 
@@ -73,7 +79,22 @@ async function capturer(page: Page, nom: string, chemin: string, opts: { selecte
   await enregistrer(await page.screenshot({ type: "png", fullPage: opts.pleine ?? false }), nom);
 }
 
+/** Statuts de sauvegarde et de restauration fictifs, datés de ce matin. */
+function ecrireStatuts() {
+  const maintenant = new Date().toISOString();
+  writeFileSync("/tmp/docs-sauvegarde.json", JSON.stringify({ date: maintenant, fichier: "psy-docs.dump.gpg", taille: 3_400_000, nombre: 30 }));
+  writeFileSync("/tmp/docs-restauration.json", JSON.stringify({ date: maintenant, ok: true, fichier: "psy-docs.dump.gpg", patients: 9, seances: 36, motif: "réussi" }));
+}
+
+/** Une requête SQL sur la base jetable, jamais sur une autre. */
+function sql(requete: string) {
+  const url = process.env.DATABASE_URL ?? "";
+  if (!/@localhost:5544\/docs$/.test(url)) throw new Error("Refusé : base non jetable.");
+  execFileSync("psql", [url, "-X", "-q", "-c", requete]);
+}
+
 async function main() {
+  ecrireStatuts();
   const navigateur = await puppeteer.launch({ executablePath: CHROME, headless: true, args: ["--no-sandbox"] });
   try {
     // Écran de connexion : sans session.
@@ -89,6 +110,45 @@ async function main() {
     await page.setViewport({ width: 1280, height: 800, deviceScaleFactor: 2 });
 
     await capturer(page, "aujourdhui", "/admin");
+
+    // La carte « À compléter » : on retire un instant l'adresse de récupération
+    // et l'IBAN pour qu'elle ait quelque chose à dire, puis on les remet.
+    sql(`UPDATE acces SET recovery_email = NULL; UPDATE parametres SET iban = NULL`);
+    try {
+      await capturer(page, "a-completer", "/admin", { selecteur: "details:has(summary)" });
+    } finally {
+      sql(`UPDATE acces SET recovery_email = 'praticienne@example.invalid'; UPDATE parametres SET iban = 'BE68 5390 0754 7034'`);
+    }
+
+    // Vue scindée : « Voir la fiche » d'une séance à trancher, à droite de la liste.
+    const large = await navigateur.newPage();
+    await large.setCookie({ name: "amapsy_session", value: jeton(), url: BASE });
+    await large.setViewport({ width: 1400, height: 940, deviceScaleFactor: 2 });
+    await large.goto(`${BASE}/admin`, { waitUntil: "load" });
+    await attendre(1500);
+    await large.evaluate(() => {
+      const d = [...document.querySelectorAll("details")].find((x) => x.textContent?.includes("Voir les"));
+      if (d) d.open = true;
+    });
+    const ligne = await large.$("section ul li a[href^='/admin/patients/']");
+    if (ligne) {
+      await ligne.click();
+      await attendre(2500);
+      await enregistrer(await large.screenshot({ type: "png" }), "aujourdhui-scindee");
+    } else console.log("  ✗ aujourdhui-scindee (aucune séance à trancher)");
+
+    // Créneaux libres proposés pour déplacer une séance : semaine prochaine.
+    const lundiProchain = new Date(Date.now() + 7 * 86_400_000).toISOString().slice(0, 10);
+    await large.goto(`${BASE}/admin/semaine?semaine=${lundiProchain}`, { waitUntil: "load" });
+    await attendre(1500);
+    const proposer = await large.$("button[aria-label^='Proposer d’autres créneaux']");
+    if (proposer) {
+      await proposer.evaluate((b) => (b as HTMLElement).click());
+      await attendre(2500);
+      await large.evaluate(() => window.scrollTo(0, 0));
+      await enregistrer(await large.screenshot({ type: "png", clip: { x: 240, y: 0, width: 1160, height: 640 } }), "agenda-creneaux");
+    } else console.log("  ✗ agenda-creneaux (aucune séance à venir la semaine prochaine)");
+    await large.close();
     await capturer(page, "agenda", "/admin/semaine");
     await capturer(page, "agenda-nouvelle-seance", "/admin/semaine", { ouvrir: "Nouvelle séance", selecteur: "details" });
 
@@ -122,7 +182,7 @@ async function main() {
 
     for (const [nom, id] of [
       ["reglages-ouverture", "ouverture"], ["reglages-rythme", "rythme"], ["reglages-horaires", "horaires"], ["reglages-tarifs", "tarifs"],
-      ["reglages-identite", "identite"], ["reglages-apparence", "apparence"], ["reglages-securite", "securite"], ["reglages-sauvegardes", "sauvegardes"], ["reglages-lieux", "lieux"],
+      ["reglages-identite", "identite"], ["reglages-apparence", "apparence"], ["reglages-securite", "securite"], ["reglages-navigateurs", "navigateurs"], ["reglages-sauvegardes", "sauvegardes"], ["reglages-hors-ligne", "hors-ligne"], ["reglages-lieux", "lieux"],
     ] as const) {
       await capturer(page, nom, "/admin/reglages", { selecteur: `#${id}`, hauteurMax: nom === "reglages-lieux" ? 1400 : undefined });
     }

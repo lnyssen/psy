@@ -21,10 +21,15 @@ export DATABASE_URL=postgresql://docs@localhost:5544/docs
 # sans cette ligne, `prisma migrate deploy` migrerait Neon au lieu de la base
 # jetable.
 export DIRECT_URL="$DATABASE_URL"
-# `next start` charge .env.production, donc les vrais identifiants SMTP : sans
-# cette ligne, un clic sur « envoyer par e-mail » dans l'outil de test écrirait
-# vraiment, depuis la vraie boîte. Vide, l'envoi est inerte.
-export SMTP_HOST=""
+# `next start` charge .env.production, donc les vrais identifiants SMTP : un clic
+# sur « envoyer par e-mail » dans l'outil de test écrirait vraiment, depuis la
+# vraie boîte. Un serveur en « .invalid » ne se résout jamais : rien ne peut
+# partir, et l'outil se croit pourtant branché (la carte « À compléter » ne
+# réclame pas de messagerie sur les captures).
+export SMTP_HOST="smtp.example.invalid"
+# Statuts fictifs de sauvegarde et de restauration, écrits par le script de capture.
+export STATUT_SAUVEGARDE=/tmp/docs-sauvegarde.json
+export STATUT_RESTAURATION=/tmp/docs-restauration.json
 
 [ -f .env.local ] || { echo "Il manque .env.local (AUTH_SECRET)."; exit 1; }
 AUTH_SECRET="$(grep '^AUTH_SECRET=' .env.local | cut -d= -f2- | tr -d '"')"
@@ -43,7 +48,8 @@ echo "== Base jetable"
 if [ ! -d "$PG_DIR" ]; then
   initdb -D "$PG_DIR" -U docs -A trust --locale=en_US.UTF-8 >/dev/null
 fi
-pg_ctl -D "$PG_DIR" -o "-p 5544" -l /tmp/docs-pg.log -w start >/dev/null
+# Déjà lancée (une séance de travail précédente) : on la réutilise.
+pg_isready -q -h localhost -p 5544 || pg_ctl -D "$PG_DIR" -o "-p 5544" -l /tmp/docs-pg.log -w start >/dev/null
 createdb -h localhost -p 5544 -U docs docs 2>/dev/null || true
 npx prisma migrate deploy >/dev/null
 

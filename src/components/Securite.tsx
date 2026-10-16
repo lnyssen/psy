@@ -254,13 +254,15 @@ export async function Securite({ code }: { code?: string }) {
               {navigateurs.map((n) => (
                 <li
                   key={n.id}
-                  className="flex flex-wrap items-center gap-x-4 gap-y-1 border-b border-line px-4 py-3 last:border-b-0"
+                  className="flex items-center gap-4 border-b border-line px-4 py-3 last:border-b-0"
                 >
-                  <span className="min-w-40 flex-1 text-sm font-medium">{n.nom}</span>
-                  <span className="text-xs text-ink-muted">
-                    Vu pour la première fois le {fmtJourMoisAn.format(n.premiereVue)} · dernière
-                    connexion le {fmtJourMoisAn.format(n.derniereVue)}
-                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium">{n.nom}</p>
+                    <p className="text-xs text-ink-muted">
+                      Première connexion le {fmtJourMoisAn.format(n.premiereVue)} · dernière le{" "}
+                      {fmtJourMoisAn.format(n.derniereVue)}
+                    </p>
+                  </div>
                   <form action={oublierNavigateur}>
                     <input type="hidden" name="id" value={n.id} />
                     <button

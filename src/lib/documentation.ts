@@ -107,6 +107,16 @@ export const PAGES_DOC: PageDoc[] = [
           {
             t: "p",
             texte:
+              "**À compléter** : tant qu'un réglage important manque, un encadré s'affiche en haut d'**Aujourd'hui** avec, pour chaque point, ce qui se passe sans lui et un bouton **Régler** qui mène au bon endroit : un IBAN absent (reçus et relances sans code QR de paiement), un n° INAMI, de visa ou d'entreprise manquant, l'adresse de récupération, un tarif ou un lieu absent, des horaires d'ouverture vides, l'envoi d'e-mails non branché, ou une sauvegarde qui ne se fait plus. L'encadré est rouge et ouvert quand il y va d'une perte (sauvegarde, accès), gris et replié sinon. Quand tout est en ordre, il disparaît.",
+          },
+          img(
+            "a-completer",
+            "L'encadré À compléter sur Aujourd'hui",
+            "Chaque point dit ce qui manque, pourquoi, et mène au réglage.",
+          ),
+          {
+            t: "p",
+            texte:
               "Tout en bas du menu, sous un trait, **Réglages** et **Documentation** (cette page) ; juste en dessous, le **thème** clair ou sombre (la lune ; **Réglages › Couleur et affichage** ajoute « automatique ») et le **cadenas**. La flèche en haut replie la barre pour gagner de la place. La page où vous êtes est sur fond violet pâle. Sur la page **Documentation**, le bouton **Version imprimable (PDF)** réunit tout ce guide sur une seule page, avec couverture et table des matières : **Imprimer** ouvre la boîte d'impression, qui permet aussi d'**Enregistrer en PDF**.",
           },
           {
@@ -148,6 +158,11 @@ export const PAGES_DOC: PageDoc[] = [
               "**Mac** : dans Safari, **Fichier**, puis **Ajouter au Dock**.",
             ],
           },
+          {
+            t: "p",
+            texte:
+              "**Sans réseau ?** Dans un cabinet sans couverture, l'outil ne s'ouvre pas. L'option **Voir la journée sans connexion** (Réglages › Voir la journée sans connexion) garde sur le téléphone la liste du jour et du suivant — heure, prénom, initiale, lieu — pour la consulter hors ligne.",
+          },
         ],
       },
     ],
@@ -187,6 +202,16 @@ export const PAGES_DOC: PageDoc[] = [
             texte:
               "Sous le nom du jour, le total d'heures de la journée. En haut, deux compteurs donnent le nombre de séances et d'heures de la semaine, et **Compter sur une autre période** calcule les mêmes chiffres entre deux dates.",
           },
+          {
+            t: "p",
+            texte:
+              "**Déplacer une séance.** Trois façons : la **glisser** sur un autre créneau (calé au quart d'heure), la décaler d'un quart d'heure avec les **flèches** qui apparaissent au survol, ou cliquer sur l'icône **calendrier** (sur téléphone, **Déplacer**) pour que l'outil **propose les six créneaux libres les plus proches** : mêmes règles que pour les rendez-vous en ligne (horaires d'ouverture, congés, trajets, séances déjà posées). Un clic sur un créneau déplace la séance.",
+          },
+          img(
+            "agenda-creneaux",
+            "Les créneaux libres proposés pour déplacer une séance",
+            "Les six créneaux libres les plus proches de la séance à déplacer.",
+          ),
           {
             t: "note",
             texte:
@@ -245,6 +270,16 @@ export const PAGES_DOC: PageDoc[] = [
               "**toutes honorées** : pour valider d'un coup toutes les séances d'un groupe.",
             ],
           },
+          {
+            t: "p",
+            texte:
+              "**Voir la fiche sans quitter la liste.** Sur un écran large (à partir de 1024 px), cliquer sur le **nom** d'une séance de la liste ouvre le dossier du patient **à droite**, la liste restant à gauche : vous tranchez une séance, lisez la fiche voisine, puis passez à la suivante sans changer de page. Dans le volet : **Actualiser** recharge la fiche, **Séance suivante** ouvre la suivante de la liste, **Pleine page** ouvre la fiche en grand, **Fermer** (ou **Échap**) referme le volet. Sur téléphone, le nom reste un simple lien vers la fiche.",
+          },
+          img(
+            "aujourdhui-scindee",
+            "La liste des séances à trancher avec la fiche du patient à droite",
+            "La fiche s'ouvre à droite : on ne perd pas la liste.",
+          ),
           {
             t: "p",
             texte:
@@ -361,7 +396,7 @@ export const PAGES_DOC: PageDoc[] = [
           {
             t: "p",
             texte:
-              "En haut : le nom, le régime, le cabinet, puis une rangée de compteurs : nombre de séances, heures, ce qui a été encaissé ou reçu de l'INAMI, ce qui reste dû ou à recevoir. Pour un patient conventionné, **INAMI, 12 mois** montre où il en est de son plafond (par exemple 4 / 10). Dessous, deux colonnes sur ordinateur (tout s'empile sur téléphone) : à gauche les **coordonnées**, à droite les boutons **Nouvelle séance** (pour ce patient), **Modifier la fiche** et **Attestation** (dont le **lien personnel de réservation**, en bas du formulaire), l'**historique des séances**, les notes, les documents et, tout en bas, les données personnelles. Sous les coordonnées, **Copier les coordonnées** met nom, téléphones, e-mails et adresse dans le presse-papiers (pour les coller dans un message ou un événement d'agenda), et **Appeler** et **WhatsApp** apparaissent pour chaque numéro connu (patient, mère, père). Deux absences non excusées ou plus sur les douze derniers mois sont signalées par un bandeau sur la fiche et par une pastille **2 absences** dans la liste des patients.",
+              "En haut : le nom, le régime, le cabinet, puis une rangée de compteurs : nombre de séances, heures, ce qui a été encaissé ou reçu de l'INAMI, ce qui reste dû ou à recevoir. Pour un patient conventionné, **INAMI, 12 mois** montre où il en est de son plafond (par exemple 6 / 10) avec une **jauge** : une barre qui se remplit, des repères à **60 %** et **80 %**, et une phrase (« plus que 2 séances ») ; elle passe à l'ambre à 60 %, au rouge à 80 % et au plafond. Dessous, deux colonnes sur ordinateur (tout s'empile sur téléphone) : à gauche les **coordonnées**, à droite les boutons **Nouvelle séance** (pour ce patient), **Modifier la fiche** et **Attestation** (dont le **lien personnel de réservation**, en bas du formulaire), l'**historique des séances**, les notes, les documents et, tout en bas, les données personnelles. Sous les coordonnées, **Copier les coordonnées** met nom, téléphones, e-mails et adresse dans le presse-papiers (pour les coller dans un message ou un événement d'agenda), et **Appeler** et **WhatsApp** apparaissent pour chaque numéro connu (patient, mère, père). Deux absences non excusées ou plus sur les douze derniers mois sont signalées par un bandeau sur la fiche et par une pastille **2 absences** dans la liste des patients.",
           },
           img(
             "patient-modifier",
@@ -756,7 +791,7 @@ export const PAGES_DOC: PageDoc[] = [
             t: "liste",
             items: [
               "le nombre de séances honorées, ce que l'**INAMI doit verser**, ce qui est **déjà reçu** et ce qui reste **à recevoir** ;",
-              "pour chaque patient, la convention (soutien ou traitement, réseau enfants ou adultes) et son **plafond sur douze mois** (par exemple 2 / 10) ;",
+              "pour chaque patient, la convention (soutien ou traitement, réseau enfants ou adultes) et son **plafond sur douze mois** (par exemple 2 / 10), avec une petite jauge qui montre d'un coup d'œil qui approche de la fin de son quota ;",
               "les séances **hors plafond**, qui ne seront pas remboursées.",
             ],
           },
@@ -867,7 +902,14 @@ export const PAGES_DOC: PageDoc[] = [
               "**Mot de passe** : saisissez l'actuel, puis le nouveau deux fois (12 caractères au moins). Les sessions déjà ouvertes restent ouvertes jusqu'à leur fin.",
               "**Adresse de récupération** : l'adresse qui reçoit le lien de réinitialisation en cas de mot de passe oublié. Choisissez une boîte que vous seule consultez.",
               "**Face ID, Touch ID et empreinte** : sur l'appareil que vous utilisez, cliquez sur **Enregistrer cet appareil** et validez avec votre visage ou votre empreinte. Vous pouvez enregistrer plusieurs appareils et en **Retirer** un à tout moment (téléphone perdu, par exemple).",
+              "**Navigateurs déjà connectés** : à chaque connexion depuis un navigateur que l'outil ne connaît pas, un **e-mail « Nouvelle connexion à votre outil »** part à l'adresse de récupération (date, appareil, adresse réseau). Si c'est vous, rien à faire ; sinon, changez le mot de passe sans attendre. **Oublier** un navigateur le fera signaler de nouveau à sa prochaine connexion.",
             ],
+          },
+          img("reglages-navigateurs", "La liste des navigateurs déjà connectés"),
+          {
+            t: "note",
+            texte:
+              "Un navigateur dont on a effacé les cookies compte comme un nouveau : c'est une alerte de trop, jamais une de moins. L'alerte prévient, elle ne bloque pas la connexion.",
           },
           {
             t: "attention",
@@ -887,9 +929,44 @@ export const PAGES_DOC: PageDoc[] = [
               "Chaque nuit, la base de données est sauvegardée et chiffrée sur le serveur, avec trente jours d'historique. Ce bloc affiche la date de la dernière sauvegarde. Si elle date de plus de 36 heures, un bandeau rouge s'affiche en haut de l'outil : faites vérifier le serveur.",
           },
           {
+            t: "p",
+            texte:
+              "**Test de restauration.** Une sauvegarde qu'on n'a jamais restaurée n'est qu'une promesse. Le 1er de chaque mois, le serveur restaure la dernière sauvegarde dans une base jetable, compare le nombre de patients et de séances avec ceux de l'outil, puis supprime la copie. Le résultat s'affiche sous la dernière sauvegarde ; en cas d'échec, un point rouge apparaît dans **À compléter** sur Aujourd'hui.",
+          },
+          {
+            t: "p",
+            texte:
+              "**Surveillance.** Toutes les 30 minutes, un contrôle extérieur vérifie que le site répond, que la base répond, que la sauvegarde date de moins de 36 h et que le test de restauration n'a pas échoué ; en cas de problème, un e-mail part à la personne qui administre le site.",
+          },
+          {
             t: "note",
             texte:
               "Une copie des sauvegardes se récupère aussi sur un autre ordinateur, avec un script dédié : un serveur qui tomberait emporterait sinon les sauvegardes qui y sont rangées. La personne qui administre le site s'en charge.",
+          },
+        ],
+      },
+      {
+        id: "hors-ligne",
+        titre: "Voir la journée sans connexion",
+        blocs: [
+          img("reglages-hors-ligne", "Le bloc Voir la journée sans connexion"),
+          {
+            t: "p",
+            texte:
+              "Une option **par appareil**, à activer sur le téléphone que vous emportez (pas sur l'ordinateur du cabinet) : **Activer sur cet appareil**. L'outil garde alors sur l'appareil la liste d'**aujourd'hui et de la prochaine journée travaillée**, remise à jour à chaque ouverture. Sans réseau, ouvrir l'outil affiche cette liste au lieu d'une page d'erreur.",
+          },
+          {
+            t: "liste",
+            items: [
+              "**Gardé sur l'appareil** : l'heure, le prénom, l'initiale du nom (« Zoé M. »), le lieu et son adresse, une mention « visio ». **Jamais** : téléphone, e-mail, montant, note, numéro national.",
+              "**Effacé** : à la fin de la journée, quand vous **verrouillez** l'outil (cadenas), quand vous cliquez sur **Désactiver et effacer**, ou avec **Effacer de cet appareil** sur la page hors connexion.",
+              "**Mettre à jour maintenant** : récupère la journée tout de suite, avec une connexion.",
+            ],
+          },
+          {
+            t: "attention",
+            texte:
+              "Hors connexion, la page ne demande **pas** de mot de passe : quiconque tient votre téléphone déverrouillé peut la lire. N'activez l'option que sur un appareil protégé par un code ou Face ID. Le verrouillage automatique après 30 minutes ne l'efface que s'il a pu joindre le serveur ; sinon, elle s'efface à minuit.",
           },
         ],
       },
@@ -956,6 +1033,11 @@ export const PAGES_DOC: PageDoc[] = [
           {
             t: "p",
             texte:
+              "**J'ai reçu un e-mail « Nouvelle connexion à votre outil ».** C'est l'alerte d'un navigateur que l'outil ne connaissait pas : un nouvel appareil, ou un navigateur dont les cookies ont été effacés. Si vous reconnaissez l'appareil indiqué, il n'y a rien à faire. Sinon, changez le mot de passe sans attendre, depuis un appareil de confiance (Réglages › Sécurité de l'accès).",
+          },
+          {
+            t: "p",
+            texte:
               "**J'ai perdu mon téléphone.** Depuis un autre appareil, ouvrez **Réglages › Sécurité de l'accès** et **retirez** le téléphone de la liste : il ne pourra plus ouvrir l'outil. Changez ensuite le mot de passe par précaution.",
           },
         ],
@@ -964,6 +1046,11 @@ export const PAGES_DOC: PageDoc[] = [
         id: "agenda",
         titre: "Agenda et séances",
         blocs: [
+          {
+            t: "p",
+            texte:
+              "**Je ne trouve pas de créneau pour déplacer une séance.** L'icône calendrier (ou **Déplacer**) propose les six créneaux libres les plus proches, dans le même lieu, sur les quatre prochaines semaines. S'il n'y en a aucun, vérifiez les **horaires d'ouverture** de ce lieu : sans horaires, aucun créneau ne peut être proposé.",
+          },
           {
             t: "p",
             texte:
@@ -1005,6 +1092,11 @@ export const PAGES_DOC: PageDoc[] = [
             t: "p",
             texte:
               "**Le bandeau « Aucune sauvegarde récente » s'affiche.** La sauvegarde nocturne n'a pas réussi depuis plus de 36 heures. L'outil continue de fonctionner, mais prévenez la personne qui administre le serveur.",
+          },
+          {
+            t: "p",
+            texte:
+              "**« Le test de restauration a échoué ».** La dernière sauvegarde n'a pas pu être restaurée sur le serveur (clé illisible, fichier abîmé, base vide). L'outil continue de fonctionner, mais une sauvegarde qui ne se restaure pas ne protège de rien : prévenez la personne qui administre le serveur sans attendre.",
           },
           {
             t: "p",

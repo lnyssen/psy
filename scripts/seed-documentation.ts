@@ -24,7 +24,7 @@ const quand = (n: number, h: string) => instantBruxelles(isoJour(ajouterJours(lu
 async function main() {
   // Vider dans l'ordre des dépendances.
   for (const t of [
-    "documents_patient", "passkeys", "reinitialisations_mdp", "acces", "attente_rdv", "demandes_rdv", "depenses",
+    "documents_patient", "passkeys", "appareils_connus", "reinitialisations_mdp", "acces", "attente_rdv", "demandes_rdv", "depenses",
     "categories_depense", "notes", "sessions", "factures_etablissement", "patients", "disponibilites",
     "indisponibilites", "tarifs", "cabinets", "parametres",
   ]) {
@@ -38,9 +38,20 @@ async function main() {
       numeroInami: "000000-00",
       numeroVisa: "000000",
       numeroCommission: "000000000",
-      iban: "BE00 0000 0000 0000",
+      // IBAN d'exemple à clé valide (celui de la norme), pour que les QR de paiement se génèrent.
+      iban: "BE68 5390 0754 7034",
       adresseSiege: "Rue de l'Exemple 1\n1000 Bruxelles",
     },
+  });
+
+  // Une adresse de récupération fictive : sans elle, la carte « À compléter » s'affiche.
+  await prisma.acces.create({ data: { id: "global", recoveryEmail: "praticienne@example.invalid" } });
+  const jours = (n: number) => new Date(Date.now() - n * 86_400_000);
+  await prisma.appareilConnu.createMany({
+    data: [
+      { empreinte: "docs-iphone", nom: "Safari sur iPhone", premiereVue: jours(60), derniereVue: jours(0) },
+      { empreinte: "docs-mac", nom: "Chrome sur Mac", premiereVue: jours(45), derniereVue: jours(2) },
+    ],
   });
 
   const uccle = await prisma.cabinet.create({
