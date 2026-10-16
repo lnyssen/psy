@@ -313,7 +313,7 @@ export default async function Etablissements({
               <textarea
                 name="commentaire"
                 rows={2}
-                placeholder="Pour toi seule — le contexte de cette facture."
+                placeholder="Pour vous seule — le contexte de cette facture."
                 className={`mt-1 ${champ.replace("rounded-full", "rounded-[14px]")} resize-y leading-snug`}
               />
             </label>

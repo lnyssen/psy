@@ -574,7 +574,7 @@ export async function synchroniser(opts: { maxAgeMs?: number } = {}): Promise<Re
   } catch (e) {
     const revoquee = e instanceof GoogleErreur && e.code === "invalid_grant";
     const message = revoquee
-      ? "L’accès à Google a expiré ou a été retiré — reconnecte ton agenda."
+      ? "L’accès à Google a expiré ou a été retiré — reconnectez votre agenda."
       : e instanceof Error
         ? e.message
         : "Erreur inconnue.";

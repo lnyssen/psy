@@ -73,7 +73,7 @@ export function ImportPatients({ champs }: { champs: Champ[] }) {
   return (
     <div className="flex flex-col gap-6">
       <section className="flex max-w-2xl flex-col gap-3 rounded-[14px] border border-line bg-surface p-5">
-        <h2 className="text-sm font-semibold">2. Choisis le fichier</h2>
+        <h2 className="text-sm font-semibold">2. Choisissez le fichier</h2>
         <ChampFichier
           key={cleChamp}
           libelle="Fichier Excel des patients (.xlsx)"
@@ -119,9 +119,9 @@ export function ImportPatients({ champs }: { champs: Champ[] }) {
       {analyse && (
         <>
           <section className="flex flex-col gap-3 rounded-[14px] border border-line bg-surface p-5">
-            <h2 className="text-sm font-semibold">3. Vérifie les colonnes</h2>
+            <h2 className="text-sm font-semibold">3. Vérifiez les colonnes</h2>
             <p className="text-sm text-ink-muted">
-              Feuille « {analyse.feuille} », {analyse.total} ligne{analyse.total > 1 ? "s" : ""}. Corrige la
+              Feuille « {analyse.feuille} », {analyse.total} ligne{analyse.total > 1 ? "s" : ""}. Corrigez la
               correspondance si une colonne a été mal reconnue.
             </p>
             <div className="grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-3">

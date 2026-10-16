@@ -77,13 +77,13 @@ export async function GET() {
   mode.addRow(["Importer des patients"]).font = { bold: true, size: 14 };
   mode.addRow([]);
   [
-    "1. Remplis la feuille « Patients » : une ligne par patient, à partir de la ligne 2.",
-    "2. Seuls le prénom et le nom sont obligatoires (colonnes marquées d’une *). Laisse vide ce que tu ne sais pas.",
-    "3. Enregistre en .xlsx, puis dans l’outil : Patients › Importer. Tu verras ce qui sera créé avant de valider.",
-    "4. Un patient déjà présent (même prénom et même nom) est ignoré, jamais écrasé : tu peux ré-importer sans risque.",
+    "1. Remplissez la feuille « Patients » : une ligne par patient, à partir de la ligne 2.",
+    "2. Seuls le prénom et le nom sont obligatoires (colonnes marquées d’une *). Laissez vide ce que vous ne savez pas.",
+    "3. Enregistrez en .xlsx, puis dans l’outil : Patients › Importer. Vous verrez ce qui sera créé avant de valider.",
+    "4. Un patient déjà présent (même prénom et même nom) est ignoré, jamais écrasé : vous pouvez ré-importer sans risque.",
     "",
-    "Tu as déjà un fichier ? Pas besoin de le recopier dans ce modèle : l’outil reconnaît les intitulés usuels",
-    "(Prénom, Nom, GSM, Date de naissance, Ville…) et te laisse corriger la correspondance des colonnes.",
+    "Vous avez déjà un fichier ? Pas besoin de le recopier dans ce modèle : l’outil reconnaît les intitulés usuels",
+    "(Prénom, Nom, GSM, Date de naissance, Ville…) et vous laisse corriger la correspondance des colonnes.",
   ].forEach((t) => mode.addRow([t]));
   mode.addRow([]);
   const tete = mode.addRow(["Colonne", "Ce qu’on attend"]);

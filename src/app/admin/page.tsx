@@ -178,7 +178,7 @@ export default async function Aujourdhui({ searchParams }: { searchParams: Promi
           className="rounded-[14px] border border-accent/40 bg-surface px-5 py-4 text-sm transition-colors hover:border-accent"
         >
           <span className="font-semibold">{googleAFaire.lignes}</span> événement
-          {googleAFaire.lignes > 1 ? "s" : ""} de ton Google Agenda
+          {googleAFaire.lignes > 1 ? "s" : ""} de votre Google Agenda
           {googleAFaire.lignes > 1 ? " attendent" : " attend"} une décision : un patient, un créneau
           occupé, ou rien.
         </Link>

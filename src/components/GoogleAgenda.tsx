@@ -10,14 +10,14 @@ const MESSAGES: Record<string, { ton: "ok" | "erreur"; texte: string }> = {
     texte: "Impossible tant que la démonstration ouverte est active : l’outil y est lisible par tous.",
   },
   config: { ton: "erreur", texte: "Les identifiants Google ne sont pas encore configurés sur le serveur." },
-  state: { ton: "erreur", texte: "L’autorisation a été interrompue. Réessaie depuis le début." },
+  state: { ton: "erreur", texte: "L’autorisation a été interrompue. Réessayez depuis le début." },
   refuse: { ton: "erreur", texte: "L’autorisation a été refusée côté Google." },
   "sans-jeton": {
     ton: "erreur",
     texte:
-      "Google n’a pas renvoyé d’accès durable. Retire l’accès de cette application sur myaccount.google.com/permissions, puis réessaie.",
+      "Google n’a pas renvoyé d’accès durable. Retirez l’accès de cette application sur myaccount.google.com/permissions, puis réessayez.",
   },
-  echec: { ton: "erreur", texte: "La connexion à Google a échoué. Réessaie dans un instant." },
+  echec: { ton: "erreur", texte: "La connexion à Google a échoué. Réessayez dans un instant." },
   "agenda-ok": {
     ton: "ok",
     texte: "Agenda changé. Les séances y sont recréées, la synchronisation est en cours.",
@@ -33,7 +33,7 @@ const MESSAGES: Record<string, { ton: "ok" | "erreur"; texte: string }> = {
   },
   "agenda-occupe": {
     ton: "erreur",
-    texte: "Une synchronisation est en cours. Réessaie dans un instant.",
+    texte: "Une synchronisation est en cours. Réessayez dans un instant.",
   },
   "agenda-echec": {
     ton: "erreur",
@@ -64,8 +64,8 @@ export async function GoogleAgenda({ retour }: { retour?: string }) {
       <div>
         <TitreSection>Google Agenda</TitreSection>
         <p className="mt-1 text-sm text-ink-muted">
-          Les séances d’ici apparaissent dans ton Google Agenda, sous le nom du patient et du lieu.
-          Ce que tu y ajoutes arrive ici « à rattacher ». Un rendez-vous titré du prénom et du
+          Les séances d’ici apparaissent dans votre Google Agenda, sous le nom du patient et du lieu.
+          Ce que vous y ajoutez arrive ici « à rattacher ». Un rendez-vous titré du prénom et du
           nom d’un patient devient automatiquement sa séance. Un déplacement ou une suppression
           faite d’un côté est reprise de l’autre.
         </p>
@@ -92,7 +92,7 @@ export async function GoogleAgenda({ retour }: { retour?: string }) {
         {e.demo ? (
           <p>
             <span className="font-semibold">Désactivé en démonstration ouverte.</span> L’outil y
-            est accessible sans mot de passe : y brancher ton agenda l’afficherait à tous. La
+            est accessible sans mot de passe : y brancher votre agenda l’afficherait à tous. La
             connexion se débloque dès que la démonstration est coupée.
           </p>
         ) : !e.configure ? (
@@ -105,10 +105,10 @@ export async function GoogleAgenda({ retour }: { retour?: string }) {
               <summary className="w-fit cursor-pointer font-medium text-ink">La marche à suivre</summary>
               <ol className="mt-2 list-decimal space-y-1.5 pl-5">
                 <li>
-                  Sur console.cloud.google.com, crée un projet et active l’API « Google Calendar ».
+                  Sur console.cloud.google.com, créez un projet et activez l’API « Google Calendar ».
                 </li>
                 <li>
-                  Écran de consentement OAuth : type « Externe », ton adresse en utilisateur test,
+                  Écran de consentement OAuth : type « Externe », votre adresse en utilisateur test,
                   puis « Publier l’application » — sans cela, l’accès expire au bout de 7 jours.
                   Google affichera un avertissement « application non vérifiée » : c’est attendu,
                   l’application n’a qu’une utilisatrice.
@@ -206,7 +206,7 @@ export async function GoogleAgenda({ retour }: { retour?: string }) {
             </form>
             <p className="text-xs text-ink-muted">
               Déconnecter n’efface rien dans Google : les événements déjà créés y restent, et sont
-              reconnus si tu te reconnectes.
+              reconnus si vous vous reconnectez.
             </p>
           </>
         )}

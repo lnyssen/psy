@@ -34,8 +34,8 @@ export type ResultatImport =
 
 async function lire(f: FormData) {
   const fichier = f.get("fichier");
-  if (!(fichier instanceof File) || fichier.size === 0) throw new Error("Choisis d’abord un fichier Excel.");
-  if (fichier.size > TAILLE_MAX) throw new Error("Le fichier dépasse 5 Mo. Retire les images ou les feuilles inutiles.");
+  if (!(fichier instanceof File) || fichier.size === 0) throw new Error("Choisissez d’abord un fichier Excel.");
+  if (fichier.size > TAILLE_MAX) throw new Error("Le fichier dépasse 5 Mo. Retirez les images ou les feuilles inutiles.");
   if (!/\.xlsx$/i.test(fichier.name)) {
     throw new Error("Seul le format .xlsx est accepté. Dans Excel : Fichier › Enregistrer sous › Classeur Excel (.xlsx).");
   }
@@ -46,7 +46,7 @@ async function lire(f: FormData) {
     throw new Error(
       e instanceof Error && /feuille/i.test(e.message)
         ? e.message
-        : "Ce fichier n’a pas pu être lu. Vérifie qu’il s’ouvre bien dans Excel et qu’il n’est pas protégé par un mot de passe.",
+        : "Ce fichier n’a pas pu être lu. Vérifiez qu’il s’ouvre bien dans Excel et qu’il n’est pas protégé par un mot de passe.",
     );
   }
   if (classeur.lignes.length === 0) throw new Error("Aucune ligne de patient sous la ligne d’en-tête.");

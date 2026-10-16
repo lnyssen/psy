@@ -57,7 +57,7 @@ export const CHAMPS: {
   { cle: "adresse", libelle: "Adresse", obligatoire: false, aide: "Rue et numéro, dans une seule colonne.", exemple: "12 rue du Doyenné", synonymes: ["adresse", "rue", "rue et numero", "adresse rue", "adresse postale", "rue numero", "voie"] },
   { cle: "codePostal", libelle: "Code postal", obligatoire: false, aide: "", exemple: "1180", synonymes: ["code postal", "cp", "postal", "code"] },
   { cle: "commune", libelle: "Commune", obligatoire: false, aide: "", exemple: "Uccle", synonymes: ["commune", "ville", "localite", "city"] },
-  { cle: "cabinet", libelle: "Cabinet", obligatoire: false, aide: "Le nom d’un de tes lieux (Uccle, Auderghem…). Vide ou inconnu : aucun cabinet habituel.", exemple: "Uccle", synonymes: ["cabinet", "lieu", "site", "consultation", "cabinet habituel"] },
+  { cle: "cabinet", libelle: "Cabinet", obligatoire: false, aide: "Le nom d’un de vos lieux (Uccle, Auderghem…). Vide ou inconnu : aucun cabinet habituel.", exemple: "Uccle", synonymes: ["cabinet", "lieu", "site", "consultation", "cabinet habituel"] },
 ];
 
 const parCle = new Map(CHAMPS.map((c) => [c.cle, c]));

@@ -20,10 +20,10 @@ export default function ImporterPatients() {
       </header>
 
       <section className="flex max-w-2xl flex-col gap-3 rounded-[14px] border border-line bg-surface p-5">
-        <h2 className="text-sm font-semibold">1. Prépare le fichier</h2>
+        <h2 className="text-sm font-semibold">1. Préparez le fichier</h2>
         <p className="text-sm text-ink-muted">
-          Utilise ton fichier tel quel : les intitulés usuels (Prénom, Nom, GSM, Ville…) sont reconnus, et tu peux
-          corriger la correspondance à l’étape suivante. Sinon, pars du modèle : menus déroulants pour le régime, le
+          Utilisez votre fichier tel quel : les intitulés usuels (Prénom, Nom, GSM, Ville…) sont reconnus, et vous pouvez
+          corriger la correspondance à l’étape suivante. Sinon, partez du modèle : menus déroulants pour le régime, le
           tarif et le cabinet, zéros des numéros conservés.
         </p>
         <div>

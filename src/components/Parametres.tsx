@@ -25,8 +25,8 @@ export function RendezVousEnLigne({ valeurs }: { valeurs: ParametresType }) {
       <div>
         <TitreSection>Rendez-vous en ligne</TitreSection>
         <p className="mt-1 text-sm text-ink-muted">
-          Ouvre ou ferme la prise de rendez-vous sur le site. Fermée, les
-          visiteurs voient un message et les moyens de te joindre ; les patients
+          Ouvrez ou fermez la prise de rendez-vous sur le site. Fermée, les
+          visiteurs voient un message et les moyens de vous joindre ; les patients
           ayant un lien personnel ne peuvent pas réserver non plus.
         </p>
       </div>
@@ -53,7 +53,7 @@ export function RendezVousEnLigne({ valeurs }: { valeurs: ParametresType }) {
               >
                 {valeurs.rdvEnLigne ? "ouverts" : "fermés"}
               </strong>
-              . Décoche la case et enregistre pour fermer ; coche-la pour
+              . Décochez la case et enregistrez pour fermer ; cochez-la pour
               rouvrir.
             </span>
           </span>
@@ -195,7 +195,7 @@ export function Parametres({ valeurs }: { valeurs: ParametresType }) {
             valeurs.battementMin,
             0,
             120,
-            "Le temps qu’il te faut entre deux patients dans le même lieu : noter, souffler, accueillir.",
+            "Le temps qu’il vous faut entre deux patients dans le même lieu : noter, souffler, accueillir.",
             5,
           )}
           {nombre(
