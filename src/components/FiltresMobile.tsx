@@ -59,7 +59,7 @@ export function FiltresMobile({
           // désormais l'un sous l'autre plutôt que de mentir sur ce qu'ils
           // filtrent.
           return (
-            <span key={g.cle} className="relative min-w-[12rem] flex-1">
+            <span key={g.cle} className="min-w-[12rem] flex-1">
               <label htmlFor={`f-${g.cle}`} className="sr-only">
                 {g.libelle}
               </label>
@@ -91,20 +91,6 @@ export function FiltresMobile({
                   </option>
                 ))}
               </select>
-              <span
-                aria-hidden="true"
-                className="pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-ink-muted"
-              >
-                <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
-                  <path
-                    d="m2.5 4.5 3.5 3.5 3.5-3.5"
-                    stroke="currentColor"
-                    strokeWidth="1.4"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              </span>
             </span>
           );
         })}

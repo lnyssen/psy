@@ -55,6 +55,7 @@ export const PAGES_DOC: PageDoc[] = [
           {
             t: "etapes",
             items: [
+              "Depuis le site, le lien **Connexion** (discret, en bas de page, à côté des mentions légales) mène à cet écran ; sinon, ouvrez directement l'adresse de l'outil.",
               "Saisissez votre mot de passe, puis cliquez sur **Ouvrir**.",
               "Sur un iPhone, un Mac ou un téléphone enregistré, vous pouvez à la place toucher **Ouvrir avec Face ID ou Touch ID** : l'outil s'ouvre d'un geste, sans mot de passe.",
               "Mot de passe oublié ? Cliquez sur **Mot de passe oublié ?** : un lien valable 30 minutes est envoyé à votre adresse de récupération.",

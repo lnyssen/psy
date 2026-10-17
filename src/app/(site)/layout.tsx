@@ -144,12 +144,23 @@ export default async function SiteLayout({
               )}
             </dl>
             <p className="flex flex-wrap items-center justify-between gap-x-6">
-              <Link
-                href="/confidentialite"
-                className="inline-block py-2 underline underline-offset-4 hover:text-white"
-              >
-                Confidentialité, cookies et mentions légales
-              </Link>
+              <span className="flex flex-wrap items-center gap-x-6">
+                <Link
+                  href="/confidentialite"
+                  className="inline-block py-2 underline underline-offset-4 hover:text-white"
+                >
+                  Confidentialité, cookies et mentions légales
+                </Link>
+                {/* Pour la praticienne : discret, en pied de page, hors du menu
+                    des patients. L'accès reste protégé par le mot de passe ou
+                    Face ID, la limitation d'essais et l'alerte de nouvel appareil. */}
+                <Link
+                  href="/connexion"
+                  className="inline-block py-2 text-white/70 underline underline-offset-4 hover:text-white"
+                >
+                  Connexion
+                </Link>
+              </span>
               <span>
                 Made by{" "}
                 <a
