@@ -144,7 +144,7 @@ export const PAGES_DOC: PageDoc[] = [
           img(
             "mobile-aujourdhui",
             "La page Aujourd'hui sur un téléphone",
-            "Sur téléphone, la barre devient un menu en haut de l'écran.",
+            "Sur téléphone, la barre devient un bouton menu en haut de l'écran ; un toucher l'ouvre en plein écran.",
           ),
           {
             t: "p",

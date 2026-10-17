@@ -111,23 +111,16 @@ export function Nav({
       </div>
 
       {/*
-        Le panneau est posé en absolu sous la barre, et non ajouté à sa
-        hauteur : autrement il allongeait l'en-tête et repoussait la page vers
-        le bas. Le voile sombre en dessous ferme le menu au toucher et sépare
-        nettement ce qui est actif de ce qui ne l'est plus.
+        Le menu ouvert occupe tout l'écran : la barre reste en haut (c'est elle
+        qui porte le bouton de fermeture), le panneau prend le reste et défile
+        de lui-même si la liste est plus haute que l'écran. Fond plein, pas de
+        voile : il n'y a plus de page à entrevoir derrière.
       */}
       {ouvert && (
-        <>
-          <button
-            type="button"
-            aria-label="Fermer le menu"
-            onClick={() => setOuvert(false)}
-            className="fixed inset-0 z-0 touch-none bg-nuit/35"
-          />
-          <div
-            id="menu-mobile"
-            className="absolute inset-x-0 top-full z-10 max-h-[80svh] overflow-y-auto overscroll-contain border-t border-line bg-paper px-5 py-4 shadow-[0_24px_48px_-24px_rgba(27,20,100,0.45)]"
-          >
+        <div
+          id="menu-mobile"
+          className="fixed inset-0 z-10 overflow-y-auto overscroll-contain bg-paper px-5 pt-[5rem] pb-8"
+        >
           <Recherche />
           <nav aria-label="Navigation principale" className="mt-4 flex flex-col gap-1">
             {ENTREES.map(({ href, label, Icone }) => {
@@ -201,8 +194,7 @@ export function Nav({
               </form>
             )}
             </div>
-          </div>
-        </>
+        </div>
       )}
     </header>
   );

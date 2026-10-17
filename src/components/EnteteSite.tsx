@@ -91,7 +91,7 @@ export function EnteteSite() {
       et une hauteur variable aurait laissé un liseré.
     */
     <header className="sticky top-0 z-40 h-[var(--entete)] px-3 pt-4 md:px-6 lg:px-4">
-      <div className="mx-auto flex h-full max-w-[calc(100rem+5rem)] items-center gap-2 rounded-full bg-paper/72 px-7 ring-1 ring-line/70 ring-inset backdrop-blur-2xl max-[359px]:px-4 max-md:pr-3.5 md:gap-4 md:px-10">
+      <div className="relative z-10 mx-auto flex h-full max-w-[calc(100rem+5rem)] items-center gap-2 rounded-full bg-paper/72 px-7 ring-1 ring-line/70 ring-inset backdrop-blur-2xl max-[359px]:px-4 max-md:pr-3.5 md:gap-4 md:px-10">
         <Link href="/" className="flex shrink-0 flex-col">
           <span className="font-display text-[17px] leading-[1.15] tracking-tight md:text-[20px]">
             Amandine Monsel
@@ -166,20 +166,14 @@ export function EnteteSite() {
       </div>
 
       {/*
-        L'en-tête ayant une hauteur fixe, le menu déplié ne peut plus pousser
-        quoi que ce soit : il devient un panneau qui flotte sous la pastille,
-        au même retrait qu'elle.
-
-        Toujours dans le DOM plutôt qu'en rendu conditionnel : c'est ce qui
-        permet une fermeture animée plutôt qu'une disparition sèche. La rangée
-        de grille passe de 0fr à 1fr — la bonne façon d'animer une hauteur qui
-        dépend du contenu, sans jamais toucher `height` elle-même. `inert`
-        retire le panneau du clavier et des lecteurs d'écran tant qu'il est
-        refermé, ce que le rendu conditionnel garantissait avant sans y penser.
+        Le menu ouvert occupe tout l'écran, sous la pastille qui reste en haut
+        (elle porte le bouton de fermeture). Toujours dans le DOM, pour une
+        fermeture en fondu ; `inert` le retire du clavier et des lecteurs
+        d'écran tant qu'il est refermé.
       */}
       <div
-        className={`grid transition-[grid-template-rows] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] md:hidden ${
-          ouvert ? "mt-2 grid-rows-[1fr]" : "grid-rows-[0fr]"
+        className={`fixed inset-0 z-0 overflow-y-auto bg-paper px-6 pt-[calc(var(--entete)+1.5rem)] pb-10 transition-opacity duration-200 md:hidden ${
+          ouvert ? "opacity-100" : "pointer-events-none opacity-0"
         }`}
       >
         <nav
@@ -187,11 +181,7 @@ export function EnteteSite() {
           aria-label="Navigation du site"
           aria-hidden={!ouvert}
           inert={!ouvert}
-          className={`flex flex-col overflow-hidden rounded-[24px] transition-opacity duration-200 ${
-            ouvert
-              ? "bg-paper/88 px-5 py-2 opacity-100 ring-1 ring-line/70 ring-inset backdrop-blur-2xl"
-              : "opacity-0"
-          }`}
+          className="mx-auto flex max-w-md flex-col"
         >
           {[
             ...PAGES,
@@ -201,8 +191,8 @@ export function EnteteSite() {
               key={p.href}
               href={p.href}
               aria-current={pathname === p.href ? "page" : undefined}
-              className={`border-b border-line py-3.5 text-base last:border-b-0 ${
-                pathname === p.href ? "font-semibold text-accent-text" : ""
+              className={`border-b border-line py-4 font-display text-2xl tracking-tight last:border-b-0 ${
+                pathname === p.href ? "text-accent-text" : ""
               } ${p.href === "/rendez-vous" ? "min-[360px]:hidden" : ""}`}
             >
               {p.label}
