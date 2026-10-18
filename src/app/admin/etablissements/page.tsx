@@ -8,10 +8,13 @@ import {
   enregistrerFactureEtablissementManuelle,
   marquerFacturePayee,
 } from "@/lib/actions";
-import { adresseCabinet, euros, fmtDateCourte, formatDuree, partiesJour } from "@/lib/format";
+import { adresseCabinet, euros, fmtDateCourte, formatDuree, isoJour, partiesJour } from "@/lib/format";
 import { heuresFacturablesSemaine } from "@/lib/quotas";
 import { IconChevronDroite, IconChevronGauche } from "@/components/icons";
 import { BoutonEnregistrer } from "@/components/BoutonEnregistrer";
+import { ChampsDecompte } from "@/components/ChampsDecompte";
+import { FormulaireFactureManuelle } from "@/components/FormulaireFactureManuelle";
+import { parametres } from "@/lib/parametres";
 import { OngletsFacturation } from "@/components/OngletsFacturation";
 import { seancesARetablir } from "@/lib/factures-etablissement";
 
@@ -104,6 +107,10 @@ export default async function Etablissements({
   );
 
   const maintenant = new Date();
+  const reglages = await parametres();
+  const echeance = new Date(maintenant);
+  echeance.setDate(echeance.getDate() + reglages.delaiPaiementJours);
+  const echeanceParDefaut = isoJour(echeance);
 
   return (
     <div className="flex flex-col gap-8">
@@ -209,122 +216,15 @@ export default async function Etablissements({
               saisit directement.
             </p>
           </div>
-          <form
+          <FormulaireFactureManuelle
             action={enregistrerFactureEtablissementManuelle}
-            className="flex flex-col gap-4 rounded-[14px] border border-dashed border-line-strong bg-surface px-5 py-4"
-          >
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              <label className="lg:max-w-48">
-                <span className={libelleChamp}>Établissement</span>
-                <select name="cabinetId" required defaultValue={cabinets[0]?.id} className={`mt-1 ${champ}`}>
-                  {cabinets.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.nom}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="lg:max-w-32">
-                <span className={libelleChamp}>Mois</span>
-                <select name="mois" defaultValue={m} className={`mt-1 ${champ}`}>
-                  {MOIS_LABEL_COURT.map((label, i) => (
-                    <option key={label} value={i + 1}>
-                      {label}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="lg:max-w-24">
-                <span className={libelleChamp}>Année</span>
-                <input
-                  name="annee"
-                  type="number"
-                  defaultValue={annee}
-                  required
-                  className={`mt-1 ${champ}`}
-                />
-              </label>
-              <label>
-                <span className={libelleChamp}>Échéance</span>
-                <input name="echeance" type="date" className={`mt-1 ${champ}`} />
-                <span className="mt-1 block text-[11px] text-ink-muted">
-                  Vide : le délai réglé dans Réglages s’applique.
-                </span>
-              </label>
-            </div>
-
-            {/* Heures et tarif, comme un décompte de séances — pour refaire à la main
-                une facture que l'agenda n'a pas calculée. Facultatif : une
-                régularisation ponctuelle n'a besoin que du libellé et du montant. */}
-            <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-4">
-              <label className="lg:max-w-24">
-                <span className={libelleChamp}>Heures</span>
-                <input name="heures" type="number" min="0" step="1" placeholder="0" className={`mt-1 ${champ}`} />
-              </label>
-              <label className="lg:max-w-24">
-                <span className={libelleChamp}>Minutes</span>
-                <input
-                  name="minutes"
-                  type="number"
-                  min="0"
-                  max="59"
-                  step="1"
-                  placeholder="0"
-                  className={`mt-1 ${champ}`}
-                />
-              </label>
-              <label className="lg:max-w-44">
-                <span className={libelleChamp}>Tarif horaire (€)</span>
-                <input
-                  name="tarifHoraireEuros"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  placeholder="—"
-                  className={`mt-1 ${champ}`}
-                />
-              </label>
-            </div>
-
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              <label className="sm:col-span-2">
-                <span className={libelleChamp}>Libellé</span>
-                <input
-                  name="libelle"
-                  placeholder="Supplément octobre — vide si heures et tarif suffisent"
-                  className={`mt-1 ${champ}`}
-                />
-              </label>
-              <label className="lg:max-w-40">
-                <span className={libelleChamp}>Montant (€)</span>
-                <input
-                  name="montant"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  placeholder="calculé si heures + tarif"
-                  className={`mt-1 ${champ}`}
-                />
-              </label>
-            </div>
-
-            <label>
-              <span className={libelleChamp}>Commentaire (facultatif, jamais imprimé)</span>
-              <textarea
-                name="commentaire"
-                rows={2}
-                placeholder="Pour vous seule — le contexte de cette facture."
-                className={`mt-1 ${champ.replace("rounded-full", "rounded-[14px]")} resize-y leading-snug`}
-              />
-            </label>
-
-            <button
-              type="submit"
-              className="self-start rounded-full bg-accent px-5 py-2 text-sm font-medium text-accent-contrast transition-colors hover:bg-accent-hover"
-            >
-              Émettre
-            </button>
-          </form>
+            cabinets={cabinets.map((c) => ({ id: c.id, nom: c.nom, tarifHoraireCents: c.tarifHoraireCents }))}
+            mois={m}
+            annee={annee}
+            moisLabels={MOIS_LABEL_COURT}
+            echeanceParDefaut={echeanceParDefaut}
+            delaiJours={reglages.delaiPaiementJours}
+          />
         </section>
       )}
 
@@ -440,65 +340,18 @@ export default async function Etablissements({
                       className="mt-2 grid gap-3 rounded-[14px] border border-line bg-sunken px-4 py-3 sm:grid-cols-3"
                     >
                       <input type="hidden" name="id" value={f.id} />
-                      <label>
-                        <span className={libelleChamp}>Heures</span>
-                        <input
-                          name="heures"
-                          type="number"
-                          min="0"
-                          step="1"
-                          defaultValue={f.heuresTotalesMin !== null ? Math.floor(f.heuresTotalesMin / 60) : ""}
-                          className={`mt-1 ${champ}`}
-                        />
-                      </label>
-                      <label>
-                        <span className={libelleChamp}>Minutes</span>
-                        <input
-                          name="minutes"
-                          type="number"
-                          min="0"
-                          max="59"
-                          step="1"
-                          defaultValue={f.heuresTotalesMin !== null ? f.heuresTotalesMin % 60 : ""}
-                          className={`mt-1 ${champ}`}
-                        />
-                      </label>
-                      <label>
-                        <span className={libelleChamp}>Tarif horaire (€)</span>
-                        <input
-                          name="tarifHoraireEuros"
-                          type="number"
-                          min="0"
-                          step="0.01"
-                          defaultValue={f.tarifHoraireCents !== null ? (f.tarifHoraireCents / 100).toFixed(2) : ""}
-                          className={`mt-1 ${champ}`}
-                        />
-                      </label>
-                      <label>
-                        <span className={libelleChamp}>Libellé</span>
-                        <input
-                          name="libelle"
-                          defaultValue={f.libelle ?? ""}
-                          placeholder={`Vacations ${MOIS_LABEL.format(new Date(Date.UTC(f.annee, f.mois - 1, 1)))}`}
-                          className={`mt-1 ${champ}`}
-                        />
-                      </label>
-                      <label>
-                        <span className={libelleChamp}>Montant (€)</span>
-                        <input
-                          name="montant"
-                          type="number"
-                          step="0.01"
-                          min="0"
-                          defaultValue={
-                            f.heuresTotalesMin === null || f.tarifHoraireCents === null
-                              ? (f.montantCents / 100).toFixed(2)
-                              : ""
-                          }
-                          placeholder="calculé si heures + tarif"
-                          className={`mt-1 ${champ}`}
-                        />
-                      </label>
+                      <ChampsDecompte
+                        heuresInitiales={f.heuresTotalesMin !== null ? String(Math.floor(f.heuresTotalesMin / 60)) : ""}
+                        minutesInitiales={f.heuresTotalesMin !== null ? String(f.heuresTotalesMin % 60) : ""}
+                        tarifInitial={f.tarifHoraireCents !== null ? (f.tarifHoraireCents / 100).toFixed(2) : ""}
+                        libelleInitial={f.libelle ?? ""}
+                        libellePlaceholder={`Vacations ${MOIS_LABEL.format(new Date(Date.UTC(f.annee, f.mois - 1, 1)))}`}
+                        montantInitial={
+                          f.heuresTotalesMin === null || f.tarifHoraireCents === null
+                            ? (f.montantCents / 100).toFixed(2)
+                            : ""
+                        }
+                      />
                       <label>
                         <span className={libelleChamp}>Échéance</span>
                         <input

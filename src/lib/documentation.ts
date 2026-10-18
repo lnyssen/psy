@@ -714,7 +714,7 @@ export const PAGES_DOC: PageDoc[] = [
             items: [
               "Le bloc **À facturer** montre, par mois, les heures et le montant des séances pas encore facturées.",
               "Cliquez sur **Émettre la facture** : elle est numérotée, et vous obtenez le PDF.",
-              "Pour un supplément ou une régularisation, utilisez **Nouvelle facture manuelle** : choisissez l'établissement, le mois, saisissez les heures et le tarif horaire (ou un libellé et un montant), puis **Émettre**.",
+              "Pour un supplément ou une régularisation, utilisez **Nouvelle facture manuelle** : choisissez l'établissement, le mois, saisissez les **heures** et **minutes**, puis **Émettre**. Ce qui se déduit est prérempli : le **tarif horaire** est celui de l'établissement (il change avec lui), l'**échéance** est la date du jour plus le délai de paiement des Réglages, le mois et l'année sont ceux de l'écran. Le **montant se calcule en direct** dès que la durée et le tarif sont saisis (il se verrouille alors, avec le détail du calcul dessous) ; sans l'un des deux, saisissez le montant directement, avec un libellé. Les factures déjà émises se corrigent avec **éditer**, avec le même calcul.",
               "Retrouvez toutes les factures dans **Historique des factures**.",
             ],
           },
