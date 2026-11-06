@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { envoyerAttestationParCourriel } from "@/lib/attestation-actions";
 import { partagerPdf } from "@/lib/partager-pdf";
+import { ChampDate } from "@/components/ChampDate";
 
 const champ =
   "w-full rounded-full border border-line bg-surface px-3.5 py-2 text-sm placeholder:text-ink-muted/60";
@@ -90,11 +91,11 @@ export function Attestation({
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <label>
             <span className={libelle}>Du</span>
-            <input type="date" value={du} onChange={(e) => setDu(e.target.value)} className={`mt-1 ${champ}`} />
+            <ChampDate value={du} onChange={setDu} className={`mt-1 ${champ}`} />
           </label>
           <label>
             <span className={libelle}>Au</span>
-            <input type="date" value={au} onChange={(e) => setAu(e.target.value)} className={`mt-1 ${champ}`} />
+            <ChampDate value={au} onChange={setAu} className={`mt-1 ${champ}`} />
           </label>
           <label className="sm:col-span-2">
             <span className={libelle}>Pour (facultatif)</span>

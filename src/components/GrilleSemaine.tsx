@@ -12,6 +12,7 @@ import {
 import { retirerEvenementGoogle } from "@/lib/google-actions";
 import { IconFermer, IconFlecheBas, IconFlecheHaut, IconPlus } from "@/components/icons";
 import { SelectPatientRecherche } from "@/components/SelectPatientRecherche";
+import { ChampHeure } from "@/components/ChampHeure";
 
 export type SeanceGrille = {
   id: string;
@@ -703,9 +704,8 @@ function CreationMobile({
       >
         <input type="hidden" name="date" value={dateStr} />
         <div className="grid grid-cols-2 gap-2">
-          <input
+          <ChampHeure
             name="heure"
-            type="time"
             required
             defaultValue="09:00"
             className="w-full rounded-full border border-line bg-surface px-3.5 py-1.5 text-sm"

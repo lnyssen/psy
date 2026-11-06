@@ -7,6 +7,7 @@ import { prisma } from "@/lib/db";
 import {
   JOURS_OUVRES,
   instantBruxelles,
+  naissanceDuNumeroNational,
   numeroNational,
   partiesJour,
 } from "@/lib/format";
@@ -123,7 +124,9 @@ export async function enregistrerPatient(f: FormData) {
   );
 
   const birthSaisie = texte(f, "birthDate");
-  const birthDate = birthSaisie ? new Date(birthSaisie) : null;
+  const birthDate = birthSaisie
+    ? new Date(birthSaisie)
+    : naissanceDuNumeroNational(texte(f, "nationalNumber"));
   if (birthSaisie && Number.isNaN(birthDate?.getTime())) return;
 
   const cabinetId = texte(f, "cabinetId") || null;
@@ -139,6 +142,7 @@ export async function enregistrerPatient(f: FormData) {
       lastName,
       email: email || null,
       phone: texte(f, "phone") || null,
+      ...parentsEtAnterieures(f),
       phoneMother: texte(f, "phoneMother") || null,
       phoneFather: texte(f, "phoneFather") || null,
       emailMother: texte(f, "emailMother") || null,
@@ -426,6 +430,28 @@ export async function annulerSeance(id: string) {
 /** Soutien ou traitement, et réseau INAMI : lus seulement s'ils sont envoyés
  *  (le formulaire ne les montre qu'en conventionné). Réseau vide : selon
  *  l'âge (voir lib/quotas.ts). */
+/**
+ * Noms des parents, et séances INAMI faites avant l'outil. Ces dernières ne
+ * sont lues que si le formulaire les porte (régime conventionné affiché) ;
+ * sans date, elles prennent celle du jour.
+ */
+function parentsEtAnterieures(f: FormData) {
+  const parents = {
+    motherFirstName: texte(f, "motherFirstName") || null,
+    motherLastName: texte(f, "motherLastName") || null,
+    fatherFirstName: texte(f, "fatherFirstName") || null,
+    fatherLastName: texte(f, "fatherLastName") || null,
+  };
+  if (!f.has("pplSeancesAnterieures")) return parents;
+  const n = Math.max(0, Math.min(40, Math.floor(Number(texte(f, "pplSeancesAnterieures")) || 0)));
+  const le = new Date(texte(f, "pplAnterieuresLe"));
+  return {
+    ...parents,
+    pplSeancesAnterieures: n,
+    pplAnterieuresLe: n === 0 ? null : Number.isNaN(le.getTime()) ? new Date() : le,
+  };
+}
+
 function pplDepuis(f: FormData) {
   if (!f.has("pplType")) return {};
   const type =
@@ -458,7 +484,9 @@ export async function creerPatient(f: FormData) {
 
   const email = texte(f, "email");
   const birthSaisie = texte(f, "birthDate");
-  const birthDate = birthSaisie ? new Date(birthSaisie) : null;
+  const birthDate = birthSaisie
+    ? new Date(birthSaisie)
+    : naissanceDuNumeroNational(texte(f, "nationalNumber"));
   const cabinetId = texte(f, "cabinetId") || null;
 
   const nnSaisi = texte(f, "nationalNumber");
@@ -471,6 +499,7 @@ export async function creerPatient(f: FormData) {
       lastName,
       email: email || null,
       phone: texte(f, "phone") || null,
+      ...parentsEtAnterieures(f),
       phoneMother: texte(f, "phoneMother") || null,
       phoneFather: texte(f, "phoneFather") || null,
       emailMother: texte(f, "emailMother") || null,

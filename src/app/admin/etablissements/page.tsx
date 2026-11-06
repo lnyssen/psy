@@ -17,6 +17,7 @@ import { FormulaireFactureManuelle } from "@/components/FormulaireFactureManuell
 import { parametres } from "@/lib/parametres";
 import { OngletsFacturation } from "@/components/OngletsFacturation";
 import { seancesARetablir } from "@/lib/factures-etablissement";
+import { ChampDate } from "@/components/ChampDate";
 
 export const dynamic = "force-dynamic";
 
@@ -354,9 +355,8 @@ export default async function Etablissements({
                       />
                       <label>
                         <span className={libelleChamp}>Échéance</span>
-                        <input
+                        <ChampDate
                           name="echeance"
-                          type="date"
                           defaultValue={f.echeanceLe.toISOString().slice(0, 10)}
                           className={`mt-1 ${champ}`}
                         />

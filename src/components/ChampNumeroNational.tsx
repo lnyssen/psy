@@ -9,7 +9,16 @@ import { numeroNational } from "@/lib/format";
  * message s'affiche sous le champ et bloque l'envoi du formulaire tant qu'il
  * n'est pas corrigé ; le reste de la saisie reste en place.
  */
-export function ChampNumeroNational({ defaultValue = "", className }: { defaultValue?: string; className: string }) {
+export function ChampNumeroNational({
+  defaultValue = "",
+  className,
+  onValide,
+}: {
+  defaultValue?: string;
+  className: string;
+  /** Appelé avec le numéro dès qu'il est complet et que sa clé est juste. */
+  onValide?: (numero: string) => void;
+}) {
   const [erreur, setErreur] = useState("");
 
   function verifier(input: HTMLInputElement) {
@@ -23,6 +32,7 @@ export function ChampNumeroNational({ defaultValue = "", className }: { defaultV
           : "";
     input.setCustomValidity(message);
     setErreur(message);
+    if (v && !message) onValide?.(v);
   }
 
   return (

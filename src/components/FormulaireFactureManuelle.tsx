@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { ChampsDecompte } from "@/components/ChampsDecompte";
+import { ChampDate } from "@/components/ChampDate";
 
 const champ =
   "w-full rounded-full border border-line bg-surface px-3.5 py-2 text-sm placeholder:text-ink-muted/60";
@@ -79,7 +80,7 @@ export function FormulaireFactureManuelle({
         </label>
         <label>
           <span className={libelleChamp}>Échéance</span>
-          <input name="echeance" type="date" defaultValue={echeanceParDefaut} className={`mt-1 ${champ}`} />
+          <ChampDate name="echeance" defaultValue={echeanceParDefaut} className={`mt-1 ${champ}`} />
           <span className="mt-1 block text-[11px] text-ink-muted">
             Aujourd’hui + {delaiJours} jours (délai réglé dans Réglages). Modifiable.
           </span>

@@ -49,6 +49,9 @@ import {
   isoJour,
   nomComplet,
 } from "@/lib/format";
+import { ChampDate } from "@/components/ChampDate";
+import { ChampHeure } from "@/components/ChampHeure";
+import { basculerArchive } from "@/lib/archive-actions";
 
 export const dynamic = "force-dynamic";
 
@@ -132,7 +135,10 @@ export default async function FichePatient({
   const conventionne = patient.scheme === "CONVENTIONNE";
   const plafondInami = conventionne ? plafondConventionne(patient) : null;
   const faitesInami = conventionne
-    ? seancesSurDouzeMois(patient.sessions, maintenant)
+    ? seancesSurDouzeMois(patient.sessions, maintenant, patient)
+    : 0;
+  const anterieuresInami = conventionne
+    ? seancesSurDouzeMois([], maintenant, patient)
     : 0;
   const prevuesInami = conventionne
     ? patient.sessions.filter(
@@ -171,11 +177,23 @@ export default async function FichePatient({
     { t: "Téléphone", v: patient.phone, mono: true },
     {
       t: "Mère",
-      v: [patient.phoneMother, patient.emailMother].filter(Boolean).join(" · "),
+      v: [
+        [patient.motherFirstName, patient.motherLastName].filter(Boolean).join(" "),
+        patient.phoneMother,
+        patient.emailMother,
+      ]
+        .filter(Boolean)
+        .join(" · "),
     },
     {
       t: "Père",
-      v: [patient.phoneFather, patient.emailFather].filter(Boolean).join(" · "),
+      v: [
+        [patient.fatherFirstName, patient.fatherLastName].filter(Boolean).join(" "),
+        patient.phoneFather,
+        patient.emailFather,
+      ]
+        .filter(Boolean)
+        .join(" · "),
     },
     { t: "E-mail", v: patient.email },
     {
@@ -224,9 +242,32 @@ export default async function FichePatient({
               <span className="text-xs text-ink-muted">{libelleReseau}</span>
             )}
             {patient.cabinet && <CabinetTag cabinet={patient.cabinet} />}
+            {!patient.active && !patient.anonymiseAt && (
+              <span className="rounded-full bg-sunken px-2.5 py-0.5 text-[11px] font-medium text-ink-muted">
+                archivé
+              </span>
+            )}
           </p>
         </div>
+        {!patient.anonymiseAt && (
+          <form action={basculerArchive}>
+            <input type="hidden" name="id" value={patient.id} />
+            <button
+              type="submit"
+              className="rounded-full border border-line-strong px-4 py-2 text-sm font-medium text-ink-muted transition-colors hover:border-accent hover:text-accent-text"
+            >
+              {patient.active ? "Archiver" : "Réactiver"}
+            </button>
+          </form>
+        )}
       </header>
+
+      {!patient.active && !patient.anonymiseAt && (
+        <p className="rounded-[10px] border border-line bg-sunken px-4 py-2.5 text-sm text-ink-muted">
+          Dossier archivé : il n’apparaît plus dans la liste des patients ni dans les choix de
+          l’agenda. Tout son historique reste consultable ici.
+        </p>
+      )}
 
       {absences >= SEUIL_ABSENCES && (
         <p className="rounded-[10px] border border-due/40 bg-due-soft px-4 py-2.5 text-sm text-due">
@@ -265,7 +306,9 @@ export default async function FichePatient({
           ...(plafondInami !== null
             ? [
                 {
-                  t: "INAMI, 12 mois",
+                  t: anterieuresInami
+                    ? `INAMI, 12 mois (dont ${anterieuresInami} avant l’outil)`
+                    : "INAMI, 12 mois",
                   v: `${faitesInami} / ${plafondInami}`,
                   alerte: faitesInami >= plafondInami,
                   jauge: { utilisees: faitesInami, plafond: plafondInami },
@@ -376,18 +419,16 @@ export default async function FichePatient({
           </label>
           <label>
             <span className={libelleChamp}>Date</span>
-            <input
+            <ChampDate
               name="date"
-              type="date"
               required
               className={`mt-1 ${champ}`}
             />
           </label>
           <label>
             <span className={libelleChamp}>Heure</span>
-            <input
+            <ChampHeure
               name="heure"
-              type="time"
               required
               defaultValue="09:00"
               className={`mt-1 ${champ}`}
@@ -395,7 +436,7 @@ export default async function FichePatient({
           </label>
           <label>
             <span className={libelleChamp}>Jusqu’au (optionnel)</span>
-            <input name="jusquau" type="date" className={`mt-1 ${champ}`} />
+            <ChampDate name="jusquau" className={`mt-1 ${champ}`} />
             <span className="mt-1 block text-[11px] text-ink-muted">
               Répète chaque semaine, même jour et même heure.
             </span>

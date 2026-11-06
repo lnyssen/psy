@@ -1,5 +1,5 @@
 import { useId } from "react";
-import { ChampNumeroNational } from "@/components/ChampNumeroNational";
+import { NaissanceEtNumeroNational } from "@/components/NaissanceEtNumeroNational";
 import { BoutonEnregistrer } from "@/components/BoutonEnregistrer";
 import { RegimeEtTarif } from "@/components/RegimeEtTarif";
 
@@ -28,6 +28,12 @@ type Patient = {
   email: string | null;
   phone: string | null;
   rappelsEmail?: boolean;
+  motherFirstName?: string | null;
+  motherLastName?: string | null;
+  fatherFirstName?: string | null;
+  fatherLastName?: string | null;
+  pplSeancesAnterieures?: number;
+  pplAnterieuresLe?: Date | null;
   phoneMother: string | null;
   phoneFather: string | null;
   emailMother: string | null;
@@ -121,24 +127,14 @@ export function FormulairePatient({
             className={`mt-1 ${champ}`}
           />
         </label>
-        <label>
-          <span className={libelle}>Date de naissance</span>
-          <input
-            name="birthDate"
-            type="date"
-            defaultValue={
-              p?.birthDate ? p.birthDate.toISOString().slice(0, 10) : ""
-            }
-            className={`mt-1 ${champ}`}
-          />
-        </label>
-        <label>
-          <span className={libelle}>Numéro national</span>
-          <ChampNumeroNational
-            defaultValue={p?.nationalNumber ?? ""}
-            className={`mt-1 ${champ}`}
-          />
-        </label>
+        <NaissanceEtNumeroNational
+          naissanceInitiale={
+            p?.birthDate ? p.birthDate.toISOString().slice(0, 10) : ""
+          }
+          numeroInitial={p?.nationalNumber ?? ""}
+          libelle={libelle}
+          champ={champ}
+        />
       </Groupe>
 
       <Groupe
@@ -152,6 +148,8 @@ export function FormulairePatient({
           ancienMontantCents={p?.feeCents}
           pplTypeInitial={p?.pplType}
           pplReseauInitial={p?.pplReseau}
+          anterieuresInitial={p?.pplSeancesAnterieures ?? 0}
+          anterieuresLeInitial={p?.pplAnterieuresLe ? p.pplAnterieuresLe.toISOString().slice(0, 10) : ""}
         />
         <label>
           <span className={libelle}>Cabinet habituel</span>
@@ -213,6 +211,22 @@ export function FormulairePatient({
         aide="Pour un enfant ou un adolescent. À laisser vide pour un adulte."
       >
         <label>
+          <span className={libelle}>Prénom de la mère</span>
+          <input
+            name="motherFirstName"
+            defaultValue={p?.motherFirstName ?? ""}
+            className={`mt-1 ${champ}`}
+          />
+        </label>
+        <label>
+          <span className={libelle}>Nom de la mère</span>
+          <input
+            name="motherLastName"
+            defaultValue={p?.motherLastName ?? ""}
+            className={`mt-1 ${champ}`}
+          />
+        </label>
+        <label>
           <span className={libelle}>Téléphone de la mère</span>
           <input
             name="phoneMother"
@@ -227,6 +241,22 @@ export function FormulairePatient({
             name="emailMother"
             type="email"
             defaultValue={p?.emailMother ?? ""}
+            className={`mt-1 ${champ}`}
+          />
+        </label>
+        <label>
+          <span className={libelle}>Prénom du père</span>
+          <input
+            name="fatherFirstName"
+            defaultValue={p?.fatherFirstName ?? ""}
+            className={`mt-1 ${champ}`}
+          />
+        </label>
+        <label>
+          <span className={libelle}>Nom du père</span>
+          <input
+            name="fatherLastName"
+            defaultValue={p?.fatherLastName ?? ""}
             className={`mt-1 ${champ}`}
           />
         </label>

@@ -6,6 +6,8 @@ import {
   supprimerDisponibilite,
 } from "@/lib/actions";
 import { fmtJourMoisAn } from "@/lib/format";
+import { ChampDate } from "@/components/ChampDate";
+import { ChampHeure } from "@/components/ChampHeure";
 
 const JOURS = ["lundi", "mardi", "mercredi", "jeudi", "vendredi"];
 
@@ -93,10 +95,9 @@ export function Horaires({
                         <label className="sr-only" htmlFor={`d-${d.id}`}>
                           Début
                         </label>
-                        <input
+                        <ChampHeure
                           id={`d-${d.id}`}
                           name="debut"
-                          type="time"
                           defaultValue={hhmm(d.debutMin)}
                           className={`${champCabinet} w-28`}
                         />
@@ -104,10 +105,9 @@ export function Horaires({
                         <label className="sr-only" htmlFor={`f-${d.id}`}>
                           Fin
                         </label>
-                        <input
+                        <ChampHeure
                           id={`f-${d.id}`}
                           name="fin"
-                          type="time"
                           defaultValue={hhmm(d.finMin)}
                           className={`${champCabinet} w-28`}
                         />
@@ -142,9 +142,9 @@ export function Horaires({
                     </option>
                   ))}
                 </select>
-                <input name="debut" type="time" defaultValue="09:00" className={`${champCabinet} w-28`} aria-label="Début" />
+                <ChampHeure name="debut" defaultValue="09:00" className={`${champCabinet} w-28`} aria-label="Début" />
                 <span className="text-sm text-ink-muted">→</span>
-                <input name="fin" type="time" defaultValue="18:00" className={`${champCabinet} w-28`} aria-label="Fin" />
+                <ChampHeure name="fin" defaultValue="18:00" className={`${champCabinet} w-28`} aria-label="Fin" />
                 <button
                   type="submit"
                   className="rounded-full border border-accent px-4 py-1.5 text-xs font-medium text-accent-text"
@@ -197,11 +197,11 @@ export function Horaires({
         >
           <label>
             <span className={libelleChamp}>Du</span>
-            <input name="debut" type="date" required className={`mt-1 ${champ}`} />
+            <ChampDate name="debut" required className={`mt-1 ${champ}`} />
           </label>
           <label>
             <span className={libelleChamp}>Au (inclus)</span>
-            <input name="fin" type="date" required className={`mt-1 ${champ}`} />
+            <ChampDate name="fin" required className={`mt-1 ${champ}`} />
           </label>
           <label className="min-w-40 flex-1">
             <span className={libelleChamp}>Motif (facultatif)</span>

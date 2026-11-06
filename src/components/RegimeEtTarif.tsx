@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { euros } from "@/lib/format";
+import { ChampDate } from "@/components/ChampDate";
 
 type Regime = "PRIVE" | "CONVENTIONNE";
 type TarifChoix = { id: string; libelle: string; amountCents: number; regime: Regime; parDefaut: boolean };
@@ -29,6 +30,8 @@ export function RegimeEtTarif({
   ancienMontantCents = null,
   pplTypeInitial = "SOUTIEN",
   pplReseauInitial = null,
+  anterieuresInitial = 0,
+  anterieuresLeInitial = "",
 }: {
   tarifs: TarifChoix[];
   regimeInitial?: Regime;
@@ -40,6 +43,9 @@ export function RegimeEtTarif({
   pplTypeInitial?: "SOUTIEN" | "TRAITEMENT";
   /** Réseau choisi ; vide, il se déduit de l'âge. */
   pplReseauInitial?: "ENFANTS" | "ADULTES" | null;
+  /** Séances INAMI faites avant l'outil, et la date de la dernière (AAAA-MM-JJ). */
+  anterieuresInitial?: number;
+  anterieuresLeInitial?: string;
 }) {
   const parDefaut = (r: Regime) =>
     (tarifs.find((t) => t.regime === r && t.parDefaut) ?? tarifs.find((t) => t.regime === r))?.id ?? "";
@@ -121,6 +127,30 @@ export function RegimeEtTarif({
             </select>
             <span className="mt-1 block text-[11px] text-ink-muted">
               De 15 à 23 ans, le patient peut relever de l’un ou l’autre.
+            </span>
+          </label>
+          <label>
+            <span className={libelleChamp}>Séances déjà faites avant l’outil</span>
+            <input
+              name="pplSeancesAnterieures"
+              type="number"
+              min="0"
+              max="40"
+              step="1"
+              inputMode="numeric"
+              defaultValue={anterieuresInitial}
+              className={`mt-1 ${champ}`}
+            />
+            <span className="mt-1 block text-[11px] text-ink-muted">
+              Séances remboursées déjà consommées sur la période : elles s’ajoutent au compteur, qui
+              continue ensuite tout seul avec les séances de l’agenda.
+            </span>
+          </label>
+          <label>
+            <span className={libelleChamp}>Date de la dernière de ces séances</span>
+            <ChampDate name="pplAnterieuresLe" defaultValue={anterieuresLeInitial} className={`mt-1 ${champ}`} />
+            <span className="mt-1 block text-[11px] text-ink-muted">
+              Elles sortent du compteur douze mois après. Vide : la date du jour.
             </span>
           </label>
         </>

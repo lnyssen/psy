@@ -28,6 +28,10 @@ export function texteCoordonnees(p: {
   lastName: string;
   phone: string | null;
   email: string | null;
+  motherFirstName?: string | null;
+  motherLastName?: string | null;
+  fatherFirstName?: string | null;
+  fatherLastName?: string | null;
   phoneMother: string | null;
   emailMother: string | null;
   phoneFather: string | null;
@@ -39,12 +43,17 @@ export function texteCoordonnees(p: {
   const lignes = [`${p.firstName} ${p.lastName}`];
   if (p.phone) lignes.push(`Tél. : ${p.phone}`);
   if (p.email) lignes.push(`E-mail : ${p.email}`);
-  const parent = (nom: string, tel: string | null, mail: string | null) => {
-    const v = [tel, mail].filter(Boolean).join(" · ");
+  const parent = (
+    nom: string,
+    tel: string | null,
+    mail: string | null,
+    ...identite: (string | null | undefined)[]
+  ) => {
+    const v = [identite.filter(Boolean).join(" "), tel, mail].filter(Boolean).join(" · ");
     if (v) lignes.push(`${nom} : ${v}`);
   };
-  parent("Mère", p.phoneMother, p.emailMother);
-  parent("Père", p.phoneFather, p.emailFather);
+  parent("Mère", p.phoneMother, p.emailMother, p.motherFirstName, p.motherLastName);
+  parent("Père", p.phoneFather, p.emailFather, p.fatherFirstName, p.fatherLastName);
   if (p.addressLine)
     lignes.push(
       `Adresse : ${p.addressLine}, ${p.postalCode ?? ""} ${p.city ?? ""}`.trim(),

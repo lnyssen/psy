@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
+  dateIsoVersFr,
+  dateSaisieFr,
+  heureSaisieFr,
+  naissanceDuNumeroNational,
   ajouterJours,
   conflitsDeTrajet,
   euros,
@@ -139,5 +143,36 @@ describe("montants et PDF", () => {
 
   it("remplace les espaces insécables que les polices de PDF ne savent pas écrire", () => {
     expect(pourPdf("65,00 € et 12")).toBe("65,00 € et 12");
+  });
+});
+
+describe("saisies à la française", () => {
+  it("lit une date jj/mm/aaaa sous plusieurs formes", () => {
+    expect(dateSaisieFr("11/10/2026")).toBe("2026-10-11");
+    expect(dateSaisieFr("1.2.26")).toBe("2026-02-01");
+    expect(dateSaisieFr("11102026")).toBe("2026-10-11");
+    expect(dateSaisieFr("31/02/2026")).toBeNull();
+    expect(dateSaisieFr("2026")).toBeNull();
+    expect(dateIsoVersFr("2026-10-11")).toBe("11/10/2026");
+  });
+
+  it("lit une heure sur 24 heures", () => {
+    expect(heureSaisieFr("9h")).toBe("09:00");
+    expect(heureSaisieFr("9h30")).toBe("09:30");
+    expect(heureSaisieFr("0930")).toBe("09:30");
+    expect(heureSaisieFr("14.15")).toBe("14:15");
+    expect(heureSaisieFr("14:15")).toBe("14:15");
+    expect(heureSaisieFr("24:00")).toBeNull();
+    expect(heureSaisieFr("9h3")).toBeNull();
+  });
+
+  it("déduit la date de naissance du numéro national", () => {
+    // 85.07.30-033.28 : exemple officiel, né en 1985.
+    expect(naissanceDuNumeroNational("85073003328")?.toISOString().slice(0, 10)).toBe("1985-07-30");
+    // Né en 2010 : la clé se calcule avec un 2 devant.
+    const base = "100315123";
+    const cle = String(97 - (Number(`2${base}`) % 97)).padStart(2, "0");
+    expect(naissanceDuNumeroNational(base + cle)?.toISOString().slice(0, 10)).toBe("2010-03-15");
+    expect(naissanceDuNumeroNational("85073003300")).toBeNull();
   });
 });

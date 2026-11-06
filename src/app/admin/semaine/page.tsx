@@ -32,6 +32,8 @@ import {
   nomSeance,
   partiesJour,
 } from "@/lib/format";
+import { ChampDate } from "@/components/ChampDate";
+import { ChampHeure } from "@/components/ChampHeure";
 
 export const dynamic = "force-dynamic";
 
@@ -263,16 +265,16 @@ export default async function Semaine({ searchParams }: { searchParams: Promise<
           <div className="grid grid-cols-2 gap-2">
             <label>
               <span className={libelleChamp}>Date</span>
-              <input name="date" type="date" required defaultValue={isoJour(lundi)} className={`mt-1 ${champ}`} />
+              <ChampDate name="date" required defaultValue={isoJour(lundi)} className={`mt-1 ${champ}`} />
             </label>
             <label>
               <span className={libelleChamp}>Heure</span>
-              <input name="heure" type="time" required defaultValue="09:00" className={`mt-1 ${champ}`} />
+              <ChampHeure name="heure" required defaultValue="09:00" className={`mt-1 ${champ}`} />
             </label>
           </div>
           <label>
             <span className={libelleChamp}>Jusqu’au (optionnel)</span>
-            <input name="jusquau" type="date" className={`mt-1 ${champ}`} />
+            <ChampDate name="jusquau" className={`mt-1 ${champ}`} />
             <span className="mt-1 block text-[11px] text-ink-muted">
               Répète chaque semaine, même jour et même heure, jusqu’à cette date.
             </span>
@@ -322,8 +324,7 @@ export default async function Semaine({ searchParams }: { searchParams: Promise<
             >
               Du
             </label>
-            <input
-              type="date"
+            <ChampDate
               id="du"
               name="du"
               defaultValue={params.du ?? ""}
@@ -337,8 +338,7 @@ export default async function Semaine({ searchParams }: { searchParams: Promise<
             >
               Au
             </label>
-            <input
-              type="date"
+            <ChampDate
               id="au"
               name="au"
               defaultValue={params.au ?? ""}

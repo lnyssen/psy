@@ -15,6 +15,7 @@ import { cabinetsActifs, optionsCabinet } from "@/lib/cabinets";
 import { euros, isBillable, nomComplet } from "@/lib/format";
 import { montantSeanceCents, payeurDe } from "@/lib/tarifs";
 import { Pagination, pageDe, tailleDePage } from "@/components/Pagination";
+import { archiverPlusieurs } from "@/lib/archive-actions";
 
 export const dynamic = "force-dynamic";
 
@@ -25,10 +26,12 @@ export default async function Patients({
 }) {
   // « supprime » n'est pas un filtre : il ne doit pas suivre dans les liens.
   const { supprime, ...params } = await searchParams;
+  const vueArchives = params.archives === "1";
 
   const nbDoublons = (await trouverDoublons()).length;
   const patients = await prisma.patient.findMany({
     where: {
+      active: !vueArchives,
       ...(params.cabinet ? { cabinetId: params.cabinet } : {}),
       ...(params.regime ? { scheme: params.regime as CareScheme } : {}),
     },
@@ -59,6 +62,27 @@ export default async function Patients({
             ),
   }));
 
+  // Dormant : aucune séance depuis six mois ni à venir, et un dossier ouvert
+  // depuis plus longtemps que ça (un nouveau patient sans séance n'en est pas
+  // un). Proposés à l'archive, jamais archivés d'office.
+  const maintenant = new Date();
+  const ilYaSixMois = new Date(maintenant);
+  ilYaSixMois.setMonth(ilYaSixMois.getMonth() - 6);
+  const dormants = vueArchives
+    ? []
+    : enrichis.filter(
+        ({ p }) =>
+          p.createdAt < ilYaSixMois &&
+          !p.sessions.some((s) => s.startsAt >= ilYaSixMois),
+      );
+  const nbArchives = vueArchives
+    ? enrichis.length
+    : await prisma.patient.count({ where: { active: false, anonymiseAt: null } });
+  if (params.dormants === "1" && !vueArchives) {
+    const ids = new Set(dormants.map((d) => d.p.id));
+    enrichis.splice(0, enrichis.length, ...enrichis.filter((e) => ids.has(e.p.id)));
+  }
+
   const sens = params.sens === "desc" ? -1 : 1;
   const comparateurs: Record<
     string,
@@ -85,9 +109,27 @@ export default async function Patients({
     <div className="flex flex-col gap-7">
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="font-display text-3xl tracking-tight">Patients</h1>
-          <p className="mt-2 text-sm text-ink-muted" data-numeric>
-            {enrichis.length} dossier{enrichis.length > 1 ? "s" : ""}.
+          <h1 className="font-display text-3xl tracking-tight">
+            {vueArchives ? "Patients archivés" : "Patients"}
+          </h1>
+          <p className="mt-2 flex flex-wrap gap-x-3 text-sm text-ink-muted" data-numeric>
+            <span>
+              {enrichis.length} dossier{enrichis.length > 1 ? "s" : ""}.
+            </span>
+            {vueArchives ? (
+              <Link href="/admin/patients" className="underline-offset-2 hover:text-accent-text hover:underline">
+                ← Patients actifs
+              </Link>
+            ) : (
+              nbArchives > 0 && (
+                <Link
+                  href="/admin/patients?archives=1"
+                  className="underline-offset-2 hover:text-accent-text hover:underline"
+                >
+                  {nbArchives} archivé{nbArchives > 1 ? "s" : ""}
+                </Link>
+              )
+            )}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
@@ -122,6 +164,43 @@ export default async function Patients({
         >
           Le patient a été supprimé.
         </p>
+      )}
+
+      {!vueArchives && dormants.length > 0 && params.dormants !== "1" && (
+        <p className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-[10px] border border-line bg-sunken px-4 py-2.5 text-sm text-ink-muted">
+          {dormants.length} patient{dormants.length > 1 ? "s" : ""} sans séance depuis six mois.
+          <Link
+            href="/admin/patients?dormants=1"
+            className="font-medium text-ink underline-offset-2 hover:text-accent-text hover:underline"
+          >
+            Les voir pour archiver
+          </Link>
+        </p>
+      )}
+      {params.dormants === "1" && !vueArchives && (
+        <form
+          action={archiverPlusieurs}
+          className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-[10px] border border-line bg-sunken px-4 py-2.5 text-sm text-ink-muted"
+        >
+          {dormants.map((d) => (
+            <input key={d.p.id} type="hidden" name="id" value={d.p.id} />
+          ))}
+          <span>
+            Sans séance depuis six mois. Archiver les retire de la liste et de l’agenda, sans rien
+            effacer ; chaque dossier se réactive depuis sa fiche.
+          </span>
+          {dormants.length > 0 && (
+            <button
+              type="submit"
+              className="rounded-full bg-accent px-4 py-1.5 text-xs font-medium text-accent-contrast transition-colors hover:bg-accent-hover"
+            >
+              Archiver les {dormants.length}
+            </button>
+          )}
+          <Link href="/admin/patients" className="text-xs hover:text-accent-text">
+            Annuler
+          </Link>
+        </form>
       )}
 
       <FiltresMobile

@@ -378,6 +378,76 @@ export function numeroNational(saisie: string): string | null {
   return `${chiffres.slice(0, 6)}-${chiffres.slice(6, 9)}.${chiffres.slice(9)}`;
 }
 
+/**
+ * La date de naissance que porte un numéro national valide : ses six premiers
+ * chiffres (AAMMJJ). Le siècle se lit dans la clé, calculée avec un « 2 »
+ * devant pour les naissances depuis 2000. Un numéro bis (étranger sans
+ * registre) ajoute 20 ou 40 au mois ; un mois ou un jour à 00 veut dire que
+ * la date était inconnue à l'inscription : rien n'est déduit.
+ */
+export function naissanceDuNumeroNational(saisie: string): Date | null {
+  const chiffres = saisie.replace(/[\s.\-]/g, "");
+  if (!numeroNational(chiffres)) return null;
+  const base = chiffres.slice(0, 9);
+  const cle = Number(chiffres.slice(9));
+  const siecle = 97 - (Number(`2${base}`) % 97) === cle ? 2000 : 1900;
+  const annee = siecle + Number(chiffres.slice(0, 2));
+  let mois = Number(chiffres.slice(2, 4));
+  if (mois > 40) mois -= 40;
+  else if (mois > 20) mois -= 20;
+  const jour = Number(chiffres.slice(4, 6));
+  if (mois < 1 || mois > 12 || jour < 1) return null;
+  const d = new Date(Date.UTC(annee, mois - 1, jour));
+  return d.getUTCMonth() === mois - 1 ? d : null;
+}
+
+/** Une date saisie à la française (jj/mm/aaaa, jj.mm.aa, jjmmaaaa…), au
+ *  format AAAA-MM-JJ des formulaires. Null si elle n'existe pas. */
+export function dateSaisieFr(saisie: string): string | null {
+  const v = saisie.trim();
+  let morceaux = v.split(/[^\d]+/).filter(Boolean);
+  if (morceaux.length === 1 && /^\d{6}$|^\d{8}$/.test(morceaux[0])) {
+    const c = morceaux[0];
+    morceaux = [c.slice(0, 2), c.slice(2, 4), c.slice(4)];
+  }
+  if (morceaux.length !== 3) return null;
+  const [j, m] = morceaux.map(Number);
+  let a = Number(morceaux[2]);
+  if (morceaux[2].length === 2) a += 2000;
+  else if (morceaux[2].length !== 4) return null;
+  const d = new Date(Date.UTC(a, m - 1, j));
+  if (d.getUTCFullYear() !== a || d.getUTCMonth() !== m - 1 || d.getUTCDate() !== j) return null;
+  return `${a}-${String(m).padStart(2, "0")}-${String(j).padStart(2, "0")}`;
+}
+
+/** AAAA-MM-JJ → jj/mm/aaaa, pour l'affichage d'un champ. */
+export function dateIsoVersFr(iso: string): string {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
+  return m ? `${m[3]}/${m[2]}/${m[1]}` : "";
+}
+
+/** Une heure saisie librement (9h, 9h30, 0930, 9:30, 14.15), au format HH:MM
+ *  sur 24 heures. Null si elle n'existe pas. */
+export function heureSaisieFr(saisie: string): string | null {
+  const v = saisie.trim().toLowerCase();
+  let h: number;
+  let min: number;
+  const separe = /^(\d{1,2})\s*[:h.]\s*(\d{0,2})$/.exec(v);
+  if (separe) {
+    h = Number(separe[1]);
+    min = separe[2] ? Number(separe[2]) : 0;
+    if (separe[2].length === 1) return null;
+  } else if (/^\d{1,2}$/.test(v)) {
+    h = Number(v);
+    min = 0;
+  } else if (/^\d{3,4}$/.test(v)) {
+    h = Number(v.slice(0, -2));
+    min = Number(v.slice(-2));
+  } else return null;
+  if (h > 23 || min > 59) return null;
+  return `${String(h).padStart(2, "0")}:${String(min).padStart(2, "0")}`;
+}
+
 // Ordre alphabétique français : « Électricité » se range avec les E, et la
 // casse ne compte pas.
 const collationFr = new Intl.Collator("fr", { sensitivity: "base", numeric: true });

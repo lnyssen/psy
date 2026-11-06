@@ -28,7 +28,27 @@ export type PatientPpl = {
   birthDate: Date | null;
   pplType: PplType;
   pplReseau: PplReseau | null;
+  /** Séances faites avant l'outil, saisies dans la fiche, et leur date. */
+  pplSeancesAnterieures?: number;
+  pplAnterieuresLe?: Date | null;
 };
+
+/**
+ * Les séances saisies à la main comme déjà faites avant l'outil, sous forme
+ * de séances honorées au jour indiqué : elles passent ainsi par exactement le
+ * même calcul que celles de l'agenda, et quittent la fenêtre de douze mois au
+ * même rythme.
+ */
+function anterieures(p: PatientPpl | undefined): SeanceQuota[] {
+  const n = p?.pplSeancesAnterieures ?? 0;
+  if (n <= 0 || !p?.pplAnterieuresLe) return [];
+  const le = p.pplAnterieuresLe;
+  return Array.from({ length: n }, (_, i) => ({
+    id: `anterieure-${i}`,
+    status: "ATTENDED" as const,
+    startsAt: le,
+  }));
+}
 
 /** Âge atteint à la date donnée — par défaut aujourd'hui. */
 export function ageAu(naissance: Date, date: Date = new Date()) {
@@ -69,9 +89,13 @@ type SeanceQuota = { id: string; status: SessionStatus; startsAt: Date };
 
 /** Séances qui comptent dans les douze mois qui se terminent à `fin`
  *  (comprise). */
-export function seancesSurDouzeMois<T extends SeanceQuota>(seances: T[], fin: Date = new Date()) {
+export function seancesSurDouzeMois<T extends SeanceQuota>(
+  seances: T[],
+  fin: Date = new Date(),
+  p?: PatientPpl,
+) {
   const debut = ilYaDouzeMois(fin);
-  return seances.filter((s) => compteAuQuota(s.status) && s.startsAt > debut && s.startsAt <= fin).length;
+  return [...seances, ...anterieures(p)].filter((s) => compteAuQuota(s.status) && s.startsAt > debut && s.startsAt <= fin).length;
 }
 
 /**
@@ -81,7 +105,7 @@ export function seancesSurDouzeMois<T extends SeanceQuota>(seances: T[], fin: Da
  */
 export function seancesHorsQuota<T extends SeanceQuota>(seances: T[], p: PatientPpl): Set<string> {
   const hors = new Set<string>();
-  const comptees = seances
+  const comptees = [...seances, ...anterieures(p)]
     .filter((s) => compteAuQuota(s.status))
     .sort((a, b) => a.startsAt.getTime() - b.startsAt.getTime());
   comptees.forEach((s, i) => {
@@ -106,6 +130,8 @@ export async function horsQuotaPour(patientIds: (string | null)[]): Promise<Set<
       birthDate: true,
       pplType: true,
       pplReseau: true,
+      pplSeancesAnterieures: true,
+      pplAnterieuresLe: true,
       sessions: { select: { id: true, status: true, startsAt: true } },
     },
   });
@@ -144,13 +170,15 @@ export async function alertesQuota(): Promise<Map<string, string>> {
       birthDate: true,
       pplType: true,
       pplReseau: true,
+      pplSeancesAnterieures: true,
+      pplAnterieuresLe: true,
       sessions: { select: { id: true, status: true, startsAt: true } },
     },
   });
   const alertes = new Map<string, string>();
   for (const p of patients) {
     const plafond = plafondConventionne(p, maintenant);
-    const faites = seancesSurDouzeMois(p.sessions, maintenant);
+    const faites = seancesSurDouzeMois(p.sessions, maintenant, p);
     const prevues = p.sessions.filter((s) => s.status === "SCHEDULED" && s.startsAt > maintenant).length;
     if (faites + prevues >= plafond) {
       alertes.set(

@@ -8,6 +8,7 @@ import { euros, fmtDateCourte, parLibelle, partiesJour } from "@/lib/format";
 import { IconChevronDroite, IconChevronGauche } from "@/components/icons";
 import { DepensePhotoOCR } from "@/components/DepensePhotoOCR";
 import { modifierDepense } from "@/lib/depense-actions";
+import { ChampDate } from "@/components/ChampDate";
 
 export const dynamic = "force-dynamic";
 
@@ -107,9 +108,8 @@ export default async function Depenses({
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <label>
             <span className={libelleChamp}>Date</span>
-            <input
+            <ChampDate
               name="date"
-              type="date"
               required
               defaultValue={new Date().toISOString().slice(0, 10)}
               className={`mt-1 ${champ}`}
@@ -267,9 +267,8 @@ export default async function Depenses({
                   <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                     <label>
                       <span className={libelleChamp}>Date</span>
-                      <input
+                      <ChampDate
                         name="date"
-                        type="date"
                         required
                         defaultValue={d.date.toISOString().slice(0, 10)}
                         className={`mt-1 ${champ}`}

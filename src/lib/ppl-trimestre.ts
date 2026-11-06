@@ -126,6 +126,7 @@ export async function suiviPpl(annee: number, trimestre: number) {
       utilisees12Mois: seancesSurDouzeMois(
         p.sessions,
         new Date(fin.getTime() - 1),
+        p,
       ),
       plafond: plafondConventionne(p, fin),
     });

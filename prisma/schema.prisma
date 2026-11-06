@@ -254,6 +254,11 @@ model Patient {
   phone          String?
   /// Numéros des parents, pour les patients mineurs : c'est souvent eux
   /// qu'on appelle pour déplacer une séance.
+  /// Noms et prénoms des parents, pour les patients mineurs.
+  motherFirstName String?   @map("mother_first_name")
+  motherLastName  String?   @map("mother_last_name")
+  fatherFirstName String?   @map("father_first_name")
+  fatherLastName  String?   @map("father_last_name")
   phoneMother    String?    @map("phone_mother")
   phoneFather    String?    @map("phone_father")
   emailMother    String?    @map("email_mother")
@@ -271,6 +276,13 @@ model Patient {
   /// (vide : déduit de l'âge). Servent au plafond INAMI, voir lib/quotas.ts.
   pplType        PplType    @default(SOUTIEN) @map("ppl_type")
   pplReseau      PplReseau? @map("ppl_reseau")
+  /// Séances INAMI déjà faites avant l'outil (ou ailleurs), saisies à la
+  /// main : elles comptent dans le plafond comme si elles avaient eu lieu le
+  /// jour indiqué ci-dessous, et sortent du calcul douze mois plus tard.
+  pplSeancesAnterieures Int       @default(0) @map("ppl_seances_anterieures")
+  /// Date de la dernière de ces séances : la plus prudente, elle les garde
+  /// le plus longtemps dans la fenêtre de douze mois.
+  pplAnterieuresLe      DateTime? @map("ppl_anterieures_le")
   /// Tarif choisi dans la grille (Réglages → Tarifs) : c'est lui qui fait foi
   /// pour le montant d'une séance.
   tarifId        String?    @map("tarif_id")

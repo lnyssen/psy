@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { IconChevronDroite, IconChevronGauche } from "@/components/icons";
+import { ChampDate } from "@/components/ChampDate";
 
 export type Jour = { iso: string; creneaux: { iso: string; minutes: number }[] };
 
@@ -178,13 +179,11 @@ export function CalendrierRdv({
 
         <label className="mt-5 flex flex-wrap items-center gap-2 text-xs text-ink-muted">
           <span className="font-semibold">Aller à une date</span>
-          <input
-            type="date"
+          <ChampDate
             min={cle(borneDebut)}
             max={cle(borneFin)}
             value={jourChoisi ?? ""}
-            onChange={(e) => {
-              const v = e.target.value;
+            onChange={(v) => {
               if (!v) return;
               const [annee, mois] = v.split("-").map(Number);
               setMois(new Date(annee, mois - 1, 1));
