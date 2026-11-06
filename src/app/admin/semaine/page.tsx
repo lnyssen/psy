@@ -427,6 +427,7 @@ export default async function Semaine({ searchParams }: { searchParams: Promise<
         heureFin={HEURE_FIN}
         patients={patients}
         cabinets={cabinetsPatients}
+        dureeSeance={reglages.dureeSeanceMin}
       />
 
       <p className="text-xs text-ink-muted">

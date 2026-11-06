@@ -68,6 +68,7 @@ export function GrilleSemaine({
   heureFin,
   patients,
   cabinets,
+  dureeSeance = 45,
 }: {
   seances: SeanceGrille[];
   jours: JourGrille[];
@@ -76,6 +77,8 @@ export function GrilleSemaine({
   /** Pour la création rapide au clic sur une case vide. */
   patients: { id: string; firstName: string; lastName: string; alerte?: string }[];
   cabinets: { id: string; nom: string }[];
+  /** Durée par défaut d'une séance, pour préremplir l'heure de fin. */
+  dureeSeance?: number;
 }) {
   const router = useRouter();
   const [, demarrer] = useTransition();
@@ -395,6 +398,7 @@ export function GrilleSemaine({
                     <PopoverCreation
                       jour={j}
                       minutes={creation.minutes}
+                      duree={dureeSeance}
                       patients={patients}
                       cabinets={cabinets}
                       alignerADroite={ji >= 3}
@@ -442,6 +446,7 @@ export function GrilleSemaine({
               {creationMobile === ji && (
                 <CreationMobile
                   jour={j}
+                  duree={dureeSeance}
                   patients={patients}
                   cabinets={cabinets}
                   onFermer={() => setCreationMobile(null)}
@@ -582,6 +587,7 @@ function repartirEnColonnes(seances: SeanceGrille[]) {
 function PopoverCreation({
   jour,
   minutes,
+  duree,
   patients,
   cabinets,
   alignerADroite,
@@ -591,6 +597,7 @@ function PopoverCreation({
 }: {
   jour: JourGrille;
   minutes: number;
+  duree: number;
   patients: { id: string; firstName: string; lastName: string; alerte?: string }[];
   cabinets: { id: string; nom: string }[];
   alignerADroite: boolean;
@@ -601,7 +608,7 @@ function PopoverCreation({
   const d = new Date(jour.iso);
   d.setHours(Math.floor(minutes / 60), minutes % 60, 0, 0);
   const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-  const heureStr = `${String(Math.floor(minutes / 60)).padStart(2, "0")}:${String(minutes % 60).padStart(2, "0")}`;
+  const heureStr = hhmm(minutes);
 
   return (
     <div
@@ -611,7 +618,7 @@ function PopoverCreation({
     >
       <div className="flex items-center justify-between gap-2">
         <p className="text-xs font-semibold" data-numeric>
-          {jour.nom} {jour.numero} · {heureStr}
+          Nouvelle séance — {jour.nom} {jour.numero}
         </p>
         <button
           type="button"
@@ -630,7 +637,7 @@ function PopoverCreation({
         className="flex flex-col gap-2"
       >
         <input type="hidden" name="date" value={dateStr} />
-        <input type="hidden" name="heure" value={heureStr} />
+        <DebutFin debut={heureStr} fin={hhmm(minutes + duree)} />
         <SelectPatientRecherche patients={patients} />
         <select
           name="cabinetId"
@@ -659,6 +666,29 @@ function PopoverCreation({
   );
 }
 
+/** Minutes depuis minuit → HH:MM. */
+function hhmm(minutes: number) {
+  return `${String(Math.floor(minutes / 60)).padStart(2, "0")}:${String(minutes % 60).padStart(2, "0")}`;
+}
+
+/** Heures de début et de fin d'une séance à créer, modifiables : la case
+ *  cliquée ne fait que les proposer, avec la durée réglée par défaut. */
+function DebutFin({ debut, fin }: { debut: string; fin: string }) {
+  const champ = "w-full rounded-full border border-line bg-surface px-3.5 py-1.5 text-sm";
+  return (
+    <div className="grid grid-cols-2 gap-2">
+      <label className="text-[11px] text-ink-muted">
+        Début
+        <ChampHeure name="heure" required defaultValue={debut} className={`mt-0.5 ${champ}`} />
+      </label>
+      <label className="text-[11px] text-ink-muted">
+        Fin
+        <ChampHeure name="fin" defaultValue={fin} className={`mt-0.5 ${champ}`} />
+      </label>
+    </div>
+  );
+}
+
 /**
  * Équivalent de `PopoverCreation` pour la liste mobile : pas de position à
  * cliquer pour en déduire l'heure, donc un champ heure à remplir, avec le
@@ -666,12 +696,14 @@ function PopoverCreation({
  */
 function CreationMobile({
   jour,
+  duree,
   patients,
   cabinets,
   onFermer,
   onCreer,
 }: {
   jour: JourGrille;
+  duree: number;
   patients: { id: string; firstName: string; lastName: string; alerte?: string }[];
   cabinets: { id: string; nom: string }[];
   onFermer: () => void;
@@ -703,13 +735,8 @@ function CreationMobile({
         className="flex flex-col gap-2"
       >
         <input type="hidden" name="date" value={dateStr} />
-        <div className="grid grid-cols-2 gap-2">
-          <ChampHeure
-            name="heure"
-            required
-            defaultValue="09:00"
-            className="w-full rounded-full border border-line bg-surface px-3.5 py-1.5 text-sm"
-          />
+        <DebutFin debut="09:00" fin={hhmm(9 * 60 + duree)} />
+        <div>
           <select
             name="cabinetId"
             required

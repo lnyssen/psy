@@ -90,12 +90,38 @@ export default async function Finance({
   const demandee = Number(params.annee);
   const annee = anneesConnues.includes(demandee) ? demandee : anneeCourante;
 
-  const cabinets = await prisma.cabinet.findMany({ orderBy: { ordre: "asc" } });
+  const [cabinets, factures, depenses] = await Promise.all([
+    prisma.cabinet.findMany({ orderBy: { ordre: "asc" } }),
+    // Factures aux établissements : les blocs n'ont pas de montant de séance
+    // (voir valeur), ils ne comptent qu'une fois, par leur facture, au mois
+    // qu'elle couvre et dans le cabinet qui l'émet. Une facture annulée ne
+    // compte pas.
+    prisma.factureEtablissement.findMany({
+      where: { annee, annuleeLe: null },
+      select: {
+        cabinetId: true,
+        mois: true,
+        montantCents: true,
+        payeeLe: true,
+        echeanceLe: true,
+      },
+    }),
+    prisma.depense.findMany({
+      where: {
+        date: {
+          gte: new Date(Date.UTC(annee - 1, 11, 31)),
+          lt: new Date(Date.UTC(annee + 1, 0, 2)),
+        },
+      },
+      select: { date: true, amountCents: true },
+    }),
+  ]);
   // Un cabinet fermé garde son historique : le retirer de la colonne ferait
   // disparaître son chiffre des totaux d'une année déjà close.
   const utilises = cabinets.filter(
     (c) =>
       c.actif ||
+      factures.some((f) => f.cabinetId === c.id) ||
       seances.some(
         (s) => s.cabinetId === c.id && partiesJour(s.startsAt).annee === annee,
       ),
@@ -119,6 +145,26 @@ export default async function Finance({
     if (s.paymentStatus === "PAID") k.encaisse += montant;
     else if (s.paymentStatus === "OVERDUE") k.retard += montant;
     else k.du += montant;
+  }
+  const maintenant = new Date();
+  const casFacture = (f: (typeof factures)[number]): Case_ => ({
+    facture: f.montantCents,
+    encaisse: f.payeeLe ? f.montantCents : 0,
+    retard:
+      !f.payeeLe && f.echeanceLe && f.echeanceLe < maintenant
+        ? f.montantCents
+        : 0,
+    du:
+      !f.payeeLe && !(f.echeanceLe && f.echeanceLe < maintenant)
+        ? f.montantCents
+        : 0,
+    actes: 0,
+  });
+  for (const f of factures) {
+    const colonne = grille[f.cabinetId];
+    if (!colonne) continue;
+    const m = f.mois - 1;
+    colonne[m] = cumuler(colonne[m], casFacture(f));
   }
 
   const parMois = Array.from({ length: 12 }, (_, m) =>
@@ -153,30 +199,15 @@ export default async function Finance({
     })),
     {
       label: "établissement (bloc)",
-      total: cumulerCas(delAnnee.filter((s) => !s.patient)),
+      total: factures
+        .map(casFacture)
+        .reduce(cumuler, cumulerCas(delAnnee.filter((s) => !s.patient))),
     },
   ];
 
   // Résultat : ce qui est facturé (séances des patients et factures aux
-  // établissements) moins les dépenses, mois par mois. Les blocs d'un
-  // établissement n'ont pas de montant de séance (voir valeur) : ils ne
-  // comptent qu'une fois, par leur facture, au mois qu'elle couvre. Une facture
-  // annulée ne compte pas.
-  const [factures, depenses] = await Promise.all([
-    prisma.factureEtablissement.findMany({
-      where: { annee, annuleeLe: null },
-      select: { mois: true, montantCents: true },
-    }),
-    prisma.depense.findMany({
-      where: {
-        date: {
-          gte: new Date(Date.UTC(annee - 1, 11, 31)),
-          lt: new Date(Date.UTC(annee + 1, 0, 2)),
-        },
-      },
-      select: { date: true, amountCents: true },
-    }),
-  ]);
+  // établissements) moins les dépenses, mois par mois. La grille contient déjà
+  // les factures : on les sépare ici pour ne pas les compter deux fois.
   const facturesParMois = Array.from({ length: 12 }, () => 0);
   for (const f of factures) facturesParMois[f.mois - 1] += f.montantCents;
   const depensesParMois = Array.from({ length: 12 }, () => 0);
@@ -185,10 +216,10 @@ export default async function Finance({
     if (a === annee) depensesParMois[mois - 1] += d.amountCents;
   }
   const resultat = parMois.map((m, i) => ({
-    seances: m.facture,
+    seances: m.facture - facturesParMois[i],
     factures: facturesParMois[i],
     depenses: depensesParMois[i],
-    net: m.facture + facturesParMois[i] - depensesParMois[i],
+    net: m.facture - depensesParMois[i],
   }));
   const resultatAnnee = resultat.reduce(
     (a, r) => ({
@@ -201,7 +232,9 @@ export default async function Finance({
   );
 
   const plafond = Math.max(1, ...parMois.map((m) => m.facture));
-  const moisAvecActes = parMois.filter((m) => m.actes > 0).length;
+  const moisAvecActes = parMois.filter(
+    (m) => m.actes > 0 || m.facture > 0,
+  ).length;
 
   const cartes = [
     { t: "Facturé", v: euros(totalAnnee.facture) },
@@ -228,7 +261,7 @@ export default async function Finance({
           <h1 className="font-display text-3xl tracking-tight">Finance</h1>
           <p className="mt-2 text-sm text-ink-muted">
             L’année {annee}, mois par mois et par cabinet. Séances facturables
-            uniquement — heure de Bruxelles.
+            et factures aux établissements — heure de Bruxelles.
           </p>
         </div>
 
@@ -358,7 +391,7 @@ export default async function Finance({
           et la règle de la maison est qu'aucune vue ne défile de côté. */}
       <ul className="flex flex-col gap-2 md:hidden">
         {parMois.map((m, i) =>
-          m.actes === 0 ? null : (
+          m.actes === 0 && m.facture === 0 ? null : (
             <li
               key={i}
               className="rounded-[14px] border border-line bg-surface px-4 py-3.5"
@@ -394,7 +427,8 @@ export default async function Finance({
               </dl>
               <ul className="mt-2.5 flex flex-wrap items-center gap-2">
                 {utilises.map((c) =>
-                  grille[c.id][i].actes === 0 ? null : (
+                  grille[c.id][i].actes === 0 &&
+                  grille[c.id][i].facture === 0 ? null : (
                     <li key={c.id} className="flex items-center gap-1.5">
                       <CabinetTag cabinet={c} />
                       <span className="font-mono text-xs" data-numeric>
@@ -448,7 +482,9 @@ export default async function Finance({
               <tr
                 key={i}
                 className={`border-b border-line last:border-b-0 ${
-                  m.actes === 0 ? "text-ink-muted" : "hover:bg-sunken/60"
+                  m.actes === 0 && m.facture === 0
+                    ? "text-ink-muted"
+                    : "hover:bg-sunken/60"
                 }`}
               >
                 <th

@@ -130,7 +130,7 @@ export function RegimeEtTarif({
             </span>
           </label>
           <label>
-            <span className={libelleChamp}>Séances déjà faites avant l’outil</span>
+            <span className={libelleChamp}>Séances déjà faites</span>
             <input
               name="pplSeancesAnterieures"
               type="number"
@@ -142,8 +142,8 @@ export function RegimeEtTarif({
               className={`mt-1 ${champ}`}
             />
             <span className="mt-1 block text-[11px] text-ink-muted">
-              Séances remboursées déjà consommées sur la période : elles s’ajoutent au compteur, qui
-              continue ensuite tout seul avec les séances de l’agenda.
+              Séances remboursées déjà consommées et absentes de l’agenda : elles s’ajoutent au
+              compteur, qui continue ensuite tout seul.
             </span>
           </label>
           <label>

@@ -387,7 +387,14 @@ export async function creerSeanceDepuisFormulaire(f: FormData) {
     }
   }
 
-  const duree = (await parametres()).dureeSeanceMin;
+  // Heure de fin facultative : sans elle, la durée réglée par défaut.
+  const [hf, mf] = texte(f, "fin").split(":").map(Number);
+  const [hd, md] = heure.split(":").map(Number);
+  const dureeSaisie = hf * 60 + mf - (hd * 60 + md);
+  const duree =
+    Number.isFinite(dureeSaisie) && dureeSaisie >= 15 && dureeSaisie <= 8 * 60
+      ? dureeSaisie
+      : (await parametres()).dureeSeanceMin;
   await prisma.session.createMany({
     data: dates.map((d) => ({
       patientId,

@@ -307,7 +307,7 @@ export default async function FichePatient({
             ? [
                 {
                   t: anterieuresInami
-                    ? `INAMI, 12 mois (dont ${anterieuresInami} avant l’outil)`
+                    ? `INAMI, 12 mois (dont ${anterieuresInami} déjà faites)`
                     : "INAMI, 12 mois",
                   v: `${faitesInami} / ${plafondInami}`,
                   alerte: faitesInami >= plafondInami,

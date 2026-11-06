@@ -2,7 +2,10 @@ import type { CareScheme } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { GroupeFiltre, TriMobile, type Params } from "@/components/filtres";
 import { FiltresMobile } from "@/components/FiltresMobile";
-import { TableFacturation, type LigneFacture } from "@/components/TableFacturation";
+import {
+  TableFacturation,
+  type LigneFacture,
+} from "@/components/TableFacturation";
 import { OngletsFacturation } from "@/components/OngletsFacturation";
 import { cabinetsActifs, optionsCabinet } from "@/lib/cabinets";
 import { euros, isBillable } from "@/lib/format";
@@ -14,7 +17,11 @@ import { parametres } from "@/lib/parametres";
 
 export const dynamic = "force-dynamic";
 
-export default async function Facturation({ searchParams }: { searchParams: Promise<Params> }) {
+export default async function Facturation({
+  searchParams,
+}: {
+  searchParams: Promise<Params>;
+}) {
   const params = await searchParams;
 
   const toutes = await prisma.session.findMany({
@@ -24,7 +31,9 @@ export default async function Facturation({ searchParams }: { searchParams: Prom
       // onglet, avec sa propre logique de facture numérotée.
       patientId: { not: null },
       ...(params.cabinet ? { cabinetId: params.cabinet } : {}),
-      ...(params.regime ? { patient: { scheme: params.regime as CareScheme } } : {}),
+      ...(params.regime
+        ? { patient: { scheme: params.regime as CareScheme } }
+        : {}),
       ...(params.paiement
         ? { paymentStatus: params.paiement as "DUE" | "PAID" | "OVERDUE" }
         : {}),
@@ -37,13 +46,18 @@ export default async function Facturation({ searchParams }: { searchParams: Prom
   // n'a rien à faire dans cette table. Le filtre patientId ci-dessus garantit
   // déjà que patient n'est jamais nul ici.
   const seances = toutes.filter(
-    (s): s is typeof s & { patient: NonNullable<typeof s.patient> } => isBillable(s.status) && s.patient !== null,
+    (s): s is typeof s & { patient: NonNullable<typeof s.patient> } =>
+      isBillable(s.status) && s.patient !== null,
   );
 
   const sens = params.sens === "desc" ? -1 : 1;
-  const comparateurs: Record<string, (a: (typeof seances)[number], b: (typeof seances)[number]) => number> = {
+  const comparateurs: Record<
+    string,
+    (a: (typeof seances)[number], b: (typeof seances)[number]) => number
+  > = {
     date: (a, b) => a.startsAt.getTime() - b.startsAt.getTime(),
-    patient: (a, b) => a.patient.lastName.localeCompare(b.patient.lastName, "fr"),
+    patient: (a, b) =>
+      a.patient.lastName.localeCompare(b.patient.lastName, "fr"),
     cabinet: (a, b) => a.cabinet.nom.localeCompare(b.cabinet.nom, "fr"),
     regime: (a, b) => a.patient.scheme.localeCompare(b.patient.scheme),
     montant: (a, b) => (a.amountCents ?? 0) - (b.amountCents ?? 0),
@@ -56,14 +70,20 @@ export default async function Facturation({ searchParams }: { searchParams: Prom
   // découpe que la table en dessous — sans quoi « Dû » mentirait dès la
   // deuxième page.
   const taille = tailleDePage(params);
-  const page = Math.min(pageDe(params), Math.max(1, Math.ceil(seances.length / taille)));
+  const page = Math.min(
+    pageDe(params),
+    Math.max(1, Math.ceil(seances.length / taille)),
+  );
 
   // Deux payeurs, deux comptes : ce que doivent les patients (privé), et ce que
   // doit encore verser l'INAMI (conventionné). Les mélanger ferait passer pour
   // une dette de patient de l'argent qu'aucun patient ne doit.
-  const valeur = (s: (typeof seances)[number]) => s.amountCents ?? montantSeanceCents(s.patient) ?? 0;
+  const valeur = (s: (typeof seances)[number]) =>
+    s.amountCents ?? montantSeanceCents(s.patient) ?? 0;
   const somme = (f: typeof seances) => f.reduce((n, s) => n + valeur(s), 0);
-  const prives = seances.filter((s) => payeurDe(s.patient.scheme) === "PATIENT");
+  const prives = seances.filter(
+    (s) => payeurDe(s.patient.scheme) === "PATIENT",
+  );
   const inami = seances.filter((s) => payeurDe(s.patient.scheme) === "INAMI");
   // Une couleur d'alerte n'a de sens que sur une somme : à zéro, « en retard »
   // en rouge crierait au loup. La valeur reste lisible, mais neutre.
@@ -72,9 +92,31 @@ export default async function Facturation({ searchParams }: { searchParams: Prom
     v: euros(centimes),
     ton: centimes > 0 ? ton : undefined,
   });
+  // Établissements : leurs factures numérotées vivent dans leur onglet, mais
+  // leur argent compte autant que celui des patients. Hors filtres régime et
+  // paiement, qui ne s'appliquent qu'aux séances des patients.
+  const filtreSeance = Boolean(params.regime || params.paiement);
+  const facturesEtab = filtreSeance
+    ? []
+    : await prisma.factureEtablissement.findMany({
+        where: {
+          annuleeLe: null,
+          ...(params.cabinet ? { cabinetId: params.cabinet } : {}),
+        },
+        select: { montantCents: true, payeeLe: true },
+      });
+  const sommeEtab = (payee: boolean) =>
+    facturesEtab
+      .filter((f) => Boolean(f.payeeLe) === payee)
+      .reduce((n, f) => n + f.montantCents, 0);
+
   const cartes = [
     carte("Encaissé", somme(prives.filter((s) => s.paymentStatus === "PAID"))),
-    carte("Dû", somme(prives.filter((s) => s.paymentStatus === "DUE")), "text-due"),
+    carte(
+      "Dû",
+      somme(prives.filter((s) => s.paymentStatus === "DUE")),
+      "text-due",
+    ),
     carte(
       "En retard",
       somme(prives.filter((s) => s.paymentStatus === "OVERDUE")),
@@ -86,6 +128,12 @@ export default async function Facturation({ searchParams }: { searchParams: Prom
       somme(inami.filter((s) => s.paymentStatus !== "PAID")),
       "text-due",
     ),
+    ...(filtreSeance
+      ? []
+      : [
+          carte("Établissements reçu", sommeEtab(true)),
+          carte("Établissements à recevoir", sommeEtab(false), "text-due"),
+        ]),
     { t: "Actes", v: String(seances.length), ton: undefined },
   ];
 
@@ -125,8 +173,9 @@ export default async function Facturation({ searchParams }: { searchParams: Prom
       <header>
         <h1 className="font-display text-3xl tracking-tight">Facturation</h1>
         <p className="mt-2 text-sm text-ink-muted">
-          Séances facturables uniquement. Les annulations à temps et les séances à venir n’y
-          figurent pas.
+          Séances facturables uniquement. Les annulations à temps et les séances
+          à venir n’y figurent pas. Les cartes « Établissements » reprennent les
+          factures de l’onglet Établissements.
         </p>
         <div className="mt-4">
           <OngletsFacturation actif="patients" />
@@ -137,32 +186,32 @@ export default async function Facturation({ searchParams }: { searchParams: Prom
         base="/admin/facturation"
         params={params}
         groupes={[
-            {
-              cle: "paiement",
-              libelle: "Paiement",
-              tout: "Tous les paiements",
-              options: [
-                { valeur: "DUE", label: "dû" },
-                { valeur: "OVERDUE", label: "en retard" },
-                { valeur: "PAID", label: "payé" },
-              ],
-            },
-            {
-              cle: "cabinet",
-              libelle: "Cabinet",
-              tout: "Tous les lieux",
-              options: optionsCabinet(cabinets),
-            },
-            {
-              cle: "regime",
-              libelle: "Régime",
-              tout: "Tous les régimes",
-              options: [
-                { valeur: "PRIVE", label: "privé" },
-                { valeur: "CONVENTIONNE", label: "conventionné" },
-              ],
-            },
-          ]}
+          {
+            cle: "paiement",
+            libelle: "Paiement",
+            tout: "Tous les paiements",
+            options: [
+              { valeur: "DUE", label: "dû" },
+              { valeur: "OVERDUE", label: "en retard" },
+              { valeur: "PAID", label: "payé" },
+            ],
+          },
+          {
+            cle: "cabinet",
+            libelle: "Cabinet",
+            tout: "Tous les lieux",
+            options: optionsCabinet(cabinets),
+          },
+          {
+            cle: "regime",
+            libelle: "Régime",
+            tout: "Tous les régimes",
+            options: [
+              { valeur: "PRIVE", label: "privé" },
+              { valeur: "CONVENTIONNE", label: "conventionné" },
+            ],
+          },
+        ]}
       />
 
       <div className="flex flex-wrap gap-x-5 gap-y-2">
@@ -196,15 +245,21 @@ export default async function Facturation({ searchParams }: { searchParams: Prom
         />
       </div>
 
-      {/* Une bande compacte : six chiffres qui tiennent sur une ligne laissent la
-          table remonter dans le premier écran. */}
-      <dl className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-6">
+      {/* Une bande compacte : six à huit chiffres sur deux lignes au plus
+          laissent la table remonter dans le premier écran. */}
+      <dl className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
         {cartes.map((c) => (
-          <div key={c.t} className="rounded-[12px] border border-line bg-surface px-4 py-2.5">
+          <div
+            key={c.t}
+            className="rounded-[12px] border border-line bg-surface px-4 py-2.5"
+          >
             <dt className="text-[10px] font-semibold tracking-[0.1em] text-ink-muted uppercase">
               {c.t}
             </dt>
-            <dd className={`mt-0.5 font-mono text-lg font-semibold ${c.ton ?? ""}`} data-numeric>
+            <dd
+              className={`mt-0.5 font-mono text-lg font-semibold ${c.ton ?? ""}`}
+              data-numeric
+            >
               {c.v}
             </dd>
           </div>
@@ -224,15 +279,20 @@ export default async function Facturation({ searchParams }: { searchParams: Prom
 
       <TableFacturation lignes={ligneActuelles} params={params} />
 
-      <Pagination base="/admin/facturation" params={params} total={lignes.length} taille={taille} />
+      <Pagination
+        base="/admin/facturation"
+        params={params}
+        total={lignes.length}
+        taille={taille}
+      />
 
       <Relances relances={relances} iban={iban} />
 
       <p className="text-xs text-ink-muted">
-        Une séance conventionnée (psychologue de première ligne) affiche ce que verse l’INAMI : le
-        patient ne paie rien, et il n’y a donc pas de reçu à lui remettre. Le reçu d’une séance
-        privée n’est pas une attestation de soins, et les prestations de psychologue sont
-        exonérées de TVA.
+        Une séance conventionnée (psychologue de première ligne) affiche ce que
+        verse l’INAMI : le patient ne paie rien, et il n’y a donc pas de reçu à
+        lui remettre. Le reçu d’une séance privée n’est pas une attestation de
+        soins, et les prestations de psychologue sont exonérées de TVA.
       </p>
     </div>
   );
