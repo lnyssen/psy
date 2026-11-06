@@ -613,7 +613,7 @@ function PopoverCreation({
   return (
     <div
       onClick={(e) => e.stopPropagation()}
-      style={{ ...style, [alignerADroite ? "right" : "left"]: 4, width: 232 }}
+      style={{ ...style, [alignerADroite ? "right" : "left"]: 4, width: 272 }}
       className="absolute z-30 flex flex-col gap-2.5 rounded-[14px] border border-accent/40 bg-surface p-3.5 shadow-[0_8px_24px_rgba(39,39,87,0.16)]"
     >
       <div className="flex items-center justify-between gap-2">
@@ -672,19 +672,46 @@ function hhmm(minutes: number) {
 }
 
 /** Heures de début et de fin d'une séance à créer, modifiables : la case
- *  cliquée ne fait que les proposer, avec la durée réglée par défaut. */
-function DebutFin({ debut, fin }: { debut: string; fin: string }) {
-  const champ = "w-full rounded-full border border-line bg-surface px-3.5 py-1.5 text-sm";
+ *  cliquée ne fait que les proposer, avec la durée réglée par défaut. Déplacer
+ *  le début entraîne la fin, durée conservée. */
+function DebutFin({ debut: d0, fin: f0 }: { debut: string; fin: string }) {
+  const [debut, setDebut] = useState(d0);
+  const [fin, setFin] = useState(f0);
+  const minutes = (v: string) => {
+    const [h, m] = v.split(":").map(Number);
+    return h * 60 + m;
+  };
+  const duree = minutes(fin) - minutes(debut);
+  const champ = "w-full rounded-full border border-line bg-surface py-1 pr-1 pl-3 text-sm";
   return (
-    <div className="grid grid-cols-2 gap-2">
-      <label className="text-[11px] text-ink-muted">
-        Début
-        <ChampHeure name="heure" required defaultValue={debut} className={`mt-0.5 ${champ}`} />
-      </label>
-      <label className="text-[11px] text-ink-muted">
-        Fin
-        <ChampHeure name="fin" defaultValue={fin} className={`mt-0.5 ${champ}`} />
-      </label>
+    <div>
+      <div className="grid grid-cols-2 gap-2">
+        <label className="text-[11px] text-ink-muted">
+          Début
+          <ChampHeure
+            name="heure"
+            required
+            valeur={debut}
+            surChangement={(v) => {
+              if (duree > 0) setFin(hhmm(Math.min(minutes(v) + duree, 23 * 60 + 59)));
+              setDebut(v);
+            }}
+            className={`mt-0.5 text-ink ${champ}`}
+          />
+        </label>
+        <label className="text-[11px] text-ink-muted">
+          Fin
+          <ChampHeure
+            name="fin"
+            valeur={fin}
+            surChangement={setFin}
+            className={`mt-0.5 text-ink ${champ}`}
+          />
+        </label>
+      </div>
+      <p className={`mt-1 px-1 text-[11px] ${duree > 0 ? "text-ink-muted" : "text-overdue"}`}>
+        {duree > 0 ? `Durée : ${duree} min` : "La fin doit suivre le début."}
+      </p>
     </div>
   );
 }

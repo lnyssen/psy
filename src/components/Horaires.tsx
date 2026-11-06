@@ -99,7 +99,7 @@ export function Horaires({
                           id={`d-${d.id}`}
                           name="debut"
                           defaultValue={hhmm(d.debutMin)}
-                          className={`${champCabinet} w-28`}
+                          className={`${champCabinet} w-32`}
                         />
                         <span className="text-sm text-ink-muted">→</span>
                         <label className="sr-only" htmlFor={`f-${d.id}`}>
@@ -109,7 +109,7 @@ export function Horaires({
                           id={`f-${d.id}`}
                           name="fin"
                           defaultValue={hhmm(d.finMin)}
-                          className={`${champCabinet} w-28`}
+                          className={`${champCabinet} w-32`}
                         />
                         <button
                           type="submit"
@@ -142,9 +142,9 @@ export function Horaires({
                     </option>
                   ))}
                 </select>
-                <ChampHeure name="debut" defaultValue="09:00" className={`${champCabinet} w-28`} aria-label="Début" />
+                <ChampHeure name="debut" defaultValue="09:00" className={`${champCabinet} w-32`} aria-label="Début" />
                 <span className="text-sm text-ink-muted">→</span>
-                <ChampHeure name="fin" defaultValue="18:00" className={`${champCabinet} w-28`} aria-label="Fin" />
+                <ChampHeure name="fin" defaultValue="18:00" className={`${champCabinet} w-32`} aria-label="Fin" />
                 <button
                   type="submit"
                   className="rounded-full border border-accent px-4 py-1.5 text-xs font-medium text-accent-text"
