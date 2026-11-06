@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { DUREE_MS, creerJeton, jetonValide, optionsCookie } from "@/lib/session";
+import { DUREE_MS, creerJeton, jetonValide, optionsCookie, roleDuJeton } from "@/lib/session";
 
 afterEach(() => {
   vi.useRealTimers();
@@ -43,5 +43,19 @@ describe("jeton de session", () => {
     expect(optionsCookie.httpOnly).toBe(true);
     expect(optionsCookie.sameSite).toBe("lax");
     expect(optionsCookie.maxAge).toBe(DUREE_MS / 1000);
+  });
+});
+
+describe("rôle de la session", () => {
+  it("distingue la praticienne du développeur", async () => {
+    expect(await roleDuJeton(await creerJeton())).toBe("praticienne");
+    expect(await roleDuJeton(await creerJeton("developpeur"))).toBe("developpeur");
+  });
+
+  it("refuse un rôle ajouté ou retiré à la main", async () => {
+    const [charge, signature] = (await creerJeton()).split(".");
+    expect(await roleDuJeton(`${charge}~dev.${signature}`)).toBeNull();
+    const [chargeDev, signatureDev] = (await creerJeton("developpeur")).split(".");
+    expect(await roleDuJeton(`${chargeDev.replace("~dev", "")}.${signatureDev}`)).toBeNull();
   });
 });

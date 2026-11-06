@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { COOKIE_SESSION, creerJeton, jetonValide, optionsCookie } from "@/lib/session";
+import { COOKIE_SESSION, creerJeton, optionsCookie, roleDuJeton } from "@/lib/session";
 import { demoOuverte } from "@/lib/demo";
 
 /**
@@ -49,7 +49,8 @@ export async function proxy(req: NextRequest) {
   // Démonstration ouverte : la garde est levée, pas retirée. Voir lib/demo.ts.
   if (demoOuverte()) return NextResponse.next();
 
-  if (await jetonValide(req.cookies.get(COOKIE_SESSION)?.value)) {
+  const role = await roleDuJeton(req.cookies.get(COOKIE_SESSION)?.value);
+  if (role) {
     const reponse = NextResponse.next();
     // Session glissante : seuls les gestes réels la prolongent — une page
     // chargée en entier, un envoi (action serveur, signal d'activité). Pas les
@@ -63,7 +64,7 @@ export async function proxy(req: NextRequest) {
       req.method !== "GET" ||
       (req.headers.get("accept") ?? "").includes("text/html");
     if (geste)
-      reponse.cookies.set(COOKIE_SESSION, await creerJeton(), optionsCookie);
+      reponse.cookies.set(COOKIE_SESSION, await creerJeton(role), optionsCookie);
     return reponse;
   }
 

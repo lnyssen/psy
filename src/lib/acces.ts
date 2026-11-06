@@ -30,6 +30,18 @@ export async function motDePasseValide(motDePasse: string) {
   return bcrypt.compare(motDePasse, empreinte);
 }
 
+/**
+ * Mot de passe du développeur : une empreinte bcrypt dans l'environnement
+ * seulement (AUTH_DEV_PASSWORD_HASH_B64), jamais en base — il ouvre la base
+ * fictive, et la base réelle ne doit rien en savoir. Sans base fictive
+ * configurée, il n'ouvre rien.
+ */
+export async function motDePasseDeveloppeurValide(motDePasse: string) {
+  const b64 = process.env.AUTH_DEV_PASSWORD_HASH_B64;
+  if (!b64 || !process.env.DATABASE_URL_DEMO || !motDePasse) return false;
+  return bcrypt.compare(motDePasse, Buffer.from(b64, "base64").toString("utf8"));
+}
+
 export async function definirMotDePasse(motDePasse: string) {
   const passwordHash = await bcrypt.hash(motDePasse, 12);
   await prisma.acces.upsert({

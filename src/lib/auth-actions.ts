@@ -13,6 +13,7 @@ import {
   definirMotDePasse,
   empreinteAttendue,
   empreinteJeton,
+  motDePasseDeveloppeurValide,
   motDePasseValide,
 } from "@/lib/acces";
 import { adresseDe, tropd } from "@/lib/limite";
@@ -39,11 +40,18 @@ export async function seConnecter(
   const motDePasse = String(f.get("motDePasse") ?? "");
   const suite = String(f.get("suite") ?? "");
 
-  if (!(await motDePasseValide(motDePasse))) return "Mot de passe incorrect.";
-
-  const jar = await cookies();
-  jar.set(COOKIE_SESSION, await creerJeton(), optionsCookie);
-  await noterConnexion("mot de passe");
+  if (await motDePasseValide(motDePasse)) {
+    (await cookies()).set(COOKIE_SESSION, await creerJeton(), optionsCookie);
+    await noterConnexion("mot de passe");
+  } else if (await motDePasseDeveloppeurValide(motDePasse)) {
+    // Noté sur la base réelle, avant que la session ne bascule sur la base
+    // fictive : Amandine voit passer chaque connexion du développeur, et reçoit
+    // l'alerte habituelle si le navigateur est inconnu.
+    await noterConnexion("accès développeur");
+    (await cookies()).set(COOKIE_SESSION, await creerJeton("developpeur"), optionsCookie);
+  } else {
+    return "Mot de passe incorrect.";
+  }
 
   // Ne rediriger que vers un chemin interne : une valeur venue de l'URL ne doit
   // jamais pouvoir emmener ailleurs.

@@ -61,7 +61,9 @@ export function libelleAppareil(ua: string | null | undefined) {
  * À appeler juste après avoir ouvert la session. Ne lève jamais : une alerte
  * qui échoue ne doit pas empêcher d'entrer.
  */
-export async function noterConnexion(moyen: "mot de passe" | "Face ID, Touch ID ou empreinte") {
+export async function noterConnexion(
+  moyen: "mot de passe" | "Face ID, Touch ID ou empreinte" | "accès développeur",
+) {
   try {
     const jar = await cookies();
     const h = await headers();

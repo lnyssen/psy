@@ -44,30 +44,46 @@ function versBase64Url(octets: ArrayBuffer) {
     .replace(/=+$/, "");
 }
 
-export async function creerJeton() {
-  const expiration = String(Date.now() + DUREE_MS);
+/**
+ * Qui est connecté : la praticienne, sur les vraies données, ou le
+ * développeur, sur une base fictive à part (voir lib/db.ts). Le rôle est signé
+ * avec l'expiration : il ne se change pas à la main dans le cookie.
+ */
+export type Role = "praticienne" | "developpeur";
+const MARQUE_DEV = "~dev";
+
+export async function creerJeton(role: Role = "praticienne") {
+  const charge = `${Date.now() + DUREE_MS}${role === "developpeur" ? MARQUE_DEV : ""}`;
   const signature = await crypto.subtle.sign(
     "HMAC",
     await cle(),
-    new TextEncoder().encode(expiration),
+    new TextEncoder().encode(charge),
   );
-  return `${expiration}.${versBase64Url(signature)}`;
+  return `${charge}.${versBase64Url(signature)}`;
+}
+
+/** Le rôle d'une session valide, ou null (absente, expirée, falsifiée). */
+export async function roleDuJeton(jeton: string | undefined): Promise<Role | null> {
+  if (!jeton) return null;
+  const [charge, signature] = jeton.split(".");
+  if (!charge || !signature) return null;
+  const developpeur = charge.endsWith(MARQUE_DEV);
+  const expiration = developpeur ? charge.slice(0, -MARQUE_DEV.length) : charge;
+  if (!/^\d+$/.test(expiration) || Number(expiration) < Date.now()) return null;
+
+  const attendue = versBase64Url(
+    await crypto.subtle.sign("HMAC", await cle(), new TextEncoder().encode(charge)),
+  );
+  // Comparaison à durée constante.
+  if (attendue.length !== signature.length) return null;
+  let diff = 0;
+  for (let i = 0; i < attendue.length; i++) diff |= attendue.charCodeAt(i) ^ signature.charCodeAt(i);
+  if (diff !== 0) return null;
+  return developpeur ? "developpeur" : "praticienne";
 }
 
 export async function jetonValide(jeton: string | undefined) {
-  if (!jeton) return false;
-  const [expiration, signature] = jeton.split(".");
-  if (!expiration || !signature) return false;
-  if (Number(expiration) < Date.now()) return false;
-
-  const attendue = versBase64Url(
-    await crypto.subtle.sign("HMAC", await cle(), new TextEncoder().encode(expiration)),
-  );
-  // Comparaison à durée constante.
-  if (attendue.length !== signature.length) return false;
-  let diff = 0;
-  for (let i = 0; i < attendue.length; i++) diff |= attendue.charCodeAt(i) ^ signature.charCodeAt(i);
-  return diff === 0;
+  return (await roleDuJeton(jeton)) !== null;
 }
 
 export const optionsCookie = {

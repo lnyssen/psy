@@ -38,6 +38,12 @@ if (process.env.SEED_DEMO !== "1" || !["localhost", "127.0.0.1", "::1", ""].incl
       "Réservé à une base locale, avec SEED_DEMO=1.",
   );
 }
+// Sur le serveur, la seule base qu'il peut toucher est la base fictive du mode
+// développeur : la base réelle y est aussi « locale », le contrôle d'hôte ne
+// suffit donc plus à la protéger.
+if (process.env.DATABASE_URL_DEMO && connectionString !== process.env.DATABASE_URL_DEMO) {
+  throw new Error("Seed refusé : sur ce serveur, il ne s'applique qu'à DATABASE_URL_DEMO.");
+}
 const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString }) });
 
 const DUREE = 45;

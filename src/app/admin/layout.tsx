@@ -8,6 +8,7 @@ import { ZoneAnnulation } from "@/components/AnnulationGeste";
 import { SyncHorsLigne } from "@/components/SyncHorsLigne";
 import { prisma } from "@/lib/db";
 import { demoOuverte } from "@/lib/demo";
+import { sessionDeveloppeur } from "@/lib/db";
 import { statutSauvegarde } from "@/lib/sauvegardes";
 
 export const metadata: Metadata = {
@@ -65,6 +66,7 @@ export default async function AdminLayout({
     where: { status: "SCHEDULED", startsAt: { lt: new Date() } },
   });
   const ouverte = demoOuverte();
+  const developpeur = await sessionDeveloppeur();
   // Une sauvegarde qui ne tourne plus ne fait aucun bruit : on le dit en haut.
   const sauvegarde = await statutSauvegarde();
 
@@ -114,6 +116,19 @@ export default async function AdminLayout({
               <span>
                 l’outil est accessible sans mot de passe. N’y saisissez aucune
                 donnée réelle.
+              </span>
+            </span>
+          </p>
+        )}
+
+        {developpeur && (
+          <p role="status" className="mx-auto w-full max-w-7xl px-5 pt-5 md:px-8">
+            <span className="flex flex-wrap items-center gap-x-2 gap-y-1 rounded-[14px] border border-line-strong bg-sunken px-4 py-2.5 text-[13px] text-ink-muted">
+              <span className="font-semibold text-ink">Mode développeur</span>
+              <span aria-hidden="true">·</span>
+              <span>
+                base fictive, séparée de celle d’Amandine : rien de ce qui s’affiche ou se
+                modifie ici ne touche ses données.
               </span>
             </span>
           </p>
