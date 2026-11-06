@@ -109,13 +109,13 @@ export function RegimeEtTarif({
       {regime === "CONVENTIONNE" && (
         <>
           <label>
-            <span className={libelleChamp}>Prise en charge</span>
+            <span className={libelleChamp}>Convention INAMI</span>
             <select name="pplType" defaultValue={pplTypeInitial} className={`mt-1 ${champ}`}>
-              <option value="SOUTIEN">soutien psychologique</option>
-              <option value="TRAITEMENT">traitement psychologique</option>
+              <option value="SOUTIEN">10 séances — soutien psychologique</option>
+              <option value="TRAITEMENT">20 séances — traitement psychologique</option>
             </select>
             <span className="mt-1 block text-[11px] text-ink-muted">
-              Soutien : 10 séances sur 12 mois (enfants et ados), 8 (adultes). Traitement : 20.
+              Sur 12 mois. Pour un adulte (réseau adultes), le soutien est limité à 8 séances.
             </span>
           </label>
           <label>

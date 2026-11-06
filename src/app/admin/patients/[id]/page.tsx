@@ -151,7 +151,7 @@ export default async function FichePatient({
     ? seancesHorsQuota(patient.sessions, patient)
     : new Set<string>();
   const libelleReseau = conventionne
-    ? `${patient.pplType === "TRAITEMENT" ? "traitement" : "soutien"} · réseau ${
+    ? `${patient.pplType === "TRAITEMENT" ? "traitement" : "soutien"} (${plafondInami} séances) · réseau ${
         reseauPpl(patient) === "ENFANTS" ? "enfants" : "adultes"
       }`
     : null;
