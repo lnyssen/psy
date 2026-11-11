@@ -1,0 +1,54 @@
+# Mise en ligne automatique : à chaque push sur main, le code est vérifié
+# (types et tests), puis envoyé au serveur qui l'installe, migre la base,
+# compile et redémarre (deploy/serveur/psy-deployer).
+#
+# La clé utilisée ne peut que lancer ce script (voir
+# deploy/activer-deploiement-auto.sh). Sans les secrets DEPLOY_*, le workflow
+# vérifie le code et s'arrête sans rien déployer.
+name: Déploiement
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+# Une mise en ligne à la fois, et jamais interrompue en cours de route : un
+# second push attend la fin du premier.
+concurrency:
+  group: deploiement
+  cancel-in-progress: false
+
+jobs:
+  deployer:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Vérifier le code (types et tests)
+        run: |
+          npm ci --no-audit --no-fund
+          npx tsc --noEmit
+          npm test
+
+      - name: Mettre en ligne
+        env:
+          CLE: ${{ secrets.DEPLOY_SSH_KEY }}
+          HOTE: ${{ secrets.DEPLOY_HOST }}
+          EMPREINTE: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+        run: |
+          if [ -z "$CLE" ] || [ -z "$HOTE" ] || [ -z "$EMPREINTE" ]; then
+            echo "::notice::Secrets DEPLOY_* absents : code vérifié, rien n'est déployé."
+            exit 0
+          fi
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$EMPREINTE" > ~/.ssh/known_hosts
+          printf '%s\n' "$CLE" > ~/.ssh/deploie
+          chmod 600 ~/.ssh/deploie
+          git archive --format=tar.gz HEAD \
+            | ssh -i ~/.ssh/deploie -o BatchMode=yes -o StrictHostKeyChecking=yes "deploie@$HOTE"

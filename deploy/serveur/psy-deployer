@@ -1,0 +1,67 @@
+#!/usr/bin/env bash
+# Mise en ligne côté serveur, lancée par GitHub Actions à chaque push sur main.
+#
+# Installé dans /usr/local/bin/psy-deployer par deploy/activer-deploiement-auto.sh.
+# L'utilisateur « deploie » ne peut lancer que ce script (commande forcée dans
+# son authorized_keys, sudo limité à ce seul fichier) : sa clé, même volée, ne
+# donne ni shell ni autre droit. Le code arrive sur l'entrée standard, en
+# archive tar.gz (git archive) : le serveur n'a besoin d'aucun accès à GitHub.
+set -euo pipefail
+
+APP=/srv/psy/app
+CONFIG=/srv/psy/config
+
+# Le même verrou que deployer.sh (depuis le Mac) : jamais deux mises en ligne
+# à la fois. Un verrou de plus de 20 minutes est jugé abandonné.
+VERROU=/srv/psy/.deploiement.verrou
+find "$VERROU" -maxdepth 0 -mmin +20 -exec rm -rf {} + 2>/dev/null || true
+if ! mkdir "$VERROU" 2>/dev/null; then
+  echo "Un déploiement est déjà en cours (depuis $(cat "$VERROU/depuis" 2>/dev/null || echo '?'))."
+  exit 1
+fi
+date '+%d/%m %H:%M:%S' > "$VERROU/depuis"
+SOURCE=$(mktemp -d)
+trap 'rm -rf "$SOURCE" "$VERROU"' EXIT
+
+echo "== Réception du code"
+# 300 Mo au plus : une archive du dépôt en fait quelques-uns.
+head -c 300000000 | tar xzf - -C "$SOURCE"
+[ -f "$SOURCE/package.json" ] || { echo "Archive vide ou invalide."; exit 1; }
+[ -f "$CONFIG/env.base" ] && [ -f "$CONFIG/env.production" ] || {
+  echo "Secrets absents : relancer deploy/activer-deploiement-auto.sh depuis le Mac."
+  exit 1
+}
+
+echo "== Sauvegarde avant migration"
+/usr/local/bin/psy-sauvegarde || echo "Avertissement : la sauvegarde n'a pas pu être faite."
+
+echo "== Copie du code et des secrets"
+rsync -a --delete \
+  --exclude node_modules --exclude .next --exclude '.env*' \
+  "$SOURCE/" "$APP/"
+cat "$CONFIG/env.base" "$CONFIG/env.production" > "$APP/.env"
+chown -R psy:psy "$APP"
+chmod 600 "$APP/.env"
+
+echo "== Installation, migrations et compilation"
+cd "$APP"
+sudo -u psy -H npm ci --no-audit --no-fund
+sudo -u psy -H npm run build
+# Base fictive du mode développeur, si elle est activée : mêmes migrations.
+DEMO=$(grep "^DATABASE_URL_DEMO=" .env | cut -d= -f2- | tr -d '"' || true)
+if [ -n "$DEMO" ]; then
+  sudo -u psy -H env DATABASE_URL="$DEMO" DIRECT_URL="$DEMO" npx prisma migrate deploy
+fi
+
+echo "== Redémarrage"
+systemctl restart pratique-psy
+for _ in $(seq 1 20); do
+  if curl -fsS -o /dev/null --max-time 5 http://127.0.0.1:3000/; then
+    echo "Déployé."
+    exit 0
+  fi
+  sleep 3
+done
+systemctl --no-pager --lines=20 status pratique-psy || true
+echo "Le site ne répond pas après le redémarrage."
+exit 1
