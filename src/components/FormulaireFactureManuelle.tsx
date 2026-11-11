@@ -1,5 +1,6 @@
 "use client";
 
+import { ChampNombre } from "@/components/ChampNombre";
 import { useState } from "react";
 import { ChampsDecompte } from "@/components/ChampsDecompte";
 import { ChampDate } from "@/components/ChampDate";
@@ -76,7 +77,7 @@ export function FormulaireFactureManuelle({
         </label>
         <label className="lg:max-w-24">
           <span className={libelleChamp}>Année</span>
-          <input name="annee" type="number" defaultValue={annee} required className={`mt-1 ${champ}`} />
+          <ChampNombre name="annee" defaultValue={annee} min={2020} max={2100} required className={`mt-1 ${champ}`} />
         </label>
         <label>
           <span className={libelleChamp}>Échéance</span>

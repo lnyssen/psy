@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { euros } from "@/lib/format";
 import { ChampDate } from "@/components/ChampDate";
+import { ChampNombre } from "@/components/ChampNombre";
 
 type Regime = "PRIVE" | "CONVENTIONNE";
 type TarifChoix = { id: string; libelle: string; amountCents: number; regime: Regime; parDefaut: boolean };
@@ -132,16 +133,26 @@ export function RegimeEtTarif({
               De 15 à 23 ans, le patient peut relever de l’un ou l’autre.
             </span>
           </label>
-          <CompteurPeriodes initial={periodesInitial} />
+          <label>
+            <span className={libelleChamp}>Périodes de référence octroyées</span>
+            <ChampNombre
+              name="pplPeriodes"
+              defaultValue={Math.max(1, periodesInitial)}
+              min={1}
+              max={20}
+              className={`mt-1 ${champ}`}
+            />
+            <span className="mt-1 block text-[11px] text-ink-muted">
+              Combien de périodes (10 puis 20 séances) ce patient a reçues. Un repère : le plafond, lui,
+              se calcule toujours sur douze mois.
+            </span>
+          </label>
           <label>
             <span className={libelleChamp}>Séances déjà faites</span>
-            <input
+            <ChampNombre
               name="pplSeancesAnterieures"
-              type="number"
-              min="0"
-              max="40"
-              step="1"
-              inputMode="numeric"
+              min={0}
+              max={40}
               defaultValue={anterieuresInitial}
               className={`mt-1 ${champ}`}
             />
@@ -160,35 +171,5 @@ export function RegimeEtTarif({
         </>
       )}
     </>
-  );
-}
-
-/** Nombre de périodes de référence octroyées : − et + plutôt qu'une saisie,
- *  c'est un compteur qu'on avance d'une unité à chaque renouvellement. */
-function CompteurPeriodes({ initial }: { initial: number }) {
-  const [n, setN] = useState(Math.max(1, initial));
-  const bouton =
-    "flex h-8 w-8 items-center justify-center rounded-full border border-line-strong text-base font-medium transition-colors hover:border-accent hover:text-accent-text disabled:opacity-40";
-  return (
-    <div>
-      <span id="libelle-periodes" className={libelleChamp}>
-        Périodes de référence octroyées
-      </span>
-      <div className="mt-1 flex items-center gap-3" role="group" aria-labelledby="libelle-periodes">
-        <button type="button" aria-label="Une période de moins" disabled={n <= 1} onClick={() => setN(n - 1)} className={bouton}>
-          −
-        </button>
-        <output aria-live="polite" className="min-w-8 text-center font-mono text-lg font-semibold" data-numeric>
-          {n}
-        </output>
-        <button type="button" aria-label="Une période de plus" disabled={n >= 20} onClick={() => setN(n + 1)} className={bouton}>
-          +
-        </button>
-        <input type="hidden" name="pplPeriodes" value={n} />
-      </div>
-      <span className="mt-1 block text-[11px] text-ink-muted">
-        Combien de périodes (10 puis 20 séances) ce patient a reçues. Un repère : le plafond, lui, se calcule toujours sur douze mois.
-      </span>
-    </div>
   );
 }

@@ -2,6 +2,7 @@
 
 import { useId, useState } from "react";
 import { euros } from "@/lib/format";
+import { ChampNombre } from "@/components/ChampNombre";
 import { montantDecompteCents, nombreSaisi } from "@/lib/decompte";
 
 const champ =
@@ -52,30 +53,25 @@ export function ChampsDecompte({
     <>
       <label>
         <span className={libelleChamp}>Heures</span>
-        <input
+        <ChampNombre
           name="heures"
-          type="number"
-          inputMode="numeric"
-          min="0"
-          step="1"
+          min={0}
           placeholder="0"
           value={heures}
-          onChange={(e) => setHeures(e.target.value)}
+          onChange={setHeures}
           className={`mt-1 ${champ}`}
         />
       </label>
       <label>
         <span className={libelleChamp}>Minutes</span>
-        <input
+        <ChampNombre
           name="minutes"
-          type="number"
-          inputMode="numeric"
-          min="0"
-          max="59"
-          step="1"
+          min={0}
+          max={59}
+          pas={5}
           placeholder="0"
           value={minutes}
-          onChange={(e) => setMinutes(e.target.value)}
+          onChange={setMinutes}
           className={`mt-1 ${champ}`}
         />
       </label>

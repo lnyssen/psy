@@ -569,3 +569,16 @@ html[data-curseur-rond] select {
 :root[data-theme="dark"] .outil select {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8' fill='none' stroke='%23ece9f2' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M1 1.5 6 6.5 11 1.5'/%3E%3C/svg%3E");
 }
+
+/* Montants : pas de petites flèches natives dans les champs numériques, qui
+   ne ressemblaient à rien d'autre dans l'outil. Les compteurs passent par
+   ChampNombre (− et + dans le champ) ; un montant se tape. */
+input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}

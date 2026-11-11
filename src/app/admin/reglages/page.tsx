@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db";
+import { ChampNombre } from "@/components/ChampNombre";
 import { TitreSection } from "@/components/tags";
 import { PALETTE_CABINETS } from "@/lib/palette";
 import {
@@ -543,11 +544,10 @@ export default async function Reglages({
                           <span className={libelleChamp}>
                             Plafond hebdomadaire (h)
                           </span>
-                          <input
+                          <ChampNombre
                             name="quotaHebdoHeures"
-                            type="number"
-                            step="0.25"
-                            min="0"
+                            pas={0.25}
+                            min={0}
                             placeholder="aucun"
                             defaultValue={
                               c.quotaHebdoMin ? c.quotaHebdoMin / 60 : ""
@@ -748,11 +748,10 @@ export default async function Reglages({
               <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                 <label>
                   <span className={libelleChamp}>Plafond hebdomadaire (h)</span>
-                  <input
+                  <ChampNombre
                     name="quotaHebdoHeures"
-                    type="number"
-                    step="0.25"
-                    min="0"
+                    pas={0.25}
+                    min={0}
                     placeholder="aucun"
                     className={`mt-1 ${champ}`}
                   />

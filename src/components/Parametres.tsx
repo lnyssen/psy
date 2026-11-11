@@ -1,9 +1,10 @@
 import { enregistrerParametres } from "@/lib/actions";
 import { TitreSection } from "@/components/tags";
+import { ChampNombre } from "@/components/ChampNombre";
 import type { Parametres as ParametresType } from "@/lib/parametres";
 
 const champCourt =
-  "w-24 rounded-full border border-line bg-surface px-3 py-1.5 text-sm";
+  "w-32 rounded-full border border-line bg-surface px-3 py-1.5 text-sm";
 const champLarge =
   "w-full rounded-full border border-line bg-surface px-3.5 py-2 text-sm";
 const libelleChamp =
@@ -136,12 +137,11 @@ export function Parametres({ valeurs }: { valeurs: ParametresType }) {
     <label key={nom}>
       <span className={libelleChamp}>{libelle}</span>
       <span className="mt-1 flex items-center gap-2">
-        <input
+        <ChampNombre
           name={nom}
-          type="number"
           min={min}
           max={max}
-          step={pas}
+          pas={pas}
           defaultValue={valeur}
           className={champCourt}
         />
@@ -347,9 +347,8 @@ export function Identite({ valeurs }: { valeurs: ParametresType }) {
             <label>
               <span className={libelleChamp}>Délai de paiement</span>
               <span className="mt-1 flex items-center gap-2">
-                <input
+                <ChampNombre
                   name="delaiPaiementJours"
-                  type="number"
                   min={0}
                   max={180}
                   defaultValue={valeurs.delaiPaiementJours}
