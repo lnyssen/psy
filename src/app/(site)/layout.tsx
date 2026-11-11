@@ -12,8 +12,8 @@ import { EnteteSite } from "@/components/EnteteSite";
 export const metadata: Metadata = {
   // Une page sans titre propre garde celui du site ; les autres s'y ajoutent.
   title: {
-    default: "Amandine Monsel — Psychologue clinicienne à Uccle et Auderghem",
-    template: "%s — Amandine Monsel",
+    default: "Amandine Monsel – Psychologue clinicienne à Uccle et Auderghem",
+    template: "%s – Amandine Monsel",
   },
 };
 

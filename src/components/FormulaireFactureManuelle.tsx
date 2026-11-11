@@ -75,7 +75,7 @@ export function FormulaireFactureManuelle({
             ))}
           </select>
         </label>
-        <label className="lg:max-w-24">
+        <label className="min-w-36 lg:max-w-40">
           <span className={libelleChamp}>Année</span>
           <ChampNombre name="annee" defaultValue={annee} min={2020} max={2100} required className={`mt-1 ${champ}`} />
         </label>
@@ -94,7 +94,7 @@ export function FormulaireFactureManuelle({
         <ChampsDecompte
           key={cabinetId}
           tarifInitial={cabinet?.tarifHoraireCents ? (cabinet.tarifHoraireCents / 100).toFixed(2) : ""}
-          libellePlaceholder={`Facultatif — ex. Supplément ${moisLabels[moisSaisi - 1] ?? moisChoisi}`}
+          libellePlaceholder={`Facultatif, par ex. supplément ${moisLabels[moisSaisi - 1] ?? moisChoisi}`}
         />
       </div>
 
@@ -103,7 +103,7 @@ export function FormulaireFactureManuelle({
         <textarea
           name="commentaire"
           rows={2}
-          placeholder="Pour vous seule — le contexte de cette facture."
+          placeholder="Pour vous seule : le contexte de cette facture."
           className={`mt-1 ${champ.replace("rounded-full", "rounded-[14px]")} resize-y leading-snug`}
         />
       </label>

@@ -50,8 +50,8 @@ export async function GET(
     coordonnees: {
       telephone: p.phone,
       email: p.email,
-      mere: { telephone: p.phoneMother, email: p.emailMother },
-      pere: { telephone: p.phoneFather, email: p.emailFather },
+      responsable1: { lien: p.lienParent1, telephone: p.phoneMother, email: p.emailMother },
+      responsable2: { lien: p.lienParent2, telephone: p.phoneFather, email: p.emailFather },
       adresse: p.addressLine
         ? { rue: p.addressLine, codePostal: p.postalCode, commune: p.city }
         : null,

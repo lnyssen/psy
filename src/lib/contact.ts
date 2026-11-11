@@ -1,3 +1,4 @@
+import { intitule } from "@/lib/liens";
 /**
  * Numéro de téléphone au format international sans « + » (« 32475123456 »), tel
  * que l'attend wa.me. Un numéro belge saisi « 0475 12 34 56 », « +32 475… » ou
@@ -32,6 +33,8 @@ export function texteCoordonnees(p: {
   motherLastName?: string | null;
   fatherFirstName?: string | null;
   fatherLastName?: string | null;
+  lienParent1?: string;
+  lienParent2?: string;
   phoneMother: string | null;
   emailMother: string | null;
   phoneFather: string | null;
@@ -52,8 +55,8 @@ export function texteCoordonnees(p: {
     const v = [identite.filter(Boolean).join(" "), tel, mail].filter(Boolean).join(" · ");
     if (v) lignes.push(`${nom} : ${v}`);
   };
-  parent("Mère", p.phoneMother, p.emailMother, p.motherFirstName, p.motherLastName);
-  parent("Père", p.phoneFather, p.emailFather, p.fatherFirstName, p.fatherLastName);
+  parent(intitule(p.lienParent1 ?? "mère"), p.phoneMother, p.emailMother, p.motherFirstName, p.motherLastName);
+  parent(intitule(p.lienParent2 ?? "père"), p.phoneFather, p.emailFather, p.fatherFirstName, p.fatherLastName);
   if (p.addressLine)
     lignes.push(
       `Adresse : ${p.addressLine}, ${p.postalCode ?? ""} ${p.city ?? ""}`.trim(),

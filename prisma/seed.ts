@@ -249,8 +249,18 @@ async function main() {
 
   const seances = [...base.filter((s) => s.jour !== AUJOURDHUI), ...duJour];
 
-  for (const { who, jour, h, m, lieu, ...rest } of seances) {
+  for (const { who, jour, h, m, lieu, ...semee } of seances) {
     const debut = at(jour, h, m ?? 0);
+    // Une séance encore à venir ne peut être ni honorée ni encaissée : semé un
+    // mercredi, le jeudi et le vendredi restent à venir, comme dans l'outil.
+    const rest =
+      debut > new Date() && semee.status !== SessionStatus.CANCELLED_IN_TIME
+        ? {
+            status: SessionStatus.SCHEDULED,
+            paymentStatus: PaymentStatus.DUE,
+            amountCents: null,
+          }
+        : semee;
     await prisma.session.create({
       data: {
         ...rest,

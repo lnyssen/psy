@@ -23,7 +23,7 @@ export async function generateViewport(): Promise<Viewport> {
 
 export const metadata: Metadata = {
   manifest: "/manifest.webmanifest",
-  title: "Amandine Monsel — Psychologue clinicienne à Uccle et Auderghem",
+  title: "Amandine Monsel – Psychologue clinicienne à Uccle et Auderghem",
   description:
     "Psychologue clinicienne et psychothérapeute à Bruxelles. Enfants, adolescents et jeunes adultes. Orientations analytique et systémique. Consultations en français et en anglais.",
 };

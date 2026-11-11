@@ -9,7 +9,7 @@ import {
 import { OngletsFacturation } from "@/components/OngletsFacturation";
 import { cabinetsActifs, optionsCabinet } from "@/lib/cabinets";
 import { euros, isBillable } from "@/lib/format";
-import { montantSeanceCents, payeurDe } from "@/lib/tarifs";
+import { etatPaiement, montantSeanceCents, payeurDe } from "@/lib/tarifs";
 import { Pagination, pageDe, tailleDePage } from "@/components/Pagination";
 import { Relances } from "@/components/Relances";
 import { relancesImpayees } from "@/lib/relance";
@@ -34,9 +34,6 @@ export default async function Facturation({
       ...(params.regime
         ? { patient: { scheme: params.regime as CareScheme } }
         : {}),
-      ...(params.paiement
-        ? { paymentStatus: params.paiement as "DUE" | "PAID" | "OVERDUE" }
-        : {}),
     },
     include: { patient: { include: { tarif: true } }, cabinet: true },
   });
@@ -45,10 +42,19 @@ export default async function Facturation({
   // Une séance à venir ou annulée à temps n'est pas un acte facturable : elle
   // n'a rien à faire dans cette table. Le filtre patientId ci-dessus garantit
   // déjà que patient n'est jamais nul ici.
-  const seances = toutes.filter(
-    (s): s is typeof s & { patient: NonNullable<typeof s.patient> } =>
-      isBillable(s.status) && s.patient !== null,
-  );
+  // « En retard » se calcule ici (voir etatPaiement) : on remplace l'état
+  // stocké par l'état affiché avant de filtrer, de trier et de totaliser.
+  const { retardPaiementJours } = await parametres();
+  const seances = toutes
+    .filter(
+      (s): s is typeof s & { patient: NonNullable<typeof s.patient> } =>
+        isBillable(s.status) && s.patient !== null,
+    )
+    .map((s) => ({
+      ...s,
+      paymentStatus: etatPaiement(s, payeurDe(s.patient.scheme), retardPaiementJours),
+    }))
+    .filter((s) => !params.paiement || s.paymentStatus === params.paiement);
 
   const sens = params.sens === "desc" ? -1 : 1;
   const comparateurs: Record<
@@ -245,26 +251,36 @@ export default async function Facturation({
         />
       </div>
 
-      {/* Une bande compacte : six à huit chiffres sur deux lignes au plus
-          laissent la table remonter dans le premier écran. */}
-      <dl className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
+      {/* Sur ordinateur, une bande compacte de six à huit chiffres. Sur
+          téléphone, seulement ce qui appelle un geste (dû, en retard, INAMI à
+          recevoir), le reste replié : la liste à encaisser remonte dans le
+          premier écran. */}
+      <dl className="hidden grid-cols-4 gap-2.5 sm:grid">
         {cartes.map((c) => (
-          <div
-            key={c.t}
-            className="rounded-[12px] border border-line bg-surface px-4 py-2.5"
-          >
-            <dt className="text-[10px] font-semibold tracking-[0.1em] text-ink-muted uppercase">
-              {c.t}
-            </dt>
-            <dd
-              className={`mt-0.5 font-mono text-lg font-semibold ${c.ton ?? ""}`}
-              data-numeric
-            >
-              {c.v}
-            </dd>
-          </div>
+          <Carte key={c.t} c={c} />
         ))}
       </dl>
+      <div className="flex flex-col gap-2 sm:hidden">
+        <dl className="grid grid-cols-3 gap-2">
+          {cartes
+            .filter((c) => PRINCIPALES.includes(c.t))
+            .map((c) => (
+              <Carte key={c.t} c={c} />
+            ))}
+        </dl>
+        <details>
+          <summary className="w-fit cursor-pointer list-none text-xs font-medium text-accent-text">
+            Tous les totaux
+          </summary>
+          <dl className="mt-2 grid grid-cols-2 gap-2">
+            {cartes
+              .filter((c) => !PRINCIPALES.includes(c.t))
+              .map((c) => (
+                <Carte key={c.t} c={c} />
+              ))}
+          </dl>
+        </details>
+      </div>
 
       <TriMobile
         base="/admin/facturation"
@@ -294,6 +310,19 @@ export default async function Facturation({
         lui remettre. Le reçu d’une séance privée n’est pas une attestation de
         soins, et les prestations de psychologue sont exonérées de TVA.
       </p>
+    </div>
+  );
+}
+
+const PRINCIPALES = ["Dû", "En retard", "INAMI à recevoir"];
+
+function Carte({ c }: { c: { t: string; v: string; ton?: string } }) {
+  return (
+    <div className="rounded-[12px] border border-line bg-surface px-3 py-2.5 sm:px-4">
+      <dt className="text-[10px] font-semibold tracking-[0.1em] text-ink-muted uppercase">{c.t}</dt>
+      <dd className={`mt-0.5 font-mono text-base font-semibold sm:text-lg ${c.ton ?? ""}`} data-numeric>
+        {c.v}
+      </dd>
     </div>
   );
 }

@@ -1,7 +1,8 @@
 import { prisma } from "@/lib/db";
 import { CabinetTag } from "@/components/tags";
 import { classerAttente, traiterDemande } from "@/lib/rdv-actions";
-import { fmtHeure, fmtJourLong } from "@/lib/format";
+import { fmtDateCourte, fmtHeure, fmtJourLong } from "@/lib/format";
+import { ageAu } from "@/lib/quotas";
 import { courrielConfigure } from "@/lib/courriel";
 
 export const dynamic = "force-dynamic";
@@ -44,7 +45,9 @@ export default async function Demandes() {
             >
               <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
                 <span className="text-base font-semibold">
-                  {d.firstName} {d.lastName}
+                  {d.enfantPrenom
+                    ? `${d.enfantPrenom} ${d.enfantNom ?? d.lastName}`
+                    : `${d.firstName} ${d.lastName}`}
                 </span>
                 <CabinetTag cabinet={d.cabinet} />
                 <span className="text-sm first-letter:uppercase" data-numeric>
@@ -52,6 +55,16 @@ export default async function Demandes() {
                   {fmtHeure.format(d.souhaite)}
                 </span>
               </div>
+              {d.enfantPrenom && (
+                <p className="mt-1 text-sm">
+                  Enfant
+                  {d.enfantNaissance
+                    ? `, né(e) le ${fmtDateCourte.format(d.enfantNaissance)} (${ageAu(d.enfantNaissance)} ans)`
+                    : ""}
+                  . Demande faite par {d.firstName} {d.lastName}
+                  {d.lienDemandeur && d.lienDemandeur !== "autre" ? `, ${d.lienDemandeur}` : ""}.
+                </p>
+              )}
               <p className="mt-1 text-sm text-ink-muted" data-numeric>
                 {[d.email, d.phone].filter(Boolean).join(" · ")}
               </p>

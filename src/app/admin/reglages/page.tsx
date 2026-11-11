@@ -185,7 +185,7 @@ export default async function Reglages({
               },
               {
                 regime: "CONVENTIONNE" as const,
-                titre: "Conventionné — psychologue de première ligne",
+                titre: "Conventionné (psychologue de première ligne)",
                 aide: "Ce que reçoit Amandine de l’INAMI pour une séance. Le patient ne paie rien : ce montant n’est jamais une dette de sa part.",
                 nouveau: "Nouveau tarif conventionné",
                 exemple: "Conventionné (INAMI)",
@@ -503,7 +503,7 @@ export default async function Reglages({
                           defaultValue={c.acces}
                           rows={3}
                           placeholder={
-                            "Tram 4 — arrêt Wagon, à cinq minutes à pied."
+                            "Tram 4, arrêt Wagon, à cinq minutes à pied."
                           }
                           className={`mt-1 ${champ.replace("rounded-full", "rounded-[14px]")} resize-y leading-snug`}
                         />
@@ -719,7 +719,7 @@ export default async function Reglages({
                 <textarea
                   name="acces"
                   rows={3}
-                  placeholder="Tram 4 — arrêt Wagon, à cinq minutes à pied."
+                  placeholder="Tram 4, arrêt Wagon, à cinq minutes à pied."
                   className={`mt-1 ${champ.replace("rounded-full", "rounded-[14px]")} resize-y leading-snug`}
                 />
               </label>

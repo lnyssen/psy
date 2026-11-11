@@ -17,6 +17,7 @@ export type Parametres = {
   nouveauxPatientsMessage: string | null;
   iban: string | null;
   delaiPaiementJours: number;
+  retardPaiementJours: number;
   adresseSiege: string | null;
   mentionLegale: string | null;
   accent: string;
@@ -39,6 +40,7 @@ const PAR_DEFAUT: Parametres = {
   nouveauxPatientsMessage: null,
   iban: null,
   delaiPaiementJours: 30,
+  retardPaiementJours: 14,
   adresseSiege: null,
   mentionLegale: null,
   accent: "violet",

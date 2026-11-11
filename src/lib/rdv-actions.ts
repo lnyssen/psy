@@ -1,5 +1,6 @@
 "use server";
 
+import { LIEN_PAR_DEFAUT_1, LIEN_PAR_DEFAUT_2, lienValide } from "@/lib/liens";
 import { revalidatePath } from "next/cache";
 import { after } from "next/server";
 import { synchroniserApres } from "@/lib/google-sync";
@@ -199,6 +200,23 @@ export async function reserverOuDemander(
     return { ok: false, message: "L’adresse électronique n’est pas valable." };
   }
 
+  // Pour un enfant, le parent écrit : le dossier se créera au nom de l'enfant.
+  const pourEnfant = texte(f, "pourQui") === "enfant";
+  const enfantPrenom = pourEnfant ? texte(f, "enfantPrenom") : "";
+  const enfantNaissanceSaisie = pourEnfant ? texte(f, "enfantNaissance") : "";
+  const enfantNaissance = enfantNaissanceSaisie
+    ? new Date(`${enfantNaissanceSaisie}T12:00:00Z`)
+    : null;
+  if (pourEnfant && !enfantPrenom) {
+    return { ok: false, message: "Le prénom de l’enfant est nécessaire." };
+  }
+  if (
+    enfantNaissance &&
+    (Number.isNaN(enfantNaissance.getTime()) || enfantNaissance > new Date())
+  ) {
+    return { ok: false, message: "La date de naissance de l’enfant n’est pas valable." };
+  }
+
   const trop = await tropDeDemandes(phone);
   if (trop) return { ok: false, message: trop };
 
@@ -209,6 +227,14 @@ export async function reserverOuDemander(
       email: email ? email.toLowerCase() : null,
       phone,
       message: texte(f, "message") || null,
+      ...(pourEnfant
+        ? {
+            enfantPrenom,
+            enfantNom: texte(f, "enfantNom") || null,
+            enfantNaissance,
+            lienDemandeur: lienValide(texte(f, "lienDemandeur"), "autre"),
+          }
+        : {}),
       souhaite: debut,
       cabinetId,
     },
@@ -220,7 +246,9 @@ export async function reserverOuDemander(
   prevenirAmandine(
     `Demande de rendez-vous : ${firstName} ${lastName}`,
     [
-      `${firstName} ${lastName} demande un rendez-vous :`,
+      demande.enfantPrenom
+        ? `${firstName} ${lastName} demande un rendez-vous pour ${demande.enfantPrenom} :`
+        : `${firstName} ${lastName} demande un rendez-vous :`,
       "",
       `${creneauEnClair(debut)} à ${demande.cabinet.nom}.`,
       `Téléphone : ${phone}`,
@@ -291,12 +319,32 @@ export async function traiterDemande(f: FormData) {
       where: { regime: "PRIVE", actif: true },
       orderBy: [{ parDefaut: "desc" }, { ordre: "asc" }],
     });
+    // Pour un enfant : le dossier à son nom, le parent qui a écrit en
+    // responsable 1, avec le lien qu'il a déclaré.
+    const lien1 = demande.lienDemandeur ?? LIEN_PAR_DEFAUT_1;
+    const identite = demande.enfantPrenom
+      ? {
+          firstName: demande.enfantPrenom,
+          lastName: demande.enfantNom ?? demande.lastName,
+          birthDate: demande.enfantNaissance,
+          email: null,
+          phone: null,
+          motherFirstName: demande.firstName,
+          motherLastName: demande.lastName,
+          phoneMother: demande.phone,
+          emailMother: demande.email,
+          lienParent1: lien1,
+          lienParent2: lien1 === "père" ? "mère" : LIEN_PAR_DEFAUT_2,
+        }
+      : {
+          firstName: demande.firstName,
+          lastName: demande.lastName,
+          email: demande.email,
+          phone: demande.phone,
+        };
     const patient = await prisma.patient.create({
       data: {
-        firstName: demande.firstName,
-        lastName: demande.lastName,
-        email: demande.email,
-        phone: demande.phone,
+        ...identite,
         scheme: "PRIVE",
         tarifId: tarif?.id ?? null,
         cabinetId: demande.cabinetId,

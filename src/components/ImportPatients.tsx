@@ -137,7 +137,7 @@ export function ImportPatients({ champs }: { champs: Champ[] }) {
                       disabled={enCours}
                       onChange={(ev) => changerColonne(i, ev.target.value as ChampImport | "")}
                     >
-                      <option value="">— ignorer —</option>
+                      <option value="">(ignorer)</option>
                       {champs.map((c) => (
                         <option key={c.cle} value={c.cle}>
                           {c.libelle}
@@ -198,7 +198,7 @@ export function ImportPatients({ champs }: { champs: Champ[] }) {
                           {l.statut === "doublon" && <span className="text-ink-muted">{l.avertissements.join(" ; ")}</span>}
                           {l.statut === "erreur" && <span className="text-due">{l.erreurs.join(" ; ")}</span>}
                           {l.statut === "ok" && l.avertissements.length > 0 && (
-                            <span className="text-ink-muted">Prêt — {l.avertissements.join(" ; ")}</span>
+                            <span className="text-ink-muted">Prêt : {l.avertissements.join(" ; ")}</span>
                           )}
                         </td>
                       </tr>

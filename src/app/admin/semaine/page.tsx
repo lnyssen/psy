@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { CareScheme } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { parametres } from "@/lib/parametres";
+import { etatPaiement, payeurDe } from "@/lib/tarifs";
 import { GrilleSemaine, type JourGrille, type SeanceGrille } from "@/components/GrilleSemaine";
 import { GroupeFiltre, avecParam, type Params } from "@/components/filtres";
 import { FiltresMobile } from "@/components/FiltresMobile";
@@ -104,6 +105,10 @@ export default async function Semaine({ searchParams }: { searchParams: Promise<
   // l'historique du patient, mais n'a rien à faire dans le calendrier. La laisser
   // dessinée, comme un bloc ordinaire, donnait l'impression que l'annulation
   // n'avait pas eu lieu. `i` reste l'indice dans `seances`, celui de `conflits`.
+  const etatAffiche = (s: (typeof seances)[number]) =>
+    s.patient
+      ? etatPaiement(s, payeurDe(s.patient.scheme), reglages.retardPaiementJours)
+      : s.paymentStatus;
   const pourGrille: SeanceGrille[] = seances.flatMap((s, i) => s.status === "CANCELLED_IN_TIME" ? [] : [{
     id: s.id,
     patientId: s.patientId,
@@ -116,8 +121,8 @@ export default async function Semaine({ searchParams }: { searchParams: Promise<
     cabinetColor: s.cabinet.colorHex,
     cabinetFill: s.cabinet.fillHex,
     cabinetVif: s.cabinet.vividHex,
-    paiement: isBillable(s.status) ? s.paymentStatus : null,
-    libellePaiement: isBillable(s.status) ? PAYMENT_LABEL[s.paymentStatus] : null,
+    paiement: isBillable(s.status) ? etatAffiche(s) : null,
+    libellePaiement: isBillable(s.status) ? PAYMENT_LABEL[etatAffiche(s)] : null,
     conflit: conflits.has(i),
     aVenir: s.status === "SCHEDULED",
     visio: s.visio,
@@ -247,35 +252,28 @@ export default async function Semaine({ searchParams }: { searchParams: Promise<
         </details>
       </div>
 
-      {/* Le volume de la semaine est la première chose qu'on vient chercher :
-          il passe en chiffres pleins plutôt qu'en mention de coin. */}
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_2fr]">
-        <div className="rounded-[14px] border border-line bg-surface px-5 py-4">
-          <p className="text-[11px] font-semibold tracking-[0.1em] text-ink-muted uppercase">
-            Séances cette semaine
-          </p>
-          <p className="mt-1 text-3xl font-bold" data-numeric>
-            {seances.filter((s) => s.status !== "CANCELLED_IN_TIME").length}
-          </p>
-        </div>
-        <div className="rounded-[14px] border border-line bg-surface px-5 py-4">
-          <p className="text-[11px] font-semibold tracking-[0.1em] text-ink-muted uppercase">
-            Heures de séance
-          </p>
-          <p className="mt-1 text-3xl font-bold text-accent-text" data-numeric>
-            {formatDuree(totalSemaine)}
-          </p>
-        </div>
-
+      {/* Le volume de la semaine tient en une ligne : l'agenda vient d'abord,
+          surtout sur téléphone où des cartes repoussaient la première séance
+          très bas. Le calcul sur une autre période se déplie à la demande. */}
+      <div className="flex flex-col gap-3">
+        <p className="text-sm text-ink-muted" data-numeric>
+          <span className="font-semibold text-ink">
+            {seances.filter((s) => s.status !== "CANCELLED_IN_TIME").length} séances
+          </span>{" "}
+          ·{" "}
+          <span className="font-semibold text-accent-text">{formatDuree(totalSemaine)}</span> cette
+          semaine
+        </p>
+        <details open={Boolean(params.du || params.au)} className="group">
+          <summary className="w-fit cursor-pointer list-none text-xs font-medium text-accent-text hover:underline">
+            Compter sur une autre période
+          </summary>
         <form
           method="get"
-          className="flex flex-wrap items-end gap-3 rounded-[14px] border border-line bg-surface px-5 py-4"
+          className="mt-2 flex flex-wrap items-end gap-3 rounded-[14px] border border-line bg-surface px-5 py-4"
         >
           {params.cabinet && <input type="hidden" name="cabinet" value={params.cabinet} />}
           {params.regime && <input type="hidden" name="regime" value={params.regime} />}
-          <p className="w-full text-[11px] font-semibold tracking-[0.1em] text-ink-muted uppercase">
-            Compter sur une autre période
-          </p>
           <div>
             <label
               htmlFor="du"
@@ -320,6 +318,7 @@ export default async function Semaine({ searchParams }: { searchParams: Promise<
             </p>
           )}
         </form>
+        </details>
       </div>
 
       {quotas.length > 0 && (
@@ -334,7 +333,7 @@ export default async function Semaine({ searchParams }: { searchParams: Promise<
                 data-numeric
               >
                 {c.nom} : {formatDuree(heures)} / {formatDuree(plafond)} cette semaine
-                {ratio >= 1 && " — plafond dépassé"}
+                {ratio >= 1 && ", plafond dépassé"}
               </li>
             );
           })}
@@ -370,7 +369,7 @@ export default async function Semaine({ searchParams }: { searchParams: Promise<
           className="flex flex-wrap items-center justify-between gap-3 rounded-[14px] border border-accent/40 bg-surface px-5 py-3 text-sm transition-colors hover:border-accent"
         >
           <span>
-            <span className="font-semibold">Google Agenda</span> —{" "}
+            <span className="font-semibold">Google Agenda</span> :{" "}
             <span data-numeric>
               {aFaire.lignes} à traiter ({aFaire.rendezVous} rendez-vous)
             </span>

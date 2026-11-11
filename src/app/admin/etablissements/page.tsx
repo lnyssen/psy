@@ -251,7 +251,7 @@ export default async function Etablissements({
                   </span>
                   <span className="min-w-32 flex-1 text-sm">
                     {f.cabinet.nom}
-                    {f.manuelle && <span className="ml-1.5 text-xs text-ink-muted">— {f.libelle}</span>}
+                    {f.manuelle && <span className="ml-1.5 text-xs text-ink-muted">· {f.libelle}</span>}
                   </span>
                   <span className="text-xs text-ink-muted capitalize" data-numeric>
                     {MOIS_LABEL.format(new Date(Date.UTC(f.annee, f.mois - 1, 1)))}

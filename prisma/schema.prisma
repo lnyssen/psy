@@ -242,6 +242,13 @@ model DemandeRdv {
   email     String?
   phone     String
   message   String?
+  /// Demande faite pour un enfant : firstName, lastName, email et phone sont
+  /// alors ceux du parent qui écrit, et le dossier se crée au nom de l'enfant.
+  enfantPrenom    String?   @map("enfant_prenom")
+  enfantNom       String?   @map("enfant_nom")
+  enfantNaissance DateTime? @map("enfant_naissance")
+  /// Lien du demandeur avec l'enfant (voir lib/liens.ts).
+  lienDemandeur   String?   @map("lien_demandeur")
   souhaite  DateTime
   cabinetId String        @map("cabinet_id")
   cabinet   Cabinet       @relation(fields: [cabinetId], references: [id], onDelete: Restrict)
@@ -271,6 +278,10 @@ model Patient {
   phoneFather    String?    @map("phone_father")
   emailMother    String?    @map("email_mother")
   emailFather    String?    @map("email_father")
+  /// Lien de chaque responsable avec le patient (voir lib/liens.ts) : les
+  /// colonnes mother… et father… ne sont que deux emplacements.
+  lienParent1    String     @default("mère") @map("lien_parent_1")
+  lienParent2    String     @default("père") @map("lien_parent_2")
   /// Numéro de registre national, au format AAMMJJ-XXX.CC (clé vérifiée).
   nationalNumber String?    @map("national_number")
   /// Adresse postale, en champs séparés : un reçu doit pouvoir la composer
@@ -478,6 +489,9 @@ model Parametres {
   iban               String?
   /// Délai de paiement en jours, pour calculer l'échéance à l'émission.
   delaiPaiementJours Int     @default(30) @map("delai_paiement_jours")
+  /// Au-delà de ce nombre de jours, une séance privée encore due s'affiche
+  /// « en retard ». Calculé à l'affichage, jamais écrit en base.
+  retardPaiementJours Int    @default(14) @map("retard_paiement_jours")
   /// Adresse du siège social, reprise en en-tête de toute facture émise à un
   /// établissement — une idée par ligne, ce n'est pas un champ structuré.
   adresseSiege       String? @map("adresse_siege") @db.Text

@@ -48,7 +48,8 @@ export default async function Patients({
   // de séances, solde dû) sont calculées et n'existent pas comme champs.
   const enrichis = patients.map((p) => ({
     p,
-    seances: p.sessions.length,
+    // Les séances qui ont eu lieu : ni les rendez-vous à venir ni les annulations.
+    seances: p.sessions.filter((s) => s.status === "ATTENDED").length,
     absences: compterAbsences(p.sessions),
     // Ce que DOIT le patient : jamais une séance conventionnée, que paie l'INAMI.
     du:

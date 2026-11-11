@@ -201,7 +201,7 @@ export const PAGES_DOC: PageDoc[] = [
           {
             t: "p",
             texte:
-              "Sous le nom du jour, le total d'heures de la journée. En haut, deux compteurs donnent le nombre de séances et d'heures de la semaine, et **Compter sur une autre période** calcule les mêmes chiffres entre deux dates.",
+              "Sous le nom du jour, le total d'heures de la journée. En haut, une ligne donne le nombre de séances et d'heures de la semaine ; le lien **Compter sur une autre période** déplie le même calcul entre deux dates.",
           },
           {
             t: "p",

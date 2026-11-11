@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { CabinetTag } from "@/components/tags";
-import { montantSeanceCents } from "@/lib/tarifs";
+import { etatPaiement, montantSeanceCents, payeurDe } from "@/lib/tarifs";
+import { parametres } from "@/lib/parametres";
 import type { Params } from "@/components/filtres";
 import {
   FUSEAU,
@@ -78,7 +79,16 @@ export default async function Finance({
   // séance non payée comptait pour zéro et le « reste dû » mentait.
   const valeur = (s: (typeof toutes)[number]) =>
     s.amountCents ?? montantSeanceCents(s.patient) ?? 0;
-  const seances = toutes.filter((s) => isBillable(s.status));
+  // « En retard » se calcule à l'affichage (voir etatPaiement).
+  const { retardPaiementJours } = await parametres();
+  const seances = toutes
+    .filter((s) => isBillable(s.status))
+    .map((s) => ({
+      ...s,
+      paymentStatus: s.patient
+        ? etatPaiement(s, payeurDe(s.patient.scheme), retardPaiementJours)
+        : s.paymentStatus,
+    }));
 
   const anneesConnues = [
     ...new Set(seances.map((s) => partiesJour(s.startsAt).annee)),
@@ -236,15 +246,34 @@ export default async function Finance({
     (m) => m.actes > 0 || m.facture > 0,
   ).length;
 
-  const cartes = [
+  const resteSeances = (payeur: "PATIENT" | "INAMI") =>
+    delAnnee
+      .filter(
+        (s) =>
+          s.patient &&
+          payeurDe(s.patient.scheme) === payeur &&
+          s.paymentStatus !== "PAID",
+      )
+      .reduce((n, s) => n + valeur(s), 0);
+  const resteDu = {
+    patients: resteSeances("PATIENT"),
+    inami: resteSeances("INAMI"),
+    etablissements: factures
+      .filter((f) => !f.payeeLe)
+      .reduce((n, f) => n + f.montantCents, 0),
+  };
+
+  const cartes: { t: string; v: string; ton?: string }[] = [
     { t: "Facturé", v: euros(totalAnnee.facture) },
     { t: "Encaissé", v: euros(totalAnnee.encaisse), ton: "text-paid" },
-    {
-      t: "Reste dû",
-      v: euros(totalAnnee.du + totalAnnee.retard),
-      // À zéro, plus rien à signaler : la couleur d'alerte s'éteint.
-      ton: totalAnnee.du + totalAnnee.retard > 0 ? "text-due" : undefined,
-    },
+    // Le reste à recevoir, séparé par payeur comme dans Facturation : une
+    // somme que doit l'INAMI ou une école n'est pas une dette de patient.
+    // À zéro, plus rien à signaler : la couleur d'alerte s'éteint.
+    ...[
+      { t: "Dû par les patients", v: resteDu.patients },
+      { t: "INAMI à recevoir", v: resteDu.inami },
+      { t: "Établissements à recevoir", v: resteDu.etablissements },
+    ].map((c) => ({ t: c.t, v: euros(c.v), ton: c.v > 0 ? "text-due" : undefined })),
     { t: "Actes", v: String(totalAnnee.actes) },
     {
       t: "Moyenne / mois",
@@ -301,7 +330,7 @@ export default async function Finance({
         </div>
       </header>
 
-      <dl className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+      <dl className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
         {cartes.map((c) => (
           <div
             key={c.t}
@@ -365,7 +394,7 @@ export default async function Finance({
                   return (
                     <div
                       key={c.id}
-                      title={`${MOIS[i]} — ${c.nom} — ${euros(part)}`}
+                      title={`${MOIS[i]} · ${c.nom} · ${euros(part)}`}
                       style={{
                         height: `${(part / plafond) * 100}%`,
                         background: (c as CabinetVue).vividHex,
@@ -413,7 +442,7 @@ export default async function Finance({
                   </dd>
                 </div>
                 <div className="flex gap-1.5">
-                  <dt className="text-ink-muted">reste dû</dt>
+                  <dt className="text-ink-muted">à recevoir</dt>
                   <dd className="font-mono font-semibold text-due" data-numeric>
                     {euros(m.du + m.retard)}
                   </dd>
@@ -470,7 +499,7 @@ export default async function Finance({
                 Encaissé
               </th>
               <th scope="col" className="px-3 py-2.5 text-right font-semibold">
-                Reste dû
+                À recevoir
               </th>
               <th scope="col" className="px-5 py-2.5 text-right font-semibold">
                 Actes

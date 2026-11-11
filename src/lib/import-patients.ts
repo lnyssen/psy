@@ -255,10 +255,10 @@ export function verifierLignes(
 
     const cle = cleDoublon(prenom, nom);
     if (ctx.existants.has(cle)) {
-      return { numero, statut: "doublon" as const, nom: resume, avertissements: ["déjà dans l’outil — ignoré"], erreurs, patient: null };
+      return { numero, statut: "doublon" as const, nom: resume, avertissements: ["déjà dans l’outil : ignoré"], erreurs, patient: null };
     }
     if (vusDansLeFichier.has(cle)) {
-      return { numero, statut: "doublon" as const, nom: resume, avertissements: ["déjà plus haut dans le fichier — ignoré"], erreurs, patient: null };
+      return { numero, statut: "doublon" as const, nom: resume, avertissements: ["déjà plus haut dans le fichier : ignoré"], erreurs, patient: null };
     }
     vusDansLeFichier.add(cle);
 
@@ -268,7 +268,7 @@ export function verifierLignes(
     if (regimeTexte) {
       if (/(conv|ppl|inami|premiere ligne|1ere ligne)/.test(regimeTexte)) scheme = "CONVENTIONNE";
       else if (/(prive|priv)/.test(regimeTexte)) scheme = "PRIVE";
-      else avertissements.push(`régime « ${v("regime")} » non reconnu — privé retenu`);
+      else avertissements.push(`régime « ${v("regime")} » non reconnu : privé retenu`);
     }
 
     // Tarif : par nom, puis par montant ; le tarif conventionné s'impose en conventionné.
@@ -288,8 +288,8 @@ export function verifierLignes(
       else if (cents !== null && cents > 0) {
         tarifId = null;
         feeCents = cents;
-        avertissements.push(`montant ${(cents / 100).toFixed(2).replace(".", ",")} € hors de la grille — conservé tel quel`);
-      } else avertissements.push(`tarif « ${tarifTexte} » inconnu — tarif par défaut retenu`);
+        avertissements.push(`montant ${(cents / 100).toFixed(2).replace(".", ",")} € hors de la grille : conservé tel quel`);
+      } else avertissements.push(`tarif « ${tarifTexte} » inconnu : tarif par défaut retenu`);
     }
     if (tarifId === null && feeCents === null) avertissements.push("aucun tarif trouvé pour ce régime");
 
@@ -298,7 +298,7 @@ export function verifierLignes(
     const naissance = v("naissance");
     if (naissance) {
       birthDate = dateISO(naissance);
-      if (!birthDate) avertissements.push(`date de naissance « ${naissance} » illisible — ignorée`);
+      if (!birthDate) avertissements.push(`date de naissance « ${naissance} » illisible : ignorée`);
     }
 
     // N° national
@@ -306,7 +306,7 @@ export function verifierLignes(
     const nn = v("numeroNational");
     if (nn) {
       nationalNumber = numeroNational(nn);
-      if (!nationalNumber) avertissements.push("n° national invalide — ignoré");
+      if (!nationalNumber) avertissements.push("n° national invalide : ignoré");
     }
 
     // Téléphones : Excel avale le zéro initial d'un numéro saisi comme un nombre.
@@ -318,7 +318,7 @@ export function verifierLignes(
         return `0${brut}`;
       }
       if (brut.replace(/\D/g, "").length < 6) {
-        avertissements.push(`téléphone « ${brut} » trop court — ignoré`);
+        avertissements.push(`téléphone « ${brut} » trop court : ignoré`);
         return null;
       }
       return brut;
@@ -327,7 +327,7 @@ export function verifierLignes(
       const brut = v(c);
       if (!brut) return null;
       if (!EMAIL.test(brut)) {
-        avertissements.push(`e-mail « ${brut} » invalide — ignoré`);
+        avertissements.push(`e-mail « ${brut} » invalide : ignoré`);
         return null;
       }
       return brut.toLowerCase();
@@ -339,7 +339,7 @@ export function verifierLignes(
     if (cab) {
       const trouve = ctx.cabinets.find((c) => normaliser(c.nom) === normaliser(cab));
       if (trouve) cabinetId = trouve.id;
-      else avertissements.push(`cabinet « ${cab} » inconnu — aucun cabinet habituel`);
+      else avertissements.push(`cabinet « ${cab} » inconnu : aucun cabinet habituel`);
     }
 
     const cp = v("codePostal");

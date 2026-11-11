@@ -1,5 +1,6 @@
 "use server";
 
+import { LIEN_PAR_DEFAUT_1, LIEN_PAR_DEFAUT_2, lienValide } from "@/lib/liens";
 import { synchroniserApres } from "@/lib/google-sync";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -472,6 +473,8 @@ function parentsEtAnterieures(f: FormData) {
     motherLastName: texte(f, "motherLastName") || null,
     fatherFirstName: texte(f, "fatherFirstName") || null,
     fatherLastName: texte(f, "fatherLastName") || null,
+    lienParent1: lienValide(texte(f, "lienParent1"), LIEN_PAR_DEFAUT_1),
+    lienParent2: lienValide(texte(f, "lienParent2"), LIEN_PAR_DEFAUT_2),
   };
   if (!f.has("pplSeancesAnterieures")) return parents;
   const n = Math.max(0, Math.min(40, Math.floor(Number(texte(f, "pplSeancesAnterieures")) || 0)));
@@ -906,6 +909,7 @@ export async function enregistrerParametres(f: FormData) {
             numeroCommission: texte(f, "numeroCommission") || null,
             iban: texte(f, "iban") || null,
             delaiPaiementJours: entier("delaiPaiementJours", 0, 180, 30),
+            retardPaiementJours: entier("retardPaiementJours", 1, 180, 14),
             adresseSiege: texte(f, "adresseSiege") || null,
             mentionLegale: texte(f, "mentionLegale") || null,
           }

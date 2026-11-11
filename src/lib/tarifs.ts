@@ -43,3 +43,24 @@ export function libellePaiement(
   }
   return { DUE: "dû", PAID: "payé", OVERDUE: "en retard" }[etat];
 }
+
+export type EtatPaiement = "DUE" | "PAID" | "OVERDUE";
+
+/**
+ * L'état de paiement tel qu'on l'affiche. « En retard » n'est jamais écrit en
+ * base : une séance privée encore due le devient d'elle-même passé le délai
+ * réglé (Réglages > Identité et facturation). Le stocker voudrait dire une
+ * tâche planifiée pour le poser, et un chiffre faux le jour où elle ne passe
+ * pas. L'INAMI n'est jamais « en retard » ici : ses délais ne dépendent pas
+ * du patient.
+ */
+export function etatPaiement(
+  s: { paymentStatus: EtatPaiement; startsAt: Date },
+  payeur: Payeur,
+  retardJours: number,
+  maintenant: Date = new Date(),
+): EtatPaiement {
+  if (s.paymentStatus !== "DUE" || payeur !== "PATIENT") return s.paymentStatus;
+  const limite = maintenant.getTime() - retardJours * 24 * 3600 * 1000;
+  return s.startsAt.getTime() < limite ? "OVERDUE" : "DUE";
+}

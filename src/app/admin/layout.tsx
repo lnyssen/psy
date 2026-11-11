@@ -7,13 +7,14 @@ import { VerrouInactivite } from "@/components/VerrouInactivite";
 import { ZoneAnnulation } from "@/components/AnnulationGeste";
 import { SyncHorsLigne } from "@/components/SyncHorsLigne";
 import { Confirmations } from "@/components/Confirmations";
+import { GardeSaisie } from "@/components/GardeSaisie";
 import { prisma } from "@/lib/db";
 import { demoOuverte } from "@/lib/demo";
 import { sessionDeveloppeur } from "@/lib/db";
 import { statutSauvegarde } from "@/lib/sauvegardes";
 
 export const metadata: Metadata = {
-  title: "Amandine Monsel — Amapsy SRL",
+  title: "Amandine Monsel – Amapsy SRL",
   description: "Outil de gestion de pratique.",
   // L'outil n'a rien à faire dans un moteur de recherche.
   robots: { index: false, follow: false },
@@ -48,6 +49,7 @@ export default async function AdminLayout({
           {children}
         </main>
         <Confirmations />
+        <GardeSaisie />
       </div>
     );
   }
@@ -86,6 +88,7 @@ export default async function AdminLayout({
       {!ouverte && <VerrouInactivite />}
       <ZoneAnnulation />
       <Confirmations />
+      <GardeSaisie />
       <SyncHorsLigne />
       <BarreLaterale
         theme={theme}

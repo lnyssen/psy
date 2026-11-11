@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { synchroniserApres } from "@/lib/google-sync";
 import { compterAFaire } from "@/lib/google-afaire";
 import { parametres } from "@/lib/parametres";
+import { etatPaiement, payeurDe } from "@/lib/tarifs";
 import { ACompleter } from "@/components/ACompleter";
 import { ATrancher } from "@/components/ATrancher";
 import { configurationACompleter } from "@/lib/configuration-etat";
@@ -281,7 +282,11 @@ export default async function Aujourdhui({ searchParams }: { searchParams: Promi
                       </span>
                       <EtatPaiement
                         status={s.status}
-                        payment={s.paymentStatus}
+                        payment={
+                          s.patient
+                            ? etatPaiement(s, payeurDe(s.patient.scheme), reglages.retardPaiementJours)
+                            : s.paymentStatus
+                        }
                         methode={s.paymentMethod}
                       />
                     </>

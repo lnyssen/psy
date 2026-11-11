@@ -334,8 +334,29 @@ export function Identite({ valeurs }: { valeurs: ParametresType }) {
             "mentionLegale",
             "Mention légale (RPM…)",
             valeurs.mentionLegale,
-            "RPM Bruxelles — Francophone",
+            "RPM Bruxelles, francophone",
           )}
+        </fieldset>
+
+        <fieldset className="flex flex-col gap-3 border-t border-line pt-5">
+          <legend className="pr-3 text-sm font-semibold">Paiement des patients</legend>
+          <label>
+            <span className={libelleChamp}>En retard après</span>
+            <span className="mt-1 flex items-center gap-2">
+              <ChampNombre
+                name="retardPaiementJours"
+                min={1}
+                max={180}
+                defaultValue={valeurs.retardPaiementJours}
+                className={champCourt}
+              />
+              <span className="text-sm text-ink-muted">jours</span>
+            </span>
+            <span className="mt-1 block text-xs text-ink-muted">
+              Une séance privée encore due au-delà de ce délai passe « en retard » dans
+              Facturation, Finance et l’agenda.
+            </span>
+          </label>
         </fieldset>
 
         <fieldset className="flex flex-col gap-3 border-t border-line pt-5">

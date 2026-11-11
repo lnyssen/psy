@@ -495,12 +495,17 @@ export function GrilleSemaine({
                           <span className="block truncate text-sm font-medium">{s.nom}</span>
                           <span className="font-mono text-[11px] text-ink-muted" data-numeric>
                             {String(Math.floor(s.minutes / 60)).padStart(2, "0")}:
-                            {String(s.minutes % 60).padStart(2, "0")} ·{" "}
+                            {String(s.minutes % 60).padStart(2, "0")}
+                            {/* Un bloc d'établissement porte déjà le nom du
+                                lieu en titre : « École », puis « 10:00 · École »
+                                le disait deux fois. */}
                             {s.externe === "A_RATTACHER"
-                              ? "Google — à rattacher"
+                              ? " · Google · à rattacher"
                               : s.externe === "OCCUPE"
-                                ? "Google — occupé"
-                                : s.cabinetNom}
+                                ? " · Google · occupé"
+                                : s.nom === s.cabinetNom
+                                  ? ""
+                                  : ` · ${s.cabinetNom}`}
                             {s.visio ? " · visio" : ""}
                             {s.participants ? ` · ${s.participants}` : ""}
                             {s.horsQuota ? " · hors quota INAMI" : ""}
@@ -628,7 +633,7 @@ function PopoverCreation({
     >
       <div className="flex items-center justify-between gap-2">
         <p className="text-xs font-semibold" data-numeric>
-          Nouvelle séance — {jour.nom} {jour.numero}
+          Nouvelle séance · {jour.nom} {jour.numero}
         </p>
         <button
           type="button"
@@ -708,7 +713,7 @@ function CreationMobile({
     <div className="mb-3 flex flex-col gap-2.5 rounded-[14px] border border-accent/40 bg-surface p-3.5 shadow-[0_8px_24px_rgba(39,39,87,0.1)]">
       <div className="flex items-center justify-between gap-2">
         <p className="text-xs font-semibold" data-numeric>
-          Nouvelle séance — {jour.nom} {jour.numero}
+          Nouvelle séance · {jour.nom} {jour.numero}
         </p>
         <button
           type="button"
@@ -878,7 +883,7 @@ function Bloc({
       <span aria-hidden="true" className="filet-cabinet w-[5px] shrink-0" />
       <Link
         href={seance.patientId ? `/admin/patients/${seance.patientId}` : "/admin/etablissements"}
-        title={`${seance.nom} — ${hhmm(seance.minutes)}–${hhmm(seance.minutes + seance.duree)} — ${seance.cabinetNom}${seance.visio ? " (visio)" : ""}${seance.participants ? ` (${seance.participants})` : ""}`}
+        title={`${seance.nom} · ${hhmm(seance.minutes)}–${hhmm(seance.minutes + seance.duree)} · ${seance.cabinetNom}${seance.visio ? " (visio)" : ""}${seance.participants ? ` (${seance.participants})` : ""}`}
         className="flex min-w-0 flex-1 flex-col gap-[3px] overflow-hidden px-2 py-1.5"
       >
         <span className="shrink-0 truncate text-[12.5px] leading-[1.25] font-bold" data-numeric>

@@ -80,8 +80,8 @@ export function RegimeEtTarif({
           }}
           className={`mt-1 ${champ}`}
         >
-          <option value="PRIVE">privé — payé par le patient</option>
-          <option value="CONVENTIONNE">conventionné — psychologue de première ligne</option>
+          <option value="PRIVE">privé (payé par le patient)</option>
+          <option value="CONVENTIONNE">conventionné (psychologue de première ligne)</option>
         </select>
       </label>
       <label>
@@ -95,12 +95,12 @@ export function RegimeEtTarif({
           className={`mt-1 ${champ}`}
         >
           {regime === "PRIVE" && ancienMontantCents !== null && !tarifInitial && (
-            <option value="ancien">Montant actuel — {euros(ancienMontantCents)} (hors grille)</option>
+            <option value="ancien">Montant actuel : {euros(ancienMontantCents)} (hors grille)</option>
           )}
-          {offerts.length === 0 && <option value="">Aucun tarif — à créer dans les réglages</option>}
+          {offerts.length === 0 && <option value="">Aucun tarif : à créer dans les réglages</option>}
           {offerts.map((t) => (
             <option key={t.id} value={t.id}>
-              {t.libelle} — {euros(t.amountCents)}
+              {t.libelle} · {euros(t.amountCents)}
             </option>
           ))}
         </select>
@@ -115,8 +115,8 @@ export function RegimeEtTarif({
           <label>
             <span className={libelleChamp}>Convention INAMI</span>
             <select name="pplType" defaultValue={pplTypeInitial} className={`mt-1 ${champ}`}>
-              <option value="SOUTIEN">10 séances — soutien psychologique</option>
-              <option value="TRAITEMENT">20 séances — traitement psychologique</option>
+              <option value="SOUTIEN">10 séances : soutien psychologique</option>
+              <option value="TRAITEMENT">20 séances : traitement psychologique</option>
             </select>
             <span className="mt-1 block text-[11px] text-ink-muted">
               Sur 12 mois. Pour un adulte (réseau adultes), le soutien est limité à 8 séances.

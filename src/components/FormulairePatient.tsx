@@ -4,6 +4,7 @@ import { BoutonEnregistrer } from "@/components/BoutonEnregistrer";
 import { RegimeEtTarif } from "@/components/RegimeEtTarif";
 import { FormulaireAction } from "@/components/FormulaireAction";
 import { ChampDate } from "@/components/ChampDate";
+import { LIENS, LIEN_PAR_DEFAUT_1, LIEN_PAR_DEFAUT_2 } from "@/lib/liens";
 
 const champ =
   "w-full rounded-full border border-line bg-surface px-3.5 py-2 text-sm placeholder:text-ink-muted/60";
@@ -42,6 +43,8 @@ type Patient = {
   phoneFather: string | null;
   emailMother: string | null;
   emailFather: string | null;
+  lienParent1?: string;
+  lienParent2?: string;
   nationalNumber: string | null;
   addressLine: string | null;
   postalCode: string | null;
@@ -69,9 +72,9 @@ function Groupe({
       aria-labelledby={id}
       className="flex flex-col gap-1 border-t border-line pt-6 first-of-type:border-t-0 first-of-type:pt-0"
     >
-      <h3 id={id} className="text-sm font-semibold">
+      <h2 id={id} className="text-sm font-semibold">
         {titre}
-      </h3>
+      </h2>
       {aide && <p className="text-xs text-ink-muted">{aide}</p>}
       <div className="mt-3 grid gap-3 sm:grid-cols-2">{children}</div>
     </div>
@@ -233,77 +236,54 @@ export function FormulairePatient({
       </Groupe>
 
       <Groupe
-        titre="Parents"
-        aide="Pour un enfant ou un adolescent. À laisser vide pour un adulte."
+        titre="Parents ou responsables"
+        aide="Pour un enfant ou un adolescent. À laisser vide pour un adulte. Choisissez le lien de chacun : deux mères, un tuteur, une famille d’accueil se saisissent de la même façon."
       >
-        <label>
-          <span className={libelle}>Prénom de la mère</span>
-          <input
-            name="motherFirstName"
-            defaultValue={p?.motherFirstName ?? ""}
-            className={`mt-1 ${champ}`}
-          />
-        </label>
-        <label>
-          <span className={libelle}>Nom de la mère</span>
-          <input
-            name="motherLastName"
-            defaultValue={p?.motherLastName ?? ""}
-            className={`mt-1 ${champ}`}
-          />
-        </label>
-        <label>
-          <span className={libelle}>Téléphone de la mère</span>
-          <input
-            name="phoneMother"
-            type="tel"
-            defaultValue={p?.phoneMother ?? ""}
-            className={`mt-1 ${champ}`}
-          />
-        </label>
-        <label>
-          <span className={libelle}>E-mail de la mère</span>
-          <input
-            name="emailMother"
-            type="email"
-            defaultValue={p?.emailMother ?? ""}
-            className={`mt-1 ${champ}`}
-          />
-        </label>
-        <label>
-          <span className={libelle}>Prénom du père</span>
-          <input
-            name="fatherFirstName"
-            defaultValue={p?.fatherFirstName ?? ""}
-            className={`mt-1 ${champ}`}
-          />
-        </label>
-        <label>
-          <span className={libelle}>Nom du père</span>
-          <input
-            name="fatherLastName"
-            defaultValue={p?.fatherLastName ?? ""}
-            className={`mt-1 ${champ}`}
-          />
-        </label>
-        <label>
-          <span className={libelle}>Téléphone du père</span>
-          <input
-            name="phoneFather"
-            type="tel"
-            defaultValue={p?.phoneFather ?? ""}
-            className={`mt-1 ${champ}`}
-          />
-        </label>
-        <label>
-          <span className={libelle}>E-mail du père</span>
-          <input
-            name="emailFather"
-            type="email"
-            defaultValue={p?.emailFather ?? ""}
-            className={`mt-1 ${champ}`}
-          />
-        </label>
+        {(
+          [
+            {
+              n: 1,
+              lien: p?.lienParent1 ?? LIEN_PAR_DEFAUT_1,
+              champs: ["motherFirstName", "motherLastName", "phoneMother", "emailMother"],
+              valeurs: [p?.motherFirstName, p?.motherLastName, p?.phoneMother, p?.emailMother],
+            },
+            {
+              n: 2,
+              lien: p?.lienParent2 ?? LIEN_PAR_DEFAUT_2,
+              champs: ["fatherFirstName", "fatherLastName", "phoneFather", "emailFather"],
+              valeurs: [p?.fatherFirstName, p?.fatherLastName, p?.phoneFather, p?.emailFather],
+            },
+          ] as const
+        ).map((r) => (
+          <fieldset key={r.n} className="contents">
+            <legend className="sr-only">Responsable {r.n}</legend>
+            <label className="sm:col-span-2">
+              <span className={libelle}>Responsable {r.n} : lien</span>
+              <select
+                name={`lienParent${r.n}`}
+                defaultValue={r.lien}
+                className={`mt-1 ${champ} sm:w-1/2`}
+              >
+                {LIENS.map((l) => (
+                  <option key={l} value={l}>
+                    {l}
+                  </option>
+                ))}
+              </select>
+            </label>
+            {(["Prénom", "Nom", "Téléphone", "E-mail"] as const).map((t, i) => (
+              <label key={t}>
+                <span className={libelle}>{t}</span>
+                <input
+                  name={r.champs[i]}
+                  type={t === "Téléphone" ? "tel" : t === "E-mail" ? "email" : "text"}
+                  defaultValue={r.valeurs[i] ?? ""}
+                  className={`mt-1 ${champ}`}
+                />
+              </label>
+            ))}
+          </fieldset>
+        ))}
       </Groupe>
 
       <Groupe titre="Adresse">

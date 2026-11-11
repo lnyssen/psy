@@ -28,6 +28,8 @@ export async function relancesImpayees(patientId?: string): Promise<Relance[]> {
       where: {
         patientId: patientId ?? { not: null },
         status: { in: ["ATTENDED", "NO_SHOW"] },
+        // Rien à relancer pour une séance qui n'a pas encore eu lieu.
+        startsAt: { lte: new Date() },
         paymentStatus: { not: "PAID" },
         patient: { scheme: "PRIVE" },
       },

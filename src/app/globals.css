@@ -582,3 +582,10 @@ input[type="number"]::-webkit-outer-spin-button {
   -webkit-appearance: none;
   margin: 0;
 }
+
+/* Formulaire modifié, pas encore enregistré (voir GardeSaisie) : son bouton
+   d'enregistrement s'entoure d'ambre, la couleur de ce qui reste à faire. */
+form[data-modifie] button[type="submit"]:not(:disabled),
+form[data-modifie] button:not([type]):not(:disabled) {
+  box-shadow: 0 0 0 3px var(--color-due-soft), 0 0 0 4px var(--color-due);
+}

@@ -36,6 +36,7 @@ export function PriseRdv({
   lienInvalide: boolean;
 }) {
   const [creneau, setCreneau] = useState<string | null>(null);
+  const [pourQui, setPourQui] = useState<"moi" | "enfant">("moi");
   const [resultat, action, enCours] = useActionState<ResultatRdv, FormData>(
     reserverOuDemander,
     null,
@@ -117,23 +118,73 @@ export function PriseRdv({
         </section>
 
         {!jeton && (
-          <section className="flex flex-col gap-3">
+          <section className="flex flex-col gap-4">
             <h2 className="text-[11px] font-semibold tracking-[0.12em] text-titre uppercase">
-              Vos coordonnées
+              Pour qui ?
+            </h2>
+            <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Le rendez-vous est pour">
+              {(
+                [
+                  ["moi", "Pour moi"],
+                  ["enfant", "Pour mon enfant"],
+                ] as const
+              ).map(([v, t]) => (
+                <label
+                  key={v}
+                  className={`cursor-pointer rounded-full border px-4 py-2 text-sm font-medium transition-colors ${
+                    pourQui === v
+                      ? "border-accent bg-accent text-accent-contrast"
+                      : "border-line-strong hover:border-accent hover:text-accent-text"
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="pourQui"
+                    value={v}
+                    checked={pourQui === v}
+                    onChange={() => setPourQui(v)}
+                    className="sr-only"
+                  />
+                  {t}
+                </label>
+              ))}
+            </div>
+
+            {pourQui === "enfant" && (
+              <div className="grid gap-3 sm:grid-cols-2">
+                <Champ nom="enfantPrenom" libelle="Prénom de l’enfant" requis />
+                <Champ nom="enfantNom" libelle="Nom de l’enfant, s’il diffère du vôtre" />
+                <Champ nom="enfantNaissance" libelle="Date de naissance de l’enfant" type="date" requis />
+                <label className="flex flex-col gap-1.5">
+                  <span className={libelleChamp}>Vous êtes</span>
+                  <select name="lienDemandeur" defaultValue="mère" className={champ}>
+                    {VOUS_ETES.map(([v, t]) => (
+                      <option key={v} value={v}>
+                        {t}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+            )}
+
+            <h2 className="mt-2 text-[11px] font-semibold tracking-[0.12em] text-titre uppercase">
+              {pourQui === "enfant" ? "Vos coordonnées (parent ou responsable)" : "Vos coordonnées"}
             </h2>
             <div className="grid gap-3 sm:grid-cols-2">
-              <input name="firstName" placeholder="Prénom" aria-label="Prénom" autoComplete="given-name" required className={champ} />
-              <input name="lastName" placeholder="Nom" aria-label="Nom" autoComplete="family-name" required className={champ} />
-              <input name="email" type="email" placeholder="Adresse électronique (facultatif)" aria-label="Adresse électronique (facultatif)" autoComplete="email" className={champ} />
-              <input name="phone" type="tel" placeholder="Téléphone" aria-label="Téléphone" autoComplete="tel" required className={champ} />
+              <Champ nom="firstName" libelle="Prénom" auto="given-name" requis />
+              <Champ nom="lastName" libelle="Nom" auto="family-name" requis />
+              <Champ nom="phone" libelle="Téléphone" type="tel" auto="tel" requis />
+              <Champ nom="email" libelle="Adresse électronique (facultatif)" type="email" auto="email" />
             </div>
-            <textarea
-              name="message"
-              rows={3}
-              placeholder="Un mot, si vous le souhaitez (facultatif)"
-              aria-label="Un mot, si vous le souhaitez (facultatif)"
-              className="w-full resize-y rounded-[14px] border border-line bg-surface px-4 py-3 text-sm"
-            />
+            <label className="flex flex-col gap-1.5">
+              <span className={libelleChamp}>Un mot, si vous le souhaitez (facultatif)</span>
+              <textarea
+                name="message"
+                rows={3}
+                className="w-full resize-y rounded-[14px] border border-line bg-surface px-4 py-3 text-sm"
+              />
+            </label>
             <p className="text-xs leading-relaxed text-ink-muted">
               Ces informations servent uniquement à traiter votre demande. Elles sont conservées en
               Europe, ne sont transmises à personne, et sont effacées si la demande n’aboutit pas.
@@ -171,3 +222,41 @@ export function PriseRdv({
 }
 
 const champ = "w-full rounded-full border border-line bg-surface px-4 py-2.5 text-sm";
+
+const libelleChamp = "text-xs font-medium text-ink-muted";
+
+/** Un champ avec son libellé au-dessus, toujours visible : un texte d'exemple
+ *  qui s'efface dès qu'on tape laisse sur téléphone un formulaire muet. */
+function Champ({
+  nom,
+  libelle,
+  type = "text",
+  auto,
+  requis,
+}: {
+  nom: string;
+  libelle: string;
+  type?: string;
+  auto?: string;
+  requis?: boolean;
+}) {
+  return (
+    <label className="flex flex-col gap-1.5">
+      <span className={libelleChamp}>{libelle}</span>
+      <input name={nom} type={type} autoComplete={auto} required={requis} className={champ} />
+    </label>
+  );
+}
+
+/** Le lien du demandeur avec l'enfant : il devient le lien du responsable 1
+ *  de la fiche (voir lib/liens.ts). */
+const VOUS_ETES = [
+  ["mère", "sa mère"],
+  ["père", "son père"],
+  ["belle-mère", "sa belle-mère"],
+  ["beau-père", "son beau-père"],
+  ["tuteur ou tutrice", "son tuteur ou sa tutrice"],
+  ["grand-parent", "un grand-parent"],
+  ["famille d’accueil", "sa famille d’accueil"],
+  ["autre", "autre"],
+] as const;

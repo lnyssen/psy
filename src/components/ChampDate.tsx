@@ -132,7 +132,7 @@ export function ChampDate({
             c.focus();
           }
         }}
-        className="absolute top-1/2 right-2.5 -translate-y-1/2 rounded-full p-1 text-ink-muted transition-colors hover:text-accent-text"
+        className="absolute top-1/2 right-1 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-ink-muted transition-colors hover:text-accent-text"
       >
         <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.4" aria-hidden>
           <rect x="2" y="3" width="12" height="11" rx="2" />

@@ -23,7 +23,7 @@ import { MenuPlus } from "@/components/MenuPlus";
 import { SupprimerSeance } from "@/components/SupprimerSeance";
 import { Attestation } from "@/components/Attestation";
 import { seanceAVenir, seancePieceComptable } from "@/lib/suppression-patient";
-import { montantSeanceCents, payeurDe } from "@/lib/tarifs";
+import { etatPaiement, montantSeanceCents, payeurDe } from "@/lib/tarifs";
 import { AnnulerAbsence } from "@/components/AnnulerAbsence";
 import { AnnulerSeance } from "@/components/AnnulerSeance";
 import { StatuerSeance } from "@/components/StatuerSeance";
@@ -33,6 +33,7 @@ import { cleNotesPresente, dechiffrer } from "@/lib/chiffrement";
 import { enregistrerPatient } from "@/lib/actions";
 import { FormulaireNouvelleSeance } from "@/components/FormulaireNouvelleSeance";
 import { parametres } from "@/lib/parametres";
+import { intitule } from "@/lib/liens";
 import { ChoixParticipants } from "@/components/ChoixParticipants";
 import {
   plafondConventionne,
@@ -101,6 +102,10 @@ export default async function FichePatient({
   });
   const montant = montantSeanceCents(patient);
   const payeur = payeurDe(patient.scheme);
+  const { retardPaiementJours } = await parametres();
+  const honorees = patient.sessions.filter((s) => s.status === "ATTENDED");
+  const nbAbsences = patient.sessions.filter((s) => s.status === "NO_SHOW").length;
+  const aVenirNb = patient.sessions.filter((s) => s.status === "SCHEDULED").length;
 
   // Un lieu facturé à un établissement (l'école) n'a pas de patientèle propre
   // (voir /admin/patients) : pas la peine de le proposer ici non plus.
@@ -180,7 +185,7 @@ export default async function FichePatient({
   const coordonnees = [
     { t: "Téléphone", v: patient.phone, mono: true },
     {
-      t: "Mère",
+      t: intitule(patient.lienParent1),
       v: [
         [patient.motherFirstName, patient.motherLastName].filter(Boolean).join(" "),
         patient.phoneMother,
@@ -190,7 +195,7 @@ export default async function FichePatient({
         .join(" · "),
     },
     {
-      t: "Père",
+      t: intitule(patient.lienParent2),
       v: [
         [patient.fatherFirstName, patient.fatherLastName].filter(Boolean).join(" "),
         patient.phoneFather,
@@ -310,8 +315,20 @@ export default async function FichePatient({
           une deuxième ligne. */}
       <dl className="grid grid-cols-2 gap-3 sm:grid-cols-[repeat(auto-fit,minmax(9.5rem,1fr))] [&>div:last-child:nth-child(odd)]:col-span-2 sm:[&>div:last-child:nth-child(odd)]:col-span-1">
         {[
-          { t: "Séances", v: String(patient.sessions.length) },
-          { t: "Heures", v: formatDuree(heuresTotales(patient.sessions)) },
+          // Ce qui a eu lieu, et seulement cela : les séances à venir et les
+          // absences se lisent à part, sous le chiffre.
+          {
+            t: "Séances honorées",
+            v: String(honorees.length),
+            sous:
+              [
+                nbAbsences > 0 ? `${nbAbsences} absence${nbAbsences > 1 ? "s" : ""}` : null,
+                aVenirNb > 0 ? `${aVenirNb} à venir` : null,
+              ]
+                .filter(Boolean)
+                .join(" · ") || undefined,
+          },
+          { t: "Heures", v: formatDuree(heuresTotales(honorees)) },
           // En conventionné, l'argent qui compte vient de l'INAMI : le patient, lui,
           // ne doit jamais rien.
           {
@@ -349,6 +366,9 @@ export default async function FichePatient({
             >
               {c.v}
             </dd>
+            {"sous" in c && c.sous && (
+              <p className="mt-0.5 text-xs text-ink-muted">{c.sous}</p>
+            )}
             {"jauge" in c && c.jauge && (
               <div className="mt-2">
                 <JaugeQuota utilisees={c.jauge.utilisees} plafond={c.jauge.plafond} />
@@ -366,8 +386,8 @@ export default async function FichePatient({
           <dl className="grid flex-1 gap-x-8 gap-y-3 sm:grid-cols-2 lg:grid-cols-1">
             {coordonnees
               .filter((c) => c.v)
-              .map((c) => (
-              <div key={c.t}>
+              .map((c, i) => (
+              <div key={`${i}-${c.t}`}>
                 <dt className="text-[11px] font-semibold tracking-[0.1em] text-ink-muted uppercase">
                   {c.t}
                 </dt>
@@ -399,8 +419,8 @@ export default async function FichePatient({
           texte={texteCoordonnees(patient)}
           numeros={[
             { libelle: "", tel: patient.phone },
-            { libelle: "mère", tel: patient.phoneMother },
-            { libelle: "père", tel: patient.phoneFather },
+            { libelle: patient.lienParent1, tel: patient.phoneMother },
+            { libelle: patient.lienParent2, tel: patient.phoneFather },
           ].filter((n): n is { libelle: string; tel: string } => Boolean(n.tel))}
         />
 
@@ -501,7 +521,7 @@ export default async function FichePatient({
                     </span>
                     <EtatPaiement
                       status={s.status}
-                      payment={s.paymentStatus}
+                      payment={etatPaiement(s, payeur, retardPaiementJours)}
                       methode={s.paymentMethod}
                       payeur={payeur}
                     />
