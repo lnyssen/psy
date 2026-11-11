@@ -4,6 +4,8 @@ import {
   dateSaisieFr,
   heureSaisieFr,
   naissanceDuNumeroNational,
+  naissanceDesSixChiffres,
+  debutNumeroNational,
   ajouterJours,
   conflitsDeTrajet,
   euros,
@@ -174,5 +176,24 @@ describe("saisies à la française", () => {
     const cle = String(97 - (Number(`2${base}`) % 97)).padStart(2, "0");
     expect(naissanceDuNumeroNational(base + cle)?.toISOString().slice(0, 10)).toBe("2010-03-15");
     expect(naissanceDuNumeroNational("85073003300")).toBeNull();
+  });
+});
+
+describe("naissanceDesSixChiffres", () => {
+  const ref = new Date(Date.UTC(2026, 10, 11));
+  it("lit AAMMJJ dès six chiffres", () => {
+    expect(naissanceDesSixChiffres("81 07 24", ref)?.toISOString().slice(0, 10)).toBe("1981-07-24");
+    expect(naissanceDesSixChiffres("810724-12", ref)?.toISOString().slice(0, 10)).toBe("1981-07-24");
+    expect(naissanceDesSixChiffres("150315", ref)?.toISOString().slice(0, 10)).toBe("2015-03-15");
+  });
+  it("laisse la clé trancher le siècle quand le numéro est complet", () => {
+    expect(naissanceDesSixChiffres("85073003328", ref)?.toISOString().slice(0, 10)).toBe("1985-07-30");
+  });
+  it("refuse une date impossible ou trop courte", () => {
+    expect(naissanceDesSixChiffres("811324", ref)).toBeNull();
+    expect(naissanceDesSixChiffres("81072", ref)).toBeNull();
+  });
+  it("donne l'inverse pour préremplir", () => {
+    expect(debutNumeroNational("1981-07-24")).toBe("810724");
   });
 });

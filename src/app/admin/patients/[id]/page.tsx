@@ -8,7 +8,6 @@ import {
   RegimeTag,
   StatutSeance,
 } from "@/components/tags";
-import { BoutonEnregistrer } from "@/components/BoutonEnregistrer";
 import { JaugeQuota } from "@/components/JaugeQuota";
 import { Notes } from "@/components/Notes";
 import { Encaisser } from "@/components/Encaisser";
@@ -31,7 +30,10 @@ import { StatuerSeance } from "@/components/StatuerSeance";
 import { BasculeVisio } from "@/components/BasculeVisio";
 import { NoteSeance } from "@/components/NoteSeance";
 import { cleNotesPresente, dechiffrer } from "@/lib/chiffrement";
-import { creerSeanceDepuisFormulaire, enregistrerPatient } from "@/lib/actions";
+import { enregistrerPatient } from "@/lib/actions";
+import { FormulaireNouvelleSeance } from "@/components/FormulaireNouvelleSeance";
+import { parametres } from "@/lib/parametres";
+import { ChoixParticipants } from "@/components/ChoixParticipants";
 import {
   plafondConventionne,
   reseauPpl,
@@ -49,16 +51,10 @@ import {
   isoJour,
   nomComplet,
 } from "@/lib/format";
-import { ChampDate } from "@/components/ChampDate";
-import { ChampHeure } from "@/components/ChampHeure";
 import { basculerArchive } from "@/lib/archive-actions";
 
 export const dynamic = "force-dynamic";
 
-const champ =
-  "w-full rounded-full border border-line bg-surface px-3.5 py-2 text-sm placeholder:text-ink-muted/60";
-const libelleChamp =
-  "block text-[11px] font-semibold tracking-[0.1em] text-ink-muted uppercase";
 
 function age(naissance: Date | null) {
   if (!naissance) return null;
@@ -153,7 +149,7 @@ export default async function FichePatient({
   const libelleReseau = conventionne
     ? `${patient.pplType === "TRAITEMENT" ? "traitement" : "soutien"} (${plafondInami} séances) · réseau ${
         reseauPpl(patient) === "ENFANTS" ? "enfants" : "adultes"
-      }`
+      }${patient.pplPeriodes > 1 ? ` · ${patient.pplPeriodes} périodes octroyées` : ""}`
     : null;
 
   // Notes de séance : déchiffrées ici, côté serveur, pour ne jamais faire
@@ -172,6 +168,14 @@ export default async function FichePatient({
       notesSeances.set(s.id, null);
     }
   }
+
+  // Première séance : celle saisie dans la fiche (suivi commencé avant
+  // l'outil), sinon la plus ancienne de l'agenda qui a eu lieu ou aura lieu.
+  const premiereAgenda =
+    patient.sessions
+      .filter((s) => s.status !== "CANCELLED_IN_TIME")
+      .reduce<Date | null>((min, s) => (!min || s.startsAt < min ? s.startsAt : min), null);
+  const premiereSeance = patient.premiereSeanceLe ?? premiereAgenda;
 
   const coordonnees = [
     { t: "Téléphone", v: patient.phone, mono: true },
@@ -210,6 +214,22 @@ export default async function FichePatient({
       mono: true,
     },
     { t: "N° national", v: patient.nationalNumber, mono: true },
+    {
+      t: "Première séance",
+      v: premiereSeance
+        ? `${fmtJourMoisAn.format(premiereSeance)}${patient.premiereSeanceLe ? "" : " (agenda)"}`
+        : null,
+      mono: true,
+    },
+    ...(conventionne
+      ? [
+          {
+            t: "Périodes de référence",
+            v: `${patient.pplPeriodes} octroyée${patient.pplPeriodes > 1 ? "s" : ""}`,
+            mono: true,
+          },
+        ]
+      : []),
     {
       t: patient.scheme === "CONVENTIONNE" ? "Tarif conventionné" : "Tarif",
       v:
@@ -394,59 +414,12 @@ export default async function FichePatient({
         <summary className="w-fit cursor-pointer list-none rounded-full bg-accent px-5 py-2.5 text-sm font-medium text-accent-contrast transition-colors hover:bg-accent-hover">
           Nouvelle séance
         </summary>
-        <form
-          action={creerSeanceDepuisFormulaire}
-          className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4"
-        >
-          <input type="hidden" name="patientId" value={patient.id} />
-          <label>
-            <span className={libelleChamp}>Cabinet</span>
-            <select
-              name="cabinetId"
-              required
-              defaultValue={patient.cabinetId ?? ""}
-              className={`mt-1 ${champ}`}
-            >
-              <option value="" disabled>
-                Choisir…
-              </option>
-              {cabinets.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.nom}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            <span className={libelleChamp}>Date</span>
-            <ChampDate
-              name="date"
-              required
-              className={`mt-1 ${champ}`}
-            />
-          </label>
-          <label>
-            <span className={libelleChamp}>Heure</span>
-            <ChampHeure
-              name="heure"
-              required
-              defaultValue="09:00"
-              className={`mt-1 ${champ}`}
-            />
-          </label>
-          <label>
-            <span className={libelleChamp}>Jusqu’au (optionnel)</span>
-            <ChampDate name="jusquau" className={`mt-1 ${champ}`} />
-            <span className="mt-1 block text-[11px] text-ink-muted">
-              Répète chaque semaine, même jour et même heure.
-            </span>
-          </label>
-          <label className="flex items-center gap-2 self-end pb-2 text-sm">
-            <input type="checkbox" name="visio" className="accent-accent" />
-            En visio
-          </label>
-          <BoutonEnregistrer className="self-end">Créer</BoutonEnregistrer>
-        </form>
+        <FormulaireNouvelleSeance
+          patientId={patient.id}
+          cabinets={cabinets}
+          cabinetParDefaut={patient.cabinetId}
+          dureeMin={(await parametres()).dureeSeanceMin}
+        />
       </details>
         <details id="modifier-fiche" className="rounded-[14px] open:order-last open:basis-full open:border open:border-line open:bg-surface open:px-5 open:py-4">
           <summary className="w-fit cursor-pointer list-none rounded-full border border-line-strong bg-surface px-5 py-2.5 text-sm font-medium transition-colors hover:border-accent hover:text-accent-text">
@@ -459,6 +432,7 @@ export default async function FichePatient({
               tarifs={tarifs}
               cabinets={cabinets}
               libelleBouton="Enregistrer la fiche"
+              premiereSeanceAgenda={premiereAgenda ? isoJour(premiereAgenda) : null}
             />
       {patient.jetonRdv && (
         <section className="mt-6 border-t border-line pt-5">
@@ -512,6 +486,7 @@ export default async function FichePatient({
                 <CabinetTag cabinet={s.cabinet} />
                 <span className="flex flex-wrap items-center gap-2">
                   <StatutSeance status={s.status} />
+                  <ChoixParticipants id={s.id} valeur={s.participants} />
                   {(s.status === "SCHEDULED" || s.visio) && (
                     <BasculeVisio id={s.id} visio={s.visio} />
                   )}

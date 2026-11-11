@@ -2,6 +2,8 @@ import { useId } from "react";
 import { NaissanceEtNumeroNational } from "@/components/NaissanceEtNumeroNational";
 import { BoutonEnregistrer } from "@/components/BoutonEnregistrer";
 import { RegimeEtTarif } from "@/components/RegimeEtTarif";
+import { FormulaireAction } from "@/components/FormulaireAction";
+import { ChampDate } from "@/components/ChampDate";
 
 const champ =
   "w-full rounded-full border border-line bg-surface px-3.5 py-2 text-sm placeholder:text-ink-muted/60";
@@ -34,6 +36,8 @@ type Patient = {
   fatherLastName?: string | null;
   pplSeancesAnterieures?: number;
   pplAnterieuresLe?: Date | null;
+  pplPeriodes?: number;
+  premiereSeanceLe?: Date | null;
   phoneMother: string | null;
   phoneFather: string | null;
   emailMother: string | null;
@@ -92,16 +96,24 @@ export function FormulairePatient({
   tarifs,
   cabinets,
   libelleBouton,
+  premiereSeanceAgenda = null,
 }: {
-  action: (f: FormData) => void | Promise<void>;
+  action: (f: FormData) => unknown;
   patient?: Patient;
   tarifs: Tarif[];
   cabinets: { id: string; nom: string }[];
   libelleBouton: string;
+  /** Date de la première séance de l'agenda (AAAA-MM-JJ), proposée tant
+   *  qu'aucune date n'est saisie. */
+  premiereSeanceAgenda?: string | null;
 }) {
   const p = patient;
   return (
-    <form action={action} className="flex flex-col gap-6">
+    <FormulaireAction
+      action={action}
+      className="flex flex-col gap-6"
+      confirmation={p ? "Fiche enregistrée." : "Patient ajouté."}
+    >
       {p && <input type="hidden" name="id" value={p.id} />}
 
       <Groupe
@@ -150,7 +162,21 @@ export function FormulairePatient({
           pplReseauInitial={p?.pplReseau}
           anterieuresInitial={p?.pplSeancesAnterieures ?? 0}
           anterieuresLeInitial={p?.pplAnterieuresLe ? p.pplAnterieuresLe.toISOString().slice(0, 10) : ""}
+          periodesInitial={p?.pplPeriodes ?? 1}
         />
+        <label>
+          <span className={libelle}>Date de la première séance</span>
+          <ChampDate
+            name="premiereSeanceLe"
+            defaultValue={p?.premiereSeanceLe ? p.premiereSeanceLe.toISOString().slice(0, 10) : ""}
+            className={`mt-1 ${champ}`}
+          />
+          <span className="mt-1 block text-[11px] text-ink-muted">
+            {premiereSeanceAgenda
+              ? `Vide : celle de l’agenda, le ${premiereSeanceAgenda.split("-").reverse().join("/")}.`
+              : "Pour un suivi commencé avant l’outil. Vide : la première séance de l’agenda."}
+          </span>
+        </label>
         <label>
           <span className={libelle}>Cabinet habituel</span>
           <select
@@ -312,6 +338,6 @@ export function FormulairePatient({
           {libelleBouton}
         </BoutonEnregistrer>
       </div>
-    </form>
+    </FormulaireAction>
   );
 }

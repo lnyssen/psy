@@ -6,6 +6,7 @@ import { Nav } from "@/components/Nav";
 import { VerrouInactivite } from "@/components/VerrouInactivite";
 import { ZoneAnnulation } from "@/components/AnnulationGeste";
 import { SyncHorsLigne } from "@/components/SyncHorsLigne";
+import { Confirmations } from "@/components/Confirmations";
 import { prisma } from "@/lib/db";
 import { demoOuverte } from "@/lib/demo";
 import { sessionDeveloppeur } from "@/lib/db";
@@ -46,6 +47,7 @@ export default async function AdminLayout({
         <main id="contenu" className="mx-auto w-full max-w-3xl px-4 py-5 outline-none">
           {children}
         </main>
+        <Confirmations />
       </div>
     );
   }
@@ -83,6 +85,7 @@ export default async function AdminLayout({
       {/* Pas pendant la démonstration ouverte : il n'y a rien à verrouiller. */}
       {!ouverte && <VerrouInactivite />}
       <ZoneAnnulation />
+      <Confirmations />
       <SyncHorsLigne />
       <BarreLaterale
         theme={theme}

@@ -76,6 +76,14 @@ enum SessionStatus {
   NO_SHOW_ANNULE
 }
 
+/// Qui assiste à la séance, en plus du patient.
+enum Participants {
+  INDIVIDUELLE
+  AVEC_PERE
+  AVEC_MERE
+  AVEC_PARENTS
+}
+
 /// Comment le paiement est entré. Sert au reçu, qui doit le mentionner.
 enum PaymentMethod {
   CASH
@@ -283,6 +291,14 @@ model Patient {
   /// Date de la dernière de ces séances : la plus prudente, elle les garde
   /// le plus longtemps dans la fenêtre de douze mois.
   pplAnterieuresLe      DateTime? @map("ppl_anterieures_le")
+  /// Nombre de périodes de référence INAMI octroyées à ce patient (10 puis
+  /// 20 séances, parfois renouvelées) : un simple compteur tenu à la main,
+  /// pour savoir combien on en a accordé. Il ne change pas le calcul du
+  /// plafond, qui reste celui des douze derniers mois.
+  pplPeriodes           Int       @default(1) @map("ppl_periodes")
+  /// Date de la première séance, saisie à la main pour un suivi commencé
+  /// avant l'outil. Vide : la première séance de l'agenda en tient lieu.
+  premiereSeanceLe      DateTime? @map("premiere_seance_le")
   /// Tarif choisi dans la grille (Réglages → Tarifs) : c'est lui qui fait foi
   /// pour le montant d'une séance.
   tarifId        String?    @map("tarif_id")
@@ -363,6 +379,9 @@ model Session {
   /// Séance à distance. Le lieu reste celui de rattachement (facturation,
   /// statistiques) ; l'agenda Google affiche « visio » au lieu de l'adresse.
   visio           Boolean               @default(false)
+  /// Qui est présent : le patient seul, ou avec son père, sa mère, ses
+  /// deux parents. Sert à l'historique de la fiche et à l'agenda.
+  participants    Participants          @default(INDIVIDUELLE)
   /// Note clinique. Chiffrement applicatif à venir (le chiffrement de bout en
   /// bout a été écarté, voir les arbitrages du brief) : ce champ restera vide
   /// tant que ce chiffrement n'est pas en place.

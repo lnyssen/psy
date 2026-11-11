@@ -401,6 +401,35 @@ export function naissanceDuNumeroNational(saisie: string): Date | null {
   return d.getUTCMonth() === mois - 1 ? d : null;
 }
 
+/**
+ * La date de naissance que portent les six premiers chiffres d'un numéro
+ * national (AAMMJJ : 810724 → 24/07/1981), sans attendre le numéro complet.
+ * Le siècle ne se lit sûrement que dans la clé : tant qu'elle manque, une
+ * année qui tomberait dans le futur passe au siècle précédent (81 → 1981,
+ * 12 → 2012). Numéro complet et valide : c'est la clé qui tranche.
+ */
+export function naissanceDesSixChiffres(saisie: string, aujourdhui = new Date()): Date | null {
+  const chiffres = saisie.replace(/[\s.\-]/g, "");
+  if (!/^\d{6}/.test(chiffres)) return null;
+  if (chiffres.length === 11 && numeroNational(chiffres)) return naissanceDuNumeroNational(chiffres);
+  let annee = 2000 + Number(chiffres.slice(0, 2));
+  if (annee > aujourdhui.getUTCFullYear()) annee -= 100;
+  let mois = Number(chiffres.slice(2, 4));
+  if (mois > 40) mois -= 40;
+  else if (mois > 20) mois -= 20;
+  const jour = Number(chiffres.slice(4, 6));
+  if (mois < 1 || mois > 12 || jour < 1) return null;
+  const d = new Date(Date.UTC(annee, mois - 1, jour));
+  return d.getUTCMonth() === mois - 1 ? d : null;
+}
+
+/** Les six premiers chiffres d'un numéro national (AAMMJJ) pour une date de
+ *  naissance AAAA-MM-JJ : 1981-07-24 → 810724. */
+export function debutNumeroNational(iso: string): string {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
+  return m ? `${m[1].slice(2)}${m[2]}${m[3]}` : "";
+}
+
 /** Une date saisie à la française (jj/mm/aaaa, jj.mm.aa, jjmmaaaa…), au
  *  format AAAA-MM-JJ des formulaires. Null si elle n'existe pas. */
 export function dateSaisieFr(saisie: string): string | null {

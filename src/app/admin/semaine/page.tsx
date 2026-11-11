@@ -8,9 +8,8 @@ import { FiltresMobile } from "@/components/FiltresMobile";
 import { IconChevronDroite, IconChevronGauche } from "@/components/icons";
 import { cabinetsActifs, optionsCabinet } from "@/lib/cabinets";
 import { alertesQuota, heuresFacturablesSemaine, horsQuotaPour } from "@/lib/quotas";
-import { creerSeanceDepuisFormulaire } from "@/lib/actions";
-import { BoutonEnregistrer } from "@/components/BoutonEnregistrer";
-import { SelectPatientRecherche } from "@/components/SelectPatientRecherche";
+import { FormulaireNouvelleSeance } from "@/components/FormulaireNouvelleSeance";
+import { mentionParticipants } from "@/lib/participants";
 import { synchroniser } from "@/lib/google-sync";
 import { compterAFaire } from "@/lib/google-afaire";
 import {
@@ -33,16 +32,12 @@ import {
   partiesJour,
 } from "@/lib/format";
 import { ChampDate } from "@/components/ChampDate";
-import { ChampHeure } from "@/components/ChampHeure";
 
 export const dynamic = "force-dynamic";
 
 const HEURE_DEBUT = 8;
 const HEURE_FIN = 20;
 
-const champ =
-  "w-full rounded-full border border-line bg-surface px-3.5 py-2 text-sm placeholder:text-ink-muted/60";
-const libelleChamp = "block text-[11px] font-semibold tracking-[0.1em] text-ink-muted uppercase";
 
 export default async function Semaine({ searchParams }: { searchParams: Promise<Params> }) {
   const params = await searchParams;
@@ -126,6 +121,7 @@ export default async function Semaine({ searchParams }: { searchParams: Promise<
     conflit: conflits.has(i),
     aVenir: s.status === "SCHEDULED",
     visio: s.visio,
+    participants: mentionParticipants(s.participants),
     horsQuota: horsQuota.has(s.id),
   }]);
   // Rendez-vous Google : mêmes colonnes, mais ni séance ni facturables.
@@ -242,49 +238,12 @@ export default async function Semaine({ searchParams }: { searchParams: Promise<
           <summary className="w-fit cursor-pointer list-none rounded-full bg-accent px-5 py-2.5 text-sm font-medium text-accent-contrast transition-colors hover:bg-accent-hover">
             Nouvelle séance
           </summary>
-          <form
-          action={creerSeanceDepuisFormulaire}
-          className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4"
-        >
-          <label className="sm:col-span-2">
-            <span className={libelleChamp}>Patient</span>
-            <div className="mt-1">
-              <SelectPatientRecherche patients={patients} />
-            </div>
-          </label>
-          <label>
-            <span className={libelleChamp}>Cabinet</span>
-            <select name="cabinetId" required defaultValue={cabinetsPatients[0]?.id} className={`mt-1 ${champ}`}>
-              {cabinetsPatients.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.nom}
-                </option>
-              ))}
-            </select>
-          </label>
-          <div className="grid grid-cols-2 gap-2">
-            <label>
-              <span className={libelleChamp}>Date</span>
-              <ChampDate name="date" required defaultValue={isoJour(lundi)} className={`mt-1 ${champ}`} />
-            </label>
-            <label>
-              <span className={libelleChamp}>Heure</span>
-              <ChampHeure name="heure" required defaultValue="09:00" className={`mt-1 ${champ}`} />
-            </label>
-          </div>
-          <label>
-            <span className={libelleChamp}>Jusqu’au (optionnel)</span>
-            <ChampDate name="jusquau" className={`mt-1 ${champ}`} />
-            <span className="mt-1 block text-[11px] text-ink-muted">
-              Répète chaque semaine, même jour et même heure, jusqu’à cette date.
-            </span>
-          </label>
-          <label className="flex items-center gap-2 self-end pb-2 text-sm">
-            <input type="checkbox" name="visio" className="accent-accent" />
-            En visio
-          </label>
-          <BoutonEnregistrer className="self-end">Créer</BoutonEnregistrer>
-        </form>
+          <FormulaireNouvelleSeance
+            patients={patients}
+            cabinets={cabinetsPatients}
+            dateInitiale={isoJour(lundi)}
+            dureeMin={reglages.dureeSeanceMin}
+          />
         </details>
       </div>
 

@@ -12,7 +12,9 @@ import {
 import { retirerEvenementGoogle } from "@/lib/google-actions";
 import { IconFermer, IconFlecheBas, IconFlecheHaut, IconPlus } from "@/components/icons";
 import { SelectPatientRecherche } from "@/components/SelectPatientRecherche";
-import { ChampHeure } from "@/components/ChampHeure";
+import { DebutFin, hhmm } from "@/components/DebutFin";
+import { ChampParticipants } from "@/components/ChampParticipants";
+import { confirmer } from "@/components/Confirmations";
 
 export type SeanceGrille = {
   id: string;
@@ -33,6 +35,8 @@ export type SeanceGrille = {
   /** Seule une séance à venir s'annule d'ici — voir annulerSeance. */
   aVenir: boolean;
   visio?: boolean;
+  /** « avec père », « avec parents »… ; vide pour une séance individuelle. */
+  participants?: string;
   /** Au-delà du plafond INAMI sur douze mois (voir lib/quotas.ts). */
   horsQuota?: boolean;
   /** Rendez-vous venu de Google Agenda qui n'est pas une séance : affiché, mais
@@ -171,7 +175,12 @@ export function GrilleSemaine({
 
   function creer(f: FormData) {
     demarrer(async () => {
-      await creerSeanceDepuisFormulaire(f);
+      const r = await creerSeanceDepuisFormulaire(f);
+      if (!r.ok) {
+        confirmer(r.message, true);
+        return;
+      }
+      confirmer(r.n > 1 ? `${r.n} séances créées.` : "Séance créée.");
       setCreation(null);
       setCreationMobile(null);
       router.refresh();
@@ -493,6 +502,7 @@ export function GrilleSemaine({
                                 ? "Google — occupé"
                                 : s.cabinetNom}
                             {s.visio ? " · visio" : ""}
+                            {s.participants ? ` · ${s.participants}` : ""}
                             {s.horsQuota ? " · hors quota INAMI" : ""}
                           </span>
                         </span>
@@ -630,6 +640,7 @@ function PopoverCreation({
         </button>
       </div>
       <form
+        data-confirmation-propre=""
         onSubmit={(e) => {
           e.preventDefault();
           onCreer(new FormData(e.currentTarget));
@@ -651,6 +662,10 @@ function PopoverCreation({
             </option>
           ))}
         </select>
+        <ChampParticipants
+          aria-label="Qui participe"
+          className="w-full rounded-full border border-line bg-surface px-3.5 py-1.5 text-sm"
+        />
         <label className="flex items-center gap-2 px-1 text-xs">
           <input type="checkbox" name="visio" className="accent-accent" />
           En visio
@@ -662,56 +677,6 @@ function PopoverCreation({
           Créer
         </button>
       </form>
-    </div>
-  );
-}
-
-/** Minutes depuis minuit → HH:MM. */
-function hhmm(minutes: number) {
-  return `${String(Math.floor(minutes / 60)).padStart(2, "0")}:${String(minutes % 60).padStart(2, "0")}`;
-}
-
-/** Heures de début et de fin d'une séance à créer, modifiables : la case
- *  cliquée ne fait que les proposer, avec la durée réglée par défaut. Déplacer
- *  le début entraîne la fin, durée conservée. */
-function DebutFin({ debut: d0, fin: f0 }: { debut: string; fin: string }) {
-  const [debut, setDebut] = useState(d0);
-  const [fin, setFin] = useState(f0);
-  const minutes = (v: string) => {
-    const [h, m] = v.split(":").map(Number);
-    return h * 60 + m;
-  };
-  const duree = minutes(fin) - minutes(debut);
-  const champ = "w-full rounded-full border border-line bg-surface py-1 pr-1 pl-3 text-sm";
-  return (
-    <div>
-      <div className="grid grid-cols-2 gap-2">
-        <label className="text-[11px] text-ink-muted">
-          Début
-          <ChampHeure
-            name="heure"
-            required
-            valeur={debut}
-            surChangement={(v) => {
-              if (duree > 0) setFin(hhmm(Math.min(minutes(v) + duree, 23 * 60 + 59)));
-              setDebut(v);
-            }}
-            className={`mt-0.5 text-ink ${champ}`}
-          />
-        </label>
-        <label className="text-[11px] text-ink-muted">
-          Fin
-          <ChampHeure
-            name="fin"
-            valeur={fin}
-            surChangement={setFin}
-            className={`mt-0.5 text-ink ${champ}`}
-          />
-        </label>
-      </div>
-      <p className={`mt-1 px-1 text-[11px] ${duree > 0 ? "text-ink-muted" : "text-overdue"}`}>
-        {duree > 0 ? `Durée : ${duree} min` : "La fin doit suivre le début."}
-      </p>
     </div>
   );
 }
@@ -755,6 +720,7 @@ function CreationMobile({
         </button>
       </div>
       <form
+        data-confirmation-propre=""
         onSubmit={(e) => {
           e.preventDefault();
           onCreer(new FormData(e.currentTarget));
@@ -778,6 +744,10 @@ function CreationMobile({
           </select>
         </div>
         <SelectPatientRecherche patients={patients} />
+        <ChampParticipants
+          aria-label="Qui participe"
+          className="w-full rounded-full border border-line bg-surface px-3.5 py-1.5 text-sm"
+        />
         <label className="flex items-center gap-2 px-1 text-xs">
           <input type="checkbox" name="visio" className="accent-accent" />
           En visio
@@ -908,7 +878,7 @@ function Bloc({
       <span aria-hidden="true" className="filet-cabinet w-[5px] shrink-0" />
       <Link
         href={seance.patientId ? `/admin/patients/${seance.patientId}` : "/admin/etablissements"}
-        title={`${seance.nom} — ${hhmm(seance.minutes)}–${hhmm(seance.minutes + seance.duree)} — ${seance.cabinetNom}${seance.visio ? " (visio)" : ""}`}
+        title={`${seance.nom} — ${hhmm(seance.minutes)}–${hhmm(seance.minutes + seance.duree)} — ${seance.cabinetNom}${seance.visio ? " (visio)" : ""}${seance.participants ? ` (${seance.participants})` : ""}`}
         className="flex min-w-0 flex-1 flex-col gap-[3px] overflow-hidden px-2 py-1.5"
       >
         <span className="shrink-0 truncate text-[12.5px] leading-[1.25] font-bold" data-numeric>
@@ -928,6 +898,7 @@ function Bloc({
           <span className="texte-cabinet min-w-0 truncate text-[10.5px] leading-[1.45] font-semibold">
             {seance.cabinetNom}
             {seance.visio ? " · visio" : ""}
+            {seance.participants ? ` · ${seance.participants}` : ""}
           </span>
           {seance.horsQuota && (
             <span

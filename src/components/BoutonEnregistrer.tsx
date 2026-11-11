@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useContext, useEffect, useRef } from "react";
 import { useFormStatus } from "react-dom";
+import { EnregistrementEnCours } from "@/components/FormulaireAction";
 
 /**
  * Bouton d'enregistrement d'un formulaire posé dans un <details> repliable
@@ -11,6 +12,8 @@ import { useFormStatus } from "react-dom";
  *
  * useFormStatus n'existe que pour le <form> ancêtre le plus proche — ce
  * bouton doit donc être posé à l'intérieur de ce formulaire, jamais à côté.
+ * Dans un FormulaireAction (sans remise à zéro), c'est son contexte qui dit
+ * si l'enregistrement est en cours.
  */
 export function BoutonEnregistrer({
   children = "Enregistrer",
@@ -19,7 +22,9 @@ export function BoutonEnregistrer({
   children?: React.ReactNode;
   className?: string;
 }) {
-  const { pending } = useFormStatus();
+  const statut = useFormStatus();
+  const formulaire = useContext(EnregistrementEnCours);
+  const pending = statut.pending || Boolean(formulaire?.enCours);
   const enCours = useRef(false);
   const ref = useRef<HTMLButtonElement>(null);
 
@@ -30,9 +35,9 @@ export function BoutonEnregistrer({
     }
     if (enCours.current) {
       enCours.current = false;
-      ref.current?.closest("details")?.removeAttribute("open");
+      if (!formulaire) ref.current?.closest("details")?.removeAttribute("open");
     }
-  }, [pending]);
+  }, [pending, formulaire]);
 
   return (
     <button

@@ -19,6 +19,7 @@ import { creneauxDisponibles } from "@/lib/creneaux";
 import { creneauxLesPlusProches } from "@/lib/creneaux-proches";
 import { creneauEnClair } from "@/lib/courriel";
 import { seancesARetablir } from "@/lib/factures-etablissement";
+import { participantsDepuis } from "@/lib/participants";
 
 /**
  * Déplace une séance sur un autre créneau, depuis le glisser-déposer de la
@@ -100,17 +101,17 @@ export async function supprimerNote(id: string, patientId: string) {
 export async function enregistrerPatient(f: FormData) {
   await exigerSession();
   const id = texte(f, "id");
-  if (!id) return;
+  if (!id) return refus("Fiche introuvable.");
 
   const firstName = texte(f, "firstName");
   const lastName = texte(f, "lastName");
-  if (!firstName || !lastName) return;
+  if (!firstName || !lastName) return refus("Le prénom et le nom sont obligatoires.");
 
   const email = texte(f, "email");
-  if (email && !email.includes("@")) return;
+  if (email && !email.includes("@")) return refus("L’adresse e-mail ne semble pas valide.");
 
   const scheme = texte(f, "scheme");
-  if (!["PRIVE", "CONVENTIONNE"].includes(scheme)) return;
+  if (!["PRIVE", "CONVENTIONNE"].includes(scheme)) return refus("Régime à choisir.");
   const regime = scheme as "PRIVE" | "CONVENTIONNE";
 
   const actuel = await prisma.patient.findUnique({
@@ -127,13 +128,15 @@ export async function enregistrerPatient(f: FormData) {
   const birthDate = birthSaisie
     ? new Date(birthSaisie)
     : naissanceDuNumeroNational(texte(f, "nationalNumber"));
-  if (birthSaisie && Number.isNaN(birthDate?.getTime())) return;
+  if (birthSaisie && Number.isNaN(birthDate?.getTime()))
+    return refus("La date de naissance n’est pas une date valide.");
 
   const cabinetId = texte(f, "cabinetId") || null;
 
   const nnSaisi = texte(f, "nationalNumber");
   const nationalNumber = nnSaisi ? numeroNational(nnSaisi) : null;
-  if (nnSaisi && !nationalNumber) return;
+  if (nnSaisi && !nationalNumber)
+    return refus("Le numéro national est incomplet ou sa clé ne correspond pas.");
 
   await prisma.patient.update({
     where: { id },
@@ -154,6 +157,7 @@ export async function enregistrerPatient(f: FormData) {
       birthDate,
       scheme: regime,
       ...pplDepuis(f),
+      ...suiviDepuis(f),
       tarifId,
       feeCents,
       cabinetId,
@@ -162,6 +166,7 @@ export async function enregistrerPatient(f: FormData) {
   });
   revalidatePath(`/admin/patients/${id}`);
   revalidatePath("/admin/patients");
+  return { ok: true as const };
 }
 
 export async function marquerPaye(id: string, methode: "CASH" | "ELECTRONIC") {
@@ -362,13 +367,15 @@ export async function creerSeanceDepuisFormulaire(f: FormData) {
   const cabinetId = texte(f, "cabinetId");
   const date = texte(f, "date");
   const heure = texte(f, "heure");
-  if (!patientId || !cabinetId || !date || !heure) return;
+  if (!patientId) return refus("Choisissez un patient.");
+  if (!cabinetId || !date || !heure) return refus("Lieu, date et heure sont à indiquer.");
 
   const debut = instantBruxelles(date, heure);
-  if (!debut || !estJourOuvre(debut)) return;
+  if (!debut) return refus("Date ou heure invalide.");
+  if (!estJourOuvre(debut)) return refus("Pas de séance le week-end.");
 
   const patient = await prisma.patient.findUnique({ where: { id: patientId } });
-  if (!patient) return;
+  if (!patient) return refus("Patient introuvable.");
 
   const dates = [debut];
   const jusquau = texte(f, "jusquau");
@@ -402,12 +409,29 @@ export async function creerSeanceDepuisFormulaire(f: FormData) {
       startsAt: d,
       durationMin: duree,
       visio: f.get("visio") === "on",
+      participants: participantsDepuis(f.get("participants")),
     })),
   });
 
   revalidatePath("/admin/semaine");
   revalidatePath("/admin");
   revalidatePath(`/admin/patients/${patientId}`);
+  return { ok: true as const, n: dates.length };
+}
+
+/** Change qui participe à une séance déjà posée (individuelle, avec le père,
+ *  la mère, les parents). */
+export async function changerParticipants(id: string, valeur: string) {
+  await exigerSession();
+  const seance = await prisma.session.update({
+    where: { id },
+    data: { participants: participantsDepuis(valeur) },
+    select: { patientId: true },
+  });
+  if (seance.patientId) revalidatePath(`/admin/patients/${seance.patientId}`);
+  revalidatePath("/admin/semaine");
+  revalidatePath("/admin");
+  return { ok: true as const };
 }
 
 /** Annule un rendez-vous à venir — pas encore honoré, donc pas encore
@@ -459,6 +483,22 @@ function parentsEtAnterieures(f: FormData) {
   };
 }
 
+/** Date de première séance et compteur de périodes INAMI : chacun n'est
+ *  touché que si le formulaire l'envoie (le compteur n'existe qu'en
+ *  conventionné). */
+function suiviDepuis(f: FormData) {
+  const data: { premiereSeanceLe?: Date | null; pplPeriodes?: number } = {};
+  if (f.has("premiereSeanceLe")) {
+    const v = texte(f, "premiereSeanceLe");
+    const d = /^\d{4}-\d{2}-\d{2}$/.test(v) ? new Date(v) : null;
+    data.premiereSeanceLe = d && !Number.isNaN(d.getTime()) ? d : null;
+  }
+  if (f.has("pplPeriodes")) {
+    data.pplPeriodes = Math.max(1, Math.min(20, Math.floor(Number(texte(f, "pplPeriodes")) || 1)));
+  }
+  return data;
+}
+
 function pplDepuis(f: FormData) {
   if (!f.has("pplType")) return {};
   const type =
@@ -479,7 +519,7 @@ export async function creerPatient(f: FormData) {
   await exigerSession();
   const firstName = texte(f, "firstName");
   const lastName = texte(f, "lastName");
-  if (!firstName || !lastName) return;
+  if (!firstName || !lastName) return refus("Le prénom et le nom sont obligatoires.");
 
   const scheme = texte(f, "scheme");
   const schemeValide = scheme === "CONVENTIONNE" ? "CONVENTIONNE" : "PRIVE";
@@ -498,7 +538,8 @@ export async function creerPatient(f: FormData) {
 
   const nnSaisi = texte(f, "nationalNumber");
   const nationalNumber = nnSaisi ? numeroNational(nnSaisi) : null;
-  if (nnSaisi && !nationalNumber) return;
+  if (nnSaisi && !nationalNumber)
+    return refus("Le numéro national est incomplet ou sa clé ne correspond pas.");
 
   const patient = await prisma.patient.create({
     data: {
@@ -519,6 +560,7 @@ export async function creerPatient(f: FormData) {
         birthDate && !Number.isNaN(birthDate.getTime()) ? birthDate : null,
       scheme: schemeValide,
       ...pplDepuis(f),
+      ...suiviDepuis(f),
       tarifId,
       cabinetId,
       jetonRdv: crypto.randomUUID(),
@@ -582,6 +624,11 @@ async function resoudreTarif(
       orderBy: { ordre: "asc" },
     }));
   return { tarifId: defaut?.id ?? null, feeCents: null };
+}
+
+/** Un refus qui se dit : le formulaire l'affiche au lieu de « Enregistré ». */
+function refus(message: string) {
+  return { ok: false as const, message };
 }
 
 function texte(f: FormData, cle: string) {

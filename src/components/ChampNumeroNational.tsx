@@ -13,11 +13,18 @@ export function ChampNumeroNational({
   defaultValue = "",
   className,
   onValide,
+  onSaisie,
+  placeholder = "AAMMJJ-XXX.CC",
 }: {
   defaultValue?: string;
   className: string;
   /** Appelé avec le numéro dès qu'il est complet et que sa clé est juste. */
   onValide?: (numero: string) => void;
+  /** Appelé à chaque frappe, numéro complet ou non. */
+  onSaisie?: (numero: string) => void;
+  /** Indication affichée dans le champ vide (les six premiers chiffres, si la
+   *  date de naissance est connue). */
+  placeholder?: string;
 }) {
   const [erreur, setErreur] = useState("");
 
@@ -33,6 +40,7 @@ export function ChampNumeroNational({
     input.setCustomValidity(message);
     setErreur(message);
     if (v && !message) onValide?.(v);
+    onSaisie?.(v);
   }
 
   return (
@@ -40,11 +48,12 @@ export function ChampNumeroNational({
       <input
         name="nationalNumber"
         defaultValue={defaultValue}
-        placeholder="AAMMJJ-XXX.CC"
+        placeholder={placeholder}
         inputMode="numeric"
         aria-invalid={erreur ? true : undefined}
         aria-describedby={erreur ? "erreur-numero-national" : undefined}
         onChange={(e) => verifier(e.currentTarget)}
+        onBlur={(e) => verifier(e.currentTarget)}
         onInvalid={(e) => verifier(e.currentTarget)}
         className={`${className} ${erreur ? "border-overdue" : ""}`}
       />
