@@ -12,6 +12,8 @@ import { prisma } from "@/lib/db";
 import { demoOuverte } from "@/lib/demo";
 import { sessionDeveloppeur } from "@/lib/db";
 import { statutSauvegarde } from "@/lib/sauvegardes";
+import { santeGoogle } from "@/lib/google-sync";
+import { fmtHeure, fmtJourMois } from "@/lib/format";
 
 export const metadata: Metadata = {
   title: "Amandine Monsel – Amapsy SRL",
@@ -73,6 +75,11 @@ export default async function AdminLayout({
   const developpeur = await sessionDeveloppeur();
   // Une sauvegarde qui ne tourne plus ne fait aucun bruit : on le dit en haut.
   const sauvegarde = await statutSauvegarde();
+  // Idem pour la synchro Google : l'incident de novembre 2026 s'est découvert
+  // en regardant l'agenda. Jamais pendant la démonstration ouverte.
+  const google = ouverte
+    ? ({ niveau: "ok" } as const)
+    : await santeGoogle().catch(() => ({ niveau: "ok" }) as const);
 
   return (
     <div className="outil flex min-h-screen">
@@ -153,6 +160,34 @@ export default async function AdminLayout({
               </span>
               <Link
                 href="/admin/reglages#sauvegardes"
+                className="font-medium underline underline-offset-4"
+              >
+                Voir
+              </Link>
+            </span>
+          </p>
+        )}
+
+        {google.niveau !== "ok" && (
+          <p
+            role={google.niveau === "coupee" ? "status" : "alert"}
+            className="mx-auto w-full max-w-7xl px-5 pt-5 md:px-8"
+          >
+            <span
+              className={
+                google.niveau === "coupee"
+                  ? "flex flex-wrap items-center gap-x-2 gap-y-1 rounded-[14px] border border-due/40 bg-due-soft px-4 py-2.5 text-[13px] text-due"
+                  : "flex flex-wrap items-center gap-x-2 gap-y-1 rounded-[14px] border border-overdue/40 bg-overdue-soft px-4 py-2.5 text-[13px] text-overdue"
+              }
+            >
+              <span className="font-semibold">{google.titre}</span>
+              <span aria-hidden="true">·</span>
+              <span>
+                {google.detail}
+                {google.depuis && ` (depuis le ${fmtJourMois.format(google.depuis)} à ${fmtHeure.format(google.depuis)})`}
+              </span>
+              <Link
+                href="/admin/google"
                 className="font-medium underline underline-offset-4"
               >
                 Voir
