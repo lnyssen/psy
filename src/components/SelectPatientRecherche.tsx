@@ -20,12 +20,15 @@ export function SelectPatientRecherche({
   patients,
   name = "patientId",
   defaultId,
+  onChange,
 }: {
   /** `alerte` : message affiché sous le champ quand ce patient est choisi
    *  (plafond INAMI atteint, voir lib/quotas.ts). */
   patients: { id: string; firstName: string; lastName: string; alerte?: string }[];
   name?: string;
   defaultId?: string;
+  /** Appelé à chaque choix (et avec "" quand le champ est effacé). */
+  onChange?: (id: string) => void;
 }) {
   const listeId = useId();
   const libelle = (p: { firstName: string; lastName: string }) => `${p.lastName} ${p.firstName}`;
@@ -55,6 +58,7 @@ export function SelectPatientRecherche({
     setTexte(libelle(p));
     setId(p.id);
     setOuvert(false);
+    onChange?.(p.id);
   }
 
   return (
@@ -64,6 +68,7 @@ export function SelectPatientRecherche({
         value={texte}
         onChange={(e) => {
           setTexte(e.target.value);
+          if (id) onChange?.("");
           setId("");
           setOuvert(true);
           setActif(0);

@@ -16,7 +16,12 @@ import {
   type CorpsEvenement,
   type EvenementDistant,
 } from "@/lib/google-api";
-import { cabinetAutorise, cabinetDesLieux, patientDuTitre } from "@/lib/google-correspondance";
+import {
+  cleAlias,
+  proposer,
+  titreDesignePatient,
+  type ValeurParticipants,
+} from "@/lib/google-correspondance";
 
 /**
  * Synchronisation dans les deux sens avec le Google Agenda d'Amandine.
@@ -24,8 +29,9 @@ import { cabinetAutorise, cabinetDesLieux, patientDuTitre } from "@/lib/google-c
  * Deux flux, toujours dans cet ordre — lire, puis écrire :
  *
  * - Google → app. Un événement créé dans Google arrive « à rattacher ». S'il
- *   est titré exactement du prénom et du nom d'un seul patient, il devient sa
- *   séance de lui-même (règles dans lib/google-correspondance.ts) ; sinon,
+ *   est titré exactement du prénom et du nom d'un seul patient, ou d'un titre
+ *   qu'Amandine a déjà rattaché à un patient, il devient sa séance de
+ *   lui-même (règles dans lib/google-correspondance.ts) ; sinon,
  *   c'est à Amandine de décider. Un événement qui est déjà une séance de
  *   l'app (déplacé ou supprimé dans Google) répercute le changement sur la
  *   séance.
@@ -379,7 +385,7 @@ async function lire(
  */
 export async function rattacherEvenement(
   ev: Pick<EvenementGoogle, "id" | "googleId" | "etag" | "debut" | "fin">,
-  cible: { patientId: string | null; cabinetId: string },
+  cible: { patientId: string | null; cabinetId: string; participants?: ValeurParticipants },
 ) {
   const duree = Math.min(480, Math.max(5, Math.round((ev.fin.getTime() - ev.debut.getTime()) / 60_000)));
   try {
@@ -390,6 +396,7 @@ export async function rattacherEvenement(
           cabinetId: cible.cabinetId,
           startsAt: ev.debut,
           durationMin: duree,
+          participants: cible.participants ?? "INDIVIDUELLE",
           // Le lien est posé tout de suite : la prochaine lecture reconnaît
           // l'événement comme une séance, pas comme un nouvel inconnu. Pas
           // d'empreinte — la séance repart vers Google pour y prendre son
@@ -407,26 +414,18 @@ export async function rattacherEvenement(
 }
 
 /**
- * Rattache d'eux-mêmes les événements à venir, encore « à rattacher », dont le
- * titre désigne un patient sans ambiguïté — règles dans
- * lib/google-correspondance.ts. Passe après la lecture, donc sur les nouveaux
- * venus comme sur ceux déjà en base, et avant l'écriture, qui donne aussitôt
- * à l'événement son titre normalisé. Un événement marqué « occupé » ou
- * « ignoré » n'est jamais repris : c'était une décision.
+ * Patients, lieux, titres retenus et dernier lieu de chaque patient : tout ce
+ * qu'il faut à `proposer` (lib/google-correspondance.ts), chargé une fois.
  */
-async function rattacherAutomatiquement(ctx: Contexte, bilan: ResultatSynchro) {
-  const evenements = await prisma.evenementGoogle.findMany({
-    where: { statut: "A_RATTACHER", debut: { gt: ctx.maintenant } },
-    orderBy: { debut: "asc" },
-  });
-  if (evenements.length === 0) return;
-
-  const [patients, cabinets] = await Promise.all([
+export async function chargerReferentiel() {
+  const [patients, cabinets, alias, dernieres] = await Promise.all([
     prisma.patient.findMany({
       where: { active: true },
+      orderBy: { lastName: "asc" },
       select: { id: true, firstName: true, lastName: true, cabinetId: true },
     }),
     prisma.cabinet.findMany({
+      orderBy: { ordre: "asc" },
       select: {
         id: true,
         nom: true,
@@ -437,35 +436,91 @@ async function rattacherAutomatiquement(ctx: Contexte, bilan: ResultatSynchro) {
         factureInstitution: true,
       },
     }),
+    prisma.aliasGoogle.findMany({ select: { cle: true, patientId: true, cabinetId: true, participants: true } }),
+    // La dernière séance passée de chaque patient, dans un lieu permis.
+    prisma.session.findMany({
+      where: {
+        patientId: { not: null },
+        startsAt: { lt: new Date() },
+        cabinet: { actif: true, factureInstitution: false },
+      },
+      orderBy: { startsAt: "desc" },
+      distinct: ["patientId"],
+      select: { patientId: true, cabinetId: true },
+    }),
   ]);
-  const parId = new Map(cabinets.map((c) => [c.id, c]));
+  return {
+    patients,
+    cabinets,
+    alias: new Map(alias.map((a) => [a.cle, a])),
+    dernierCabinet: new Map(dernieres.map((d) => [d.patientId as string, d.cabinetId])),
+  };
+}
 
+/**
+ * Rattache d'eux-mêmes les événements à venir, encore « à rattacher », dont le
+ * titre désigne un patient sans ambiguïté : son nom complet, ou un titre
+ * qu'Amandine a déjà rattaché à ce patient (« Anas », « Chloé E + parents »).
+ * Une simple ressemblance ne suffit jamais : elle est seulement proposée à
+ * l'écran. Passe après la lecture, donc sur les nouveaux venus comme sur ceux
+ * déjà en base, et avant l'écriture, qui donne aussitôt à l'événement son
+ * titre normalisé. Un événement marqué « occupé » ou « ignoré » n'est jamais
+ * repris : c'était une décision. Renvoie le nombre de séances créées.
+ */
+export async function rattacherConnus(maintenant = new Date()) {
+  const evenements = await prisma.evenementGoogle.findMany({
+    where: { statut: "A_RATTACHER", debut: { gt: maintenant } },
+    orderBy: { debut: "asc" },
+  });
+  if (evenements.length === 0) return 0;
+
+  const ref = await chargerReferentiel();
+  let crees = 0;
   for (const ev of evenements) {
-    const trouve = patientDuTitre(ev.titre, patients);
-    if (!trouve) continue;
-
-    let cabinetId: string | null = null;
-    const duLieu = cabinetDesLieux([trouve.lieu, ev.lieu], cabinets);
-    if (duLieu === "refuse") continue;
-    if (duLieu) {
-      cabinetId = duLieu.cabinet.id;
-    } else {
-      const derniere = await prisma.session.findFirst({
-        where: {
-          patientId: trouve.patient.id,
-          startsAt: { lt: ev.debut },
-          cabinet: { actif: true, factureInstitution: false },
-        },
-        orderBy: { startsAt: "desc" },
-        select: { cabinetId: true },
-      });
-      const habituel = trouve.patient.cabinetId ? parId.get(trouve.patient.cabinetId) : undefined;
-      cabinetId = derniere?.cabinetId ?? (habituel && cabinetAutorise(habituel) ? habituel.id : null);
-    }
-    if (!cabinetId) continue;
-
-    if (await rattacherEvenement(ev, { patientId: trouve.patient.id, cabinetId })) bilan.rattaches++;
+    const p = proposer(ev, ref);
+    if (!p || p === "refuse" || p.source === "ressemblance" || !p.cabinetId) continue;
+    const ok = await rattacherEvenement(ev, {
+      patientId: p.patient.id,
+      cabinetId: p.cabinetId,
+      participants: p.participants,
+    });
+    if (ok) crees++;
   }
+  return crees;
+}
+
+/**
+ * Retient qu'un titre désigne ce patient, pour que les prochains événements
+ * du même titre soient rattachés sans clic. Seulement si le titre contient
+ * son prénom ou son nom ; et si ce titre avait été retenu pour un autre
+ * patient, il devient ambigu et n'est plus retenu du tout.
+ */
+export async function retenirTitre(
+  titre: string,
+  cible: { patientId: string; cabinetId: string; participants: ValeurParticipants },
+) {
+  const lieux = await prisma.cabinet.findMany({ select: { nom: true } });
+  const cle = cleAlias(titre, lieux.map((c) => c.nom));
+  if (!cle || titre === "(sans titre)") return;
+  const patient = await prisma.patient.findUnique({
+    where: { id: cible.patientId },
+    select: { firstName: true, lastName: true },
+  });
+  if (!patient || !titreDesignePatient(titre, patient)) return;
+  const existant = await prisma.aliasGoogle.findUnique({ where: { cle } });
+  if (existant && existant.patientId !== cible.patientId) {
+    await prisma.aliasGoogle.delete({ where: { cle } });
+    return;
+  }
+  await prisma.aliasGoogle.upsert({
+    where: { cle },
+    create: { cle, ...cible },
+    update: { cabinetId: cible.cabinetId, participants: cible.participants },
+  });
+}
+
+async function rattacherAutomatiquement(ctx: Contexte, bilan: ResultatSynchro) {
+  bilan.rattaches += await rattacherConnus(ctx.maintenant);
 }
 
 // --- app → Google -----------------------------------------------------------
