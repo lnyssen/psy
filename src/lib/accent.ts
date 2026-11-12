@@ -40,11 +40,36 @@ export const ACCENTS = {
     sombre: { accent: "#29a39f", hover: "#31c4bf", text: "#30c0bb", soft: "#183938" },
   },
   vert: {
-    // Vert sapin : un vert profond tiré vers le bleu, plus feutré que le vert
-    // franc d'avant, qui rappelait un bouton « Valider » (changé le 2026-11-12).
-    nom: "Vert sapin",
-    clair: { accent: "#167556", hover: "#0f5a42", text: "#0f5440", soft: "#e6f4ee", bande: "#d0ebdf" },
-    sombre: { accent: "#38a67f", hover: "#4dbb93", text: "#5cc6a0", soft: "#14332a" },
+    // Vert sauge : un vert grisé, doux et calme, qui va mieux à un cabinet
+    // de psychologue qu'un vert franc. Remplace le « Vert sapin » du
+    // 2026-11-12, lui-même venu après le vert « bouton Valider » d'origine.
+    nom: "Vert sauge",
+    clair: { accent: "#4d7358", hover: "#3c5a45", text: "#3a5843", soft: "#eef3ef", bande: "#dde8df" },
+    sombre: { accent: "#7fa58a", hover: "#95b89f", text: "#9cc2a6", soft: "#1e2a22" },
+  },
+  eucalyptus: {
+    // Vert bleuté, feuillage d'eucalyptus (ajouté le 2026-11-12).
+    nom: "Eucalyptus",
+    clair: { accent: "#2f7468", hover: "#235a50", text: "#22564d", soft: "#e8f3f0", bande: "#d4e8e3" },
+    sombre: { accent: "#5fa597", hover: "#78b8ab", text: "#82c2b5", soft: "#16302b" },
+  },
+  terracotta: {
+    // Terre cuite chaude, en écho au couchant de la photo du phare (2026-11-12).
+    nom: "Terracotta",
+    clair: { accent: "#b0502c", hover: "#8f3f21", text: "#8a3c1f", soft: "#f9ece6", bande: "#f2dccf" },
+    sombre: { accent: "#df8460", hover: "#e79a7b", text: "#eba587", soft: "#36211a" },
+  },
+  petrole: {
+    // Bleu canard profond, cousin du bleu nuit (2026-11-12).
+    nom: "Bleu pétrole",
+    clair: { accent: "#1d6a85", hover: "#15536a", text: "#145066", soft: "#e6f1f5", bande: "#d2e5ed" },
+    sombre: { accent: "#5a9fbb", hover: "#74b2ca", text: "#86bfd5", soft: "#152a33" },
+  },
+  prune: {
+    // Prune feutrée, plus douce que le violet de marque (2026-11-12).
+    nom: "Prune",
+    clair: { accent: "#8a3b6e", hover: "#6f2e58", text: "#6b2c55", soft: "#f6eaf2", bande: "#ecd7e5" },
+    sombre: { accent: "#c47aa8", hover: "#d092b8", text: "#d79fc1", soft: "#33192b" },
   },
   rose: {
     nom: "Rose",
