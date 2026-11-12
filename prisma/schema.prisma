@@ -633,6 +633,15 @@ model GoogleConnexion {
   /// (psyInstance). Une autre base (copie, ancienne instance) ne peut ainsi
   /// jamais supprimer nos événements en les croyant orphelins.
   instance            String    @default(dbgenerated("(gen_random_uuid())::text"))
+  /// Santé de la synchronisation, pour prévenir au lieu de laisser découvrir
+  /// un incident en regardant l'agenda. Échecs d'affilée (remis à zéro à la
+  /// première réussite), début du problème en cours, et vrai quand le
+  /// garde-fou anti-suppression a retenu la synchronisation.
+  echecsConsecutifs   Int       @default(0) @map("echecs_consecutifs")
+  problemeDepuis      DateTime? @map("probleme_depuis")
+  bloquee             Boolean   @default(false)
+  /// Dernier e-mail d'alerte envoyé pour le problème en cours ; nul = aucun.
+  alerteEnvoyeeLe     DateTime? @map("alerte_envoyee_le")
 
   @@map("google_connexions")
 }
