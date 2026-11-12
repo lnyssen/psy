@@ -306,7 +306,14 @@ export async function changerAgendaGoogle(f: FormData) {
   await prisma.$transaction([
     prisma.googleConnexion.update({
       where: { id: "global" },
-      data: { calendrierId: id, syncToken: null, derniereErreur: null },
+      data: {
+        calendrierId: id,
+        syncToken: null,
+        derniereErreur: null,
+        echecsConsecutifs: 0,
+        bloquee: false,
+        problemeDepuis: null,
+      },
     }),
     // EvenementGoogle n'a aucune relation : tout ce qu'il contient vient de
     // l'ancien agenda, les séances, elles, sont dans Session.

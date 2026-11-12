@@ -3,6 +3,8 @@ import { after } from "next/server";
 import type { EvenementGoogle } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { demoOuverte } from "@/lib/demo";
+import { adresseNotifications, envoyerCourriel } from "@/lib/courriel";
+import { MESSAGE_REVOQUEE, decisionCourriel, santeSynchro } from "@/lib/google-sante";
 import { chiffrer, dechiffrer } from "@/lib/chiffrement";
 import { adresseCabinet, lundiDe, partiesJour } from "@/lib/format";
 import {
@@ -683,21 +685,73 @@ export async function synchroniser(opts: { maxAgeMs?: number } = {}): Promise<Re
         derniereSynchro: new Date(),
         derniereErreur: alerte,
         verrouJusqua: null,
+        echecsConsecutifs: 0,
+        bloquee: Boolean(alerte),
+        problemeDepuis: alerte ? (connexion.problemeDepuis ?? maintenant) : null,
       },
     });
+    await alerterSiBesoin();
     return bilan;
   } catch (e) {
     const revoquee = e instanceof GoogleErreur && e.code === "invalid_grant";
     const message = revoquee
-      ? "L’accès à Google a expiré ou a été retiré — reconnectez votre agenda."
+      ? MESSAGE_REVOQUEE
       : e instanceof Error
         ? e.message
         : "Erreur inconnue.";
     await prisma.googleConnexion.update({
       where: { id: "global" },
-      data: { derniereErreur: message, verrouJusqua: null },
+      data: {
+        derniereErreur: message,
+        verrouJusqua: null,
+        echecsConsecutifs: { increment: 1 },
+        problemeDepuis: connexion.problemeDepuis ?? maintenant,
+      },
     });
+    await alerterSiBesoin();
     return { ...bilan, ok: false, erreur: message };
+  }
+}
+
+/**
+ * Prévient Amandine par e-mail quand la synchronisation échoue pour de bon ou
+ * est retenue par le garde-fou, puis quand elle repart. Sans SMTP configuré,
+ * rien ne part : le bandeau de l'outil reste le seul signal. Ne lève jamais.
+ */
+async function alerterSiBesoin() {
+  try {
+    const c = await prisma.googleConnexion.findUnique({ where: { id: "global" } });
+    if (!c) return;
+    const decision = decisionCourriel(c);
+    if (!decision) return;
+
+    const sante = santeSynchro(c, { configure: true });
+    const lien = `${process.env.SITE_URL || "https://amandinemonsel.be"}/admin/google`;
+    const sujet =
+      decision === "retablie"
+        ? "Synchro Google rétablie"
+        : `${decision === "rappel" ? "Rappel : " : ""}${sante.niveau === "ok" ? "Synchro Google" : sante.titre}`;
+    const texte =
+      decision === "retablie"
+        ? "La synchronisation avec Google Agenda fonctionne de nouveau. Rien à faire.\n"
+        : [
+            sante.niveau === "ok" ? "" : `${sante.titre} : ${sante.detail}`,
+            "",
+            "Tant que ce n’est pas réglé, les rendez-vous ne passent plus entre l’outil et Google Agenda : vérifiez l’agenda avant de vous y fier.",
+            "",
+            `Détails : ${lien}`,
+            "",
+            "Un rappel partira chaque jour tant que le problème dure.",
+          ].join("\n");
+
+    const envoye = await envoyerCourriel({ a: adresseNotifications(), sujet, texte });
+    if (!envoye) return; // pas de SMTP, ou échec : on retentera au passage suivant
+    await prisma.googleConnexion.update({
+      where: { id: "global" },
+      data: { alerteEnvoyeeLe: decision === "retablie" ? null : new Date() },
+    });
+  } catch (e) {
+    console.error("Alerte de synchronisation Google impossible :", e);
   }
 }
 
@@ -727,8 +781,23 @@ export async function enregistrerConnexion(email: string, refreshToken: string) 
     where: { id: "global" },
     create: { id: "global", email, refreshTokenChiffre: chiffre },
     // Nouvelle autorisation : on repart d'une relecture complète.
-    update: { email, refreshTokenChiffre: chiffre, syncToken: null, derniereErreur: null, verrouJusqua: null },
+    update: {
+      email,
+      refreshTokenChiffre: chiffre,
+      syncToken: null,
+      derniereErreur: null,
+      verrouJusqua: null,
+      echecsConsecutifs: 0,
+      bloquee: false,
+      problemeDepuis: null,
+    },
   });
+}
+
+/** Pour le bandeau de l'outil : ce qui ne va pas, ou `ok`. */
+export async function santeGoogle() {
+  const connexion = await prisma.googleConnexion.findUnique({ where: { id: "global" } });
+  return santeSynchro(connexion, { configure: googleConfigure() });
 }
 
 export async function etatGoogle() {
