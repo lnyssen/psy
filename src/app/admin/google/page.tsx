@@ -6,9 +6,11 @@ import { Pagination, pageDe, tailleDePage } from "@/components/Pagination";
 import type { Params } from "@/components/filtres";
 import { fmtHeure, fmtJourMois } from "@/lib/format";
 import { grouperEnLignes } from "@/lib/google-afaire";
-import { etatGoogle, synchroniser } from "@/lib/google-sync";
-import { traiterSansTitre } from "@/lib/google-actions";
-import { suggererPatient } from "@/lib/google-correspondance";
+import { chargerReferentiel, etatGoogle, synchroniser } from "@/lib/google-sync";
+import { oublierTitre, synchroniserMaintenant, traiterSansTitre } from "@/lib/google-actions";
+import { cabinetAutorise, proposer } from "@/lib/google-correspondance";
+import { PropositionsGoogle } from "@/components/PropositionsGoogle";
+import { mentionParticipants } from "@/lib/participants";
 
 export const dynamic = "force-dynamic";
 
@@ -73,16 +75,17 @@ export default async function GoogleATraiter({ searchParams }: { searchParams: P
   const page = Math.min(pageDe(params), Math.max(1, Math.ceil(lignes.length / taille)));
   const affichees = lignes.slice((page - 1) * taille, page * taille);
 
-  const [patientsBruts, cabinetsActifs, sansTitre, alertes] = await Promise.all([
-    prisma.patient.findMany({
-      where: { active: true },
-      orderBy: { lastName: "asc" },
-      select: { id: true, firstName: true, lastName: true },
-    }),
-    prisma.cabinet.findMany({
-      where: { actif: true },
-      orderBy: { ordre: "asc" },
-      select: { id: true, nom: true, factureInstitution: true },
+  const [ref, titresRetenus, sansTitre, alertes] = await Promise.all([
+    chargerReferentiel(),
+    prisma.aliasGoogle.findMany({
+      orderBy: { cle: "asc" },
+      select: {
+        id: true,
+        cle: true,
+        participants: true,
+        patient: { select: { firstName: true, lastName: true } },
+        cabinet: { select: { nom: true } },
+      },
     }),
     voir
       ? 0
@@ -91,15 +94,52 @@ export default async function GoogleATraiter({ searchParams }: { searchParams: P
         }),
     alertesQuota(),
   ]);
-  const patients = patientsBruts.map((p) => ({ ...p, alerte: alertes.get(p.id) }));
+  const patients = ref.patients.map((p) => ({ ...p, alerte: alertes.get(p.id) }));
+  const cabinetsActifs = ref.cabinets.filter((c) => c.actif);
+  const nomCabinet = new Map(ref.cabinets.map((c) => [c.id, c.nom]));
+
+  // Lieu habituel de chaque patient : celui de sa dernière séance, sinon celui
+  // de sa fiche. Le choix d'un patient dans une ligne y met le lieu.
+  const lieuParPatient: Record<string, string> = {};
+  for (const p of ref.patients) {
+    const fiche = ref.cabinets.find((c) => c.id === p.cabinetId);
+    const lieu = ref.dernierCabinet.get(p.id) ?? (fiche && cabinetAutorise(fiche) ? fiche.id : undefined);
+    if (lieu) lieuParPatient[p.id] = lieu;
+  }
+
+  const quand = (e: { debut: Date; fin: Date }) =>
+    `${fmtJourMois.format(e.debut)} · ${fmtHeure.format(e.debut)}–${fmtHeure.format(e.fin)}`;
+
+  // Ce que l'outil propose pour chaque ligne (patient, lieu, accompagnants).
+  const propositions = new Map(
+    lignes.map(({ tete }) => {
+      const p = tete.statut === "A_RATTACHER" ? proposer(tete, ref) : null;
+      return [tete.id, p && p !== "refuse" ? p : null] as const;
+    }),
+  );
+  const aValider = voir
+    ? []
+    : lignes.flatMap(({ tete, occurrences }) => {
+        const p = propositions.get(tete.id);
+        if (!p || !p.cabinetId) return [];
+        return [
+          {
+            valeur: `${tete.id}|${p.patient.id}|${p.cabinetId}|${p.participants}`,
+            titre: tete.titre,
+            patient: `${p.patient.firstName} ${p.patient.lastName}`,
+            lieu: nomCabinet.get(p.cabinetId) ?? "",
+            accompagnants: mentionParticipants(p.participants),
+            quand: quand(tete),
+            occurrences: occurrences.length,
+          },
+        ];
+      });
 
   // Compte rendu d'un rattachement qui vient d'avoir lieu.
   const fait = params.fait !== undefined ? Number(params.fait) : null;
   const patientFait = params.p ? patients.find((p) => p.id === params.p) : null;
   const cabinetFait = params.c ? cabinetsActifs.find((c) => c.id === params.c) : null;
 
-  const quand = (e: { debut: Date; fin: Date }) =>
-    `${fmtJourMois.format(e.debut)} · ${fmtHeure.format(e.debut)}–${fmtHeure.format(e.fin)}`;
   const libelleStatut = { A_RATTACHER: null, OCCUPE: "Marqué occupé", IGNORE: "Ignoré" } as const;
 
   return (
@@ -114,6 +154,21 @@ export default async function GoogleATraiter({ searchParams }: { searchParams: P
                 ? "Rien à traiter."
                 : `${lignes.length} à traiter · ${lignesBrutes.length} rendez-vous au total`}
           </p>
+          <form action={synchroniserMaintenant} className="mt-1 flex flex-wrap items-center gap-2 text-xs text-ink-muted">
+            <span data-numeric>
+              {etat.derniereSynchro
+                ? `Synchronisé avec Google à ${fmtHeure.format(etat.derniereSynchro)}`
+                : "Jamais synchronisé"}
+            </span>
+            <button type="submit" className="font-medium text-accent-text underline">
+              Synchroniser maintenant
+            </button>
+          </form>
+          {etat.derniereErreur && (
+            <p role="alert" className="mt-2 max-w-xl rounded-[10px] border border-overdue/40 px-3 py-2 text-xs text-overdue">
+              {etat.derniereErreur}
+            </p>
+          )}
         </div>
         <span className="flex flex-wrap gap-2 text-sm">
           <Link
@@ -156,6 +211,18 @@ export default async function GoogleATraiter({ searchParams }: { searchParams: P
           )}
         </p>
       )}
+
+      {(params.auto || params.lot) && (
+        <p role="status" className="rounded-[14px] bg-paid-soft px-5 py-3 text-sm text-paid" data-numeric>
+          {params.lot &&
+            `${params.lot} séance${Number(params.lot) > 1 ? "s" : ""} créée${Number(params.lot) > 1 ? "s" : ""} (${params.lignes ?? 0} titre${Number(params.lignes) > 1 ? "s" : ""}). `}
+          {params.auto &&
+            `${params.auto} autre${Number(params.auto) > 1 ? "s" : ""} rendez-vous du même titre rattaché${Number(params.auto) > 1 ? "s" : ""} automatiquement. `}
+          Tout est dans le calendrier.
+        </p>
+      )}
+
+      {aValider.length > 0 && <PropositionsGoogle propositions={aValider} />}
 
       {voir && (
         <p className="text-sm">
@@ -244,10 +311,18 @@ export default async function GoogleATraiter({ searchParams }: { searchParams: P
                 occurrences.length > 1 ? fmtJourMois.format(occurrences[occurrences.length - 1].debut) : null
               }
               statut={libelleStatut[tete.statut]}
-              suggestion={(() => {
-                const p = suggererPatient(tete.titre, patients);
-                return p ? { id: p.id, nom: `${p.firstName} ${p.lastName}` } : null;
+              proposition={(() => {
+                const p = propositions.get(tete.id);
+                return p
+                  ? {
+                      patientId: p.patient.id,
+                      nom: `${p.patient.firstName} ${p.patient.lastName}`,
+                      cabinetId: p.cabinetId ?? lieuParPatient[p.patient.id] ?? null,
+                      participants: p.participants,
+                    }
+                  : null;
               })()}
+              lieuParPatient={lieuParPatient}
               patients={patients}
               cabinets={cabinetsActifs}
             />
@@ -256,6 +331,38 @@ export default async function GoogleATraiter({ searchParams }: { searchParams: P
       )}
 
       {!voir && <Pagination base="/admin/google" params={params} total={lignes.length} taille={taille} />}
+
+      {!voir && titresRetenus.length > 0 && (
+        <details className="rounded-[14px] border border-line px-5 py-3">
+          <summary className="cursor-pointer text-sm font-medium">
+            {`Titres retenus (${titresRetenus.length})`}
+          </summary>
+          <p className="mt-2 max-w-2xl text-xs text-ink-muted">
+            Un rendez-vous ajouté dans Google avec l’un de ces titres devient tout seul une séance du
+            patient indiqué. Ajouter le nom d’un lieu au titre (« Anas Auderghem ») change le lieu pour
+            ce rendez-vous-là. « Oublier » ne touche pas aux séances déjà créées.
+          </p>
+          <ul className="mt-3 flex flex-col divide-y divide-line text-sm">
+            {titresRetenus.map((t) => (
+              <li key={t.id} className="flex flex-wrap items-center justify-between gap-2 py-2">
+                <span>
+                  <span className="font-semibold">« {t.cle} »</span>
+                  {` → ${t.patient.firstName} ${t.patient.lastName}`}
+                  <span className="text-ink-muted">
+                    {t.cabinet ? ` · ${t.cabinet.nom}` : ""}
+                    {mentionParticipants(t.participants) ? ` · ${mentionParticipants(t.participants)}` : ""}
+                  </span>
+                </span>
+                <form action={oublierTitre.bind(null, t.id)}>
+                  <button type="submit" className="text-xs text-ink-muted underline hover:text-overdue">
+                    Oublier
+                  </button>
+                </form>
+              </li>
+            ))}
+          </ul>
+        </details>
+      )}
     </div>
   );
 }

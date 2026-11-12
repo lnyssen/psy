@@ -167,6 +167,7 @@ model Cabinet {
   demandes       DemandeRdv[]
   depenses       Depense[]
   factures       FactureEtablissement[]
+  aliasGoogle    AliasGoogle[]
 
   @@map("cabinets")
 }
@@ -232,99 +233,99 @@ enum DemandeStatut {
 /// en révèle une. Elle est donc traitée comme un dossier — hébergement
 /// européen, minimum de champs, et purge de ce qui n'aboutit pas.
 model DemandeRdv {
-  id        String        @id @default(cuid())
-  firstName String        @map("first_name")
-  lastName  String        @map("last_name")
+  id              String        @id @default(cuid())
+  firstName       String        @map("first_name")
+  lastName        String        @map("last_name")
   /// Facultative : seul le téléphone est exigé, plus fiable pour reprendre
   /// contact vite. L'e-mail reste demandé — il sert à l'accusé de réception
   /// et au lien de réservation directe — mais son absence ne bloque pas la
   /// demande.
-  email     String?
-  phone     String
-  message   String?
+  email           String?
+  phone           String
+  message         String?
   /// Demande faite pour un enfant : firstName, lastName, email et phone sont
   /// alors ceux du parent qui écrit, et le dossier se crée au nom de l'enfant.
-  enfantPrenom    String?   @map("enfant_prenom")
-  enfantNom       String?   @map("enfant_nom")
-  enfantNaissance DateTime? @map("enfant_naissance")
+  enfantPrenom    String?       @map("enfant_prenom")
+  enfantNom       String?       @map("enfant_nom")
+  enfantNaissance DateTime?     @map("enfant_naissance")
   /// Lien du demandeur avec l'enfant (voir lib/liens.ts).
-  lienDemandeur   String?   @map("lien_demandeur")
-  souhaite  DateTime
-  cabinetId String        @map("cabinet_id")
-  cabinet   Cabinet       @relation(fields: [cabinetId], references: [id], onDelete: Restrict)
-  statut    DemandeStatut @default(EN_ATTENTE)
-  createdAt DateTime      @default(now()) @map("created_at")
+  lienDemandeur   String?       @map("lien_demandeur")
+  souhaite        DateTime
+  cabinetId       String        @map("cabinet_id")
+  cabinet         Cabinet       @relation(fields: [cabinetId], references: [id], onDelete: Restrict)
+  statut          DemandeStatut @default(EN_ATTENTE)
+  createdAt       DateTime      @default(now()) @map("created_at")
 
   @@index([statut, souhaite])
   @@map("demandes_rdv")
 }
 
 model Patient {
-  id             String     @id @default(cuid())
+  id                    String     @id @default(cuid())
   /// Prénom et nom séparés : les vues d'ensemble n'affichent que les
   /// initiales (principe de discrétion), ce qui suppose de les distinguer.
-  firstName      String     @map("first_name")
-  lastName       String     @map("last_name")
-  email          String?
-  phone          String?
+  firstName             String     @map("first_name")
+  lastName              String     @map("last_name")
+  email                 String?
+  phone                 String?
   /// Numéros des parents, pour les patients mineurs : c'est souvent eux
   /// qu'on appelle pour déplacer une séance.
   /// Noms et prénoms des parents, pour les patients mineurs.
-  motherFirstName String?   @map("mother_first_name")
-  motherLastName  String?   @map("mother_last_name")
-  fatherFirstName String?   @map("father_first_name")
-  fatherLastName  String?   @map("father_last_name")
-  phoneMother    String?    @map("phone_mother")
-  phoneFather    String?    @map("phone_father")
-  emailMother    String?    @map("email_mother")
-  emailFather    String?    @map("email_father")
+  motherFirstName       String?    @map("mother_first_name")
+  motherLastName        String?    @map("mother_last_name")
+  fatherFirstName       String?    @map("father_first_name")
+  fatherLastName        String?    @map("father_last_name")
+  phoneMother           String?    @map("phone_mother")
+  phoneFather           String?    @map("phone_father")
+  emailMother           String?    @map("email_mother")
+  emailFather           String?    @map("email_father")
   /// Lien de chaque responsable avec le patient (voir lib/liens.ts) : les
   /// colonnes mother… et father… ne sont que deux emplacements.
-  lienParent1    String     @default("mère") @map("lien_parent_1")
-  lienParent2    String     @default("père") @map("lien_parent_2")
+  lienParent1           String     @default("mère") @map("lien_parent_1")
+  lienParent2           String     @default("père") @map("lien_parent_2")
   /// Numéro de registre national, au format AAMMJJ-XXX.CC (clé vérifiée).
-  nationalNumber String?    @map("national_number")
+  nationalNumber        String?    @map("national_number")
   /// Adresse postale, en champs séparés : un reçu doit pouvoir la composer
   /// proprement, ce qu'une chaîne unique ne permet pas.
-  addressLine    String?    @map("address_line")
-  postalCode     String?    @map("postal_code")
-  city           String?
-  birthDate      DateTime?  @map("birth_date")
-  scheme         CareScheme
+  addressLine           String?    @map("address_line")
+  postalCode            String?    @map("postal_code")
+  city                  String?
+  birthDate             DateTime?  @map("birth_date")
+  scheme                CareScheme
   /// Conventionné seulement : soutien ou traitement, et réseau si choisi
   /// (vide : déduit de l'âge). Servent au plafond INAMI, voir lib/quotas.ts.
-  pplType        PplType    @default(SOUTIEN) @map("ppl_type")
-  pplReseau      PplReseau? @map("ppl_reseau")
+  pplType               PplType    @default(SOUTIEN) @map("ppl_type")
+  pplReseau             PplReseau? @map("ppl_reseau")
   /// Séances INAMI déjà faites avant l'outil (ou ailleurs), saisies à la
   /// main : elles comptent dans le plafond comme si elles avaient eu lieu le
   /// jour indiqué ci-dessous, et sortent du calcul douze mois plus tard.
-  pplSeancesAnterieures Int       @default(0) @map("ppl_seances_anterieures")
+  pplSeancesAnterieures Int        @default(0) @map("ppl_seances_anterieures")
   /// Date de la dernière de ces séances : la plus prudente, elle les garde
   /// le plus longtemps dans la fenêtre de douze mois.
-  pplAnterieuresLe      DateTime? @map("ppl_anterieures_le")
+  pplAnterieuresLe      DateTime?  @map("ppl_anterieures_le")
   /// Nombre de périodes de référence INAMI octroyées à ce patient (10 puis
   /// 20 séances, parfois renouvelées) : un simple compteur tenu à la main,
   /// pour savoir combien on en a accordé. Il ne change pas le calcul du
   /// plafond, qui reste celui des douze derniers mois.
-  pplPeriodes           Int       @default(1) @map("ppl_periodes")
+  pplPeriodes           Int        @default(1) @map("ppl_periodes")
   /// Date de la première séance, saisie à la main pour un suivi commencé
   /// avant l'outil. Vide : la première séance de l'agenda en tient lieu.
-  premiereSeanceLe      DateTime? @map("premiere_seance_le")
+  premiereSeanceLe      DateTime?  @map("premiere_seance_le")
   /// Tarif choisi dans la grille (Réglages → Tarifs) : c'est lui qui fait foi
   /// pour le montant d'une séance.
-  tarifId        String?    @map("tarif_id")
-  tarif          Tarif?     @relation(fields: [tarifId], references: [id], onDelete: SetNull)
+  tarifId               String?    @map("tarif_id")
+  tarif                 Tarif?     @relation(fields: [tarifId], references: [id], onDelete: SetNull)
   /// Ancien montant libre, en centimes, d'avant la grille. Sans tarif choisi, il
   /// continue de servir plutôt que de faire disparaître un montant ; dès qu'un
   /// tarif est choisi dans la fiche, il est effacé.
-  feeCents       Int?       @map("fee_cents")
+  feeCents              Int?       @map("fee_cents")
   /// Cabinet habituel, simple valeur par défaut à la création d'une séance.
-  cabinetId      String?    @map("cabinet_id")
-  cabinet        Cabinet?   @relation(fields: [cabinetId], references: [id], onDelete: SetNull)
-  notes          String?
-  active         Boolean    @default(true)
-  createdAt      DateTime   @default(now()) @map("created_at")
-  updatedAt      DateTime   @updatedAt @map("updated_at")
+  cabinetId             String?    @map("cabinet_id")
+  cabinet               Cabinet?   @relation(fields: [cabinetId], references: [id], onDelete: SetNull)
+  notes                 String?
+  active                Boolean    @default(true)
+  createdAt             DateTime   @default(now()) @map("created_at")
+  updatedAt             DateTime   @updatedAt @map("updated_at")
 
   /// Jeton personnel permettant de réserver directement depuis le site, sans
   /// passer par une demande. Il est transmis par courriel, vaut reconnaissance
@@ -342,6 +343,7 @@ model Patient {
 
   sessions     Session[]
   patientNotes Note[]
+  aliasGoogle  AliasGoogle[]
 
   @@index([lastName, firstName])
   @@map("patients")
@@ -463,45 +465,45 @@ model Parametres {
   /// Mentions légales de la SRL, reprises sur toute facture émise à un
   /// établissement. Un reçu au patient n'en a pas besoin — ce n'est pas une
   /// pièce comptable numérotée — mais une facture en est une.
-  numeroEntreprise   String? @map("numero_entreprise")
+  numeroEntreprise        String? @map("numero_entreprise")
   /// N° INAMI de la praticienne, repris sur le reçu patient (que la mutuelle
   /// demande pour un remboursement) et dans les mentions légales du site.
-  numeroInami        String? @map("numero_inami")
+  numeroInami             String? @map("numero_inami")
   /// N° de visa délivré par le SPF Santé publique : il autorise le titre de
   /// psychologue clinicien. Affiché dans le pied de page du site, les mentions
   /// légales et le reçu patient.
-  numeroVisa         String? @map("numero_visa")
+  numeroVisa              String? @map("numero_visa")
   /// N° d'inscription à la Commission des psychologues. Distinct du visa, et
   /// renouvelé chaque année : il est affiché tel quel, sans date.
-  numeroCommission   String? @map("numero_commission")
+  numeroCommission        String? @map("numero_commission")
   /// Interrupteur des rendez-vous en ligne. Fermé : la page publique de
   /// réservation affiche un message au lieu des créneaux, et aucune demande
   /// n'est acceptée, même par un formulaire envoyé à la main.
-  rdvEnLigne         Boolean @default(true) @map("rdv_en_ligne")
+  rdvEnLigne              Boolean @default(true) @map("rdv_en_ligne")
   /// Message affiché quand les rendez-vous sont fermés (facultatif : un texte
   /// par défaut sert à défaut).
-  rdvMessage         String? @map("rdv_message")
+  rdvMessage              String? @map("rdv_message")
   /// Faux : les inconnus ne peuvent plus demander de rendez-vous, seulement
   /// s'inscrire sur la liste d'attente. Les patients munis de leur lien
   /// personnel réservent comme avant.
-  nouveauxPatients   Boolean @default(true) @map("nouveaux_patients")
+  nouveauxPatients        Boolean @default(true) @map("nouveaux_patients")
   nouveauxPatientsMessage String? @map("nouveaux_patients_message")
-  iban               String?
+  iban                    String?
   /// Délai de paiement en jours, pour calculer l'échéance à l'émission.
-  delaiPaiementJours Int     @default(30) @map("delai_paiement_jours")
+  delaiPaiementJours      Int     @default(30) @map("delai_paiement_jours")
   /// Au-delà de ce nombre de jours, une séance privée encore due s'affiche
   /// « en retard ». Calculé à l'affichage, jamais écrit en base.
-  retardPaiementJours Int    @default(14) @map("retard_paiement_jours")
+  retardPaiementJours     Int     @default(14) @map("retard_paiement_jours")
   /// Adresse du siège social, reprise en en-tête de toute facture émise à un
   /// établissement — une idée par ligne, ce n'est pas un champ structuré.
-  adresseSiege       String? @map("adresse_siege") @db.Text
+  adresseSiege            String? @map("adresse_siege") @db.Text
   /// Mention légale complémentaire de la société (RPM…), reprise sous son
   /// numéro d'entreprise sur la facture.
-  mentionLegale      String? @map("mention_legale")
+  mentionLegale           String? @map("mention_legale")
   /// Couleur d'accent du site et de l'outil, choisie dans une palette dont
   /// chaque teinte a ses contrastes vérifiés (voir lib/accent.ts). Violet par
   /// défaut, la couleur de marque.
-  accent             String  @default("violet")
+  accent                  String  @default("violet")
 
   @@map("parametres")
 }
@@ -667,6 +669,28 @@ model EvenementGoogle {
   @@map("evenements_google")
 }
 
+/// Titre d'agenda Google qu'Amandine a déjà rattaché à un patient (« Anas »,
+/// « Chloé E + parents ») : les prochains événements portant le même titre
+/// deviennent ses séances d'eux-mêmes. Retenu seulement quand le titre
+/// contient le prénom ou le nom du patient, et effacé dès qu'il devient
+/// ambigu (même titre rattaché à un autre patient).
+model AliasGoogle {
+  id           String       @id @default(cuid())
+  /// Titre normalisé (voir lib/google-correspondance.ts, cleAlias).
+  cle          String       @unique
+  patientId    String       @map("patient_id")
+  patient      Patient      @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  /// Dernier lieu choisi pour ce titre ; vide : celui de l'historique.
+  cabinetId    String?      @map("cabinet_id")
+  cabinet      Cabinet?     @relation(fields: [cabinetId], references: [id], onDelete: SetNull)
+  participants Participants @default(INDIVIDUELLE)
+  creeLe       DateTime     @default(now()) @map("cree_le")
+  majLe        DateTime     @updatedAt @map("maj_le")
+
+  @@index([patientId])
+  @@map("alias_google")
+}
+
 /// Accès à l'outil : une seule ligne, comme les paramètres.
 ///
 /// L'empreinte du mot de passe vit ici dès qu'il a été changé depuis les
@@ -674,10 +698,10 @@ model EvenementGoogle {
 /// foi (voir lib/acces.ts). L'adresse de récupération reçoit le lien de
 /// réinitialisation quand le mot de passe est oublié.
 model Acces {
-  id             String   @id @default("global")
-  passwordHash   String?  @map("password_hash")
-  recoveryEmail  String?  @map("recovery_email")
-  updatedAt      DateTime @updatedAt @map("updated_at")
+  id            String   @id @default("global")
+  passwordHash  String?  @map("password_hash")
+  recoveryEmail String?  @map("recovery_email")
+  updatedAt     DateTime @updatedAt @map("updated_at")
 
   @@map("acces")
 }

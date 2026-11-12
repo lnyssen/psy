@@ -38,6 +38,8 @@ export async function anonymiserPatient(f: FormData) {
   await prisma.$transaction([
     prisma.note.deleteMany({ where: { patientId: id } }),
     prisma.documentPatient.deleteMany({ where: { patientId: id } }),
+    // Un titre d'agenda retenu (« Anas ») est un prénom : il part aussi.
+    prisma.aliasGoogle.deleteMany({ where: { patientId: id } }),
     prisma.session.updateMany({
       where: { patientId: id },
       data: { note: null },

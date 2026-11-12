@@ -318,6 +318,8 @@ export const PAGES_DOC: PageDoc[] = [
               "Une séance créée dans l'outil apparaît dans Google Agenda, avec le **nom du patient** comme titre.",
               "Un événement créé dans Google Agenda apparaît dans l'outil comme une séance **à rattacher** : vous dites alors s'il s'agit d'un patient, d'un créneau occupé, ou de l'ignorer.",
               "Un rendez-vous déplacé ou supprimé d'un côté est déplacé ou supprimé de l'autre.",
+              "Un titre rattaché une fois est **retenu** : si « Anas » a été rattaché à Anas, les prochains « Anas » ajoutés dans Google deviennent ses séances tout seuls, au même lieu. Ajoutez le nom du lieu au titre (« Anas Auderghem ») pour en changer, et « + parents », « maman » ou « papa » pour dire qui l'accompagne.",
+              "En haut de la page Google Agenda, les titres que l'outil reconnaît (prénom seul, prénom et initiale, nom de famille) sont proposés ensemble : décochez ce qui est faux et validez d'un clic. La liste des titres retenus, en bas de page, permet d'en oublier un.",
             ],
           },
           {

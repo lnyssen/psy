@@ -6,7 +6,14 @@ import { prisma } from "@/lib/db";
 import { dechiffrer } from "@/lib/chiffrement";
 import { demoOuverte } from "@/lib/demo";
 import { GoogleErreur, jetonAcces, listerEvenements, revoquer } from "@/lib/google-api";
-import { rattacherEvenement, synchroniser, synchroniserApres } from "@/lib/google-sync";
+import {
+  rattacherConnus,
+  rattacherEvenement,
+  retenirTitre,
+  synchroniser,
+  synchroniserApres,
+} from "@/lib/google-sync";
+import { participantsDepuis } from "@/lib/participants";
 import { exigerSession } from "@/lib/garde";
 
 /**
@@ -44,36 +51,106 @@ async function cibles(f: FormData) {
   return [ev];
 }
 
-export async function rattacherEvenementGoogle(f: FormData) {
-  await exigerSession();
-  const cabinetId = texte(f, "cabinetId");
-  const patientId = texte(f, "patientId");
-  const cabinet = await prisma.cabinet.findUnique({ where: { id: cabinetId } });
-  if (!cabinet) return;
+/** Le formulaire peut viser toute la série d'un événement récurrent. */
+async function seriesDe(id: string, serie: boolean) {
+  const ev = await prisma.evenementGoogle.findUnique({ where: { id } });
+  if (!ev) return [];
+  if (serie && ev.serieId) {
+    return prisma.evenementGoogle.findMany({
+      where: { serieId: ev.serieId, statut: "A_RATTACHER" },
+      orderBy: { debut: "asc" },
+    });
+  }
+  return ev.statut === "A_RATTACHER" || serie === false ? [ev] : [];
+}
 
+/**
+ * Une décision : un événement (ou sa série) devient des séances. Le titre est
+ * retenu pour ce patient, et tout ce qui porte déjà le même titre est
+ * rattaché dans la foulée — une décision par titre, pas par rendez-vous.
+ */
+async function decider(
+  evenementId: string,
+  serie: boolean,
+  cible: { patientId: string; cabinetId: string; participants: string },
+) {
+  const cabinet = await prisma.cabinet.findUnique({ where: { id: cible.cabinetId } });
+  if (!cabinet) return null;
   // Un lieu facturé à l'heure (l'école) n'a pas de patient ; partout ailleurs
   // une séance en a un, et sans lui il n'y a rien à rattacher.
-  let patient: { id: string } | null = null;
+  let patientId: string | null = null;
   if (!cabinet.factureInstitution) {
-    if (!patientId) return;
-    patient = await prisma.patient.findUnique({ where: { id: patientId }, select: { id: true } });
-    if (!patient) return;
+    if (!cible.patientId) return null;
+    const p = await prisma.patient.findUnique({ where: { id: cible.patientId }, select: { id: true } });
+    if (!p) return null;
+    patientId = p.id;
   }
+  const participants = patientId ? participantsDepuis(cible.participants) : "INDIVIDUELLE";
 
   let crees = 0;
-  for (const ev of await cibles(f)) {
+  let titre: string | null = null;
+  for (const ev of await seriesDe(evenementId, serie)) {
+    titre ??= ev.titre;
     // Faux si déjà rattaché entre-temps (double clic) : rien à faire.
-    if (await rattacherEvenement(ev, { patientId: patient?.id ?? null, cabinetId: cabinet.id })) crees++;
+    if (await rattacherEvenement(ev, { patientId, cabinetId: cabinet.id, participants })) crees++;
   }
+  if (patientId && titre && !cabinet.factureInstitution) {
+    await retenirTitre(titre, { patientId, cabinetId: cabinet.id, participants });
+  }
+  return { crees, patientId, cabinetId: cabinet.id };
+}
+
+export async function rattacherEvenementGoogle(f: FormData) {
+  await exigerSession();
+  const r = await decider(texte(f, "id"), f.get("serie") === "on", {
+    patientId: texte(f, "patientId"),
+    cabinetId: texte(f, "cabinetId"),
+    participants: texte(f, "participants"),
+  });
+  if (!r) return;
+  const autres = await rattacherConnus();
 
   rafraichir();
   synchroniserApres();
   // Compte rendu sur la page de tri : combien de séances, pour qui, avec un lien
   // vers la fiche. Sans lui, un rattachement de série ne laisse aucune trace
   // visible de ce qui vient d'être créé.
-  const retour = new URLSearchParams({ fait: String(crees), c: cabinet.id });
-  if (patient) retour.set("p", patient.id);
+  const retour = new URLSearchParams({ fait: String(r.crees), c: r.cabinetId });
+  if (r.patientId) retour.set("p", r.patientId);
+  if (autres > 0) retour.set("auto", String(autres));
   redirect(`/admin/google?${retour}`);
+}
+
+/**
+ * Valide d'un coup les propositions cochées en tête de page. Chaque valeur :
+ * « idEvenement|patientId|cabinetId|participants », toujours pour la série
+ * entière. Les propositions viennent de l'écran : tout est revérifié ici.
+ */
+export async function rattacherPropositions(f: FormData) {
+  await exigerSession();
+  let crees = 0;
+  let lignes = 0;
+  for (const v of f.getAll("ligne")) {
+    const [id, patientId, cabinetId, participants] = String(v).split("|");
+    if (!id || !patientId || !cabinetId) continue;
+    const r = await decider(id, true, { patientId, cabinetId, participants: participants ?? "" });
+    if (r && r.crees > 0) {
+      crees += r.crees;
+      lignes++;
+    }
+  }
+  crees += await rattacherConnus();
+  rafraichir();
+  synchroniserApres();
+  redirect(`/admin/google?${new URLSearchParams({ lot: String(crees), lignes: String(lignes) })}`);
+}
+
+/** Oublie un titre retenu : les prochains événements de ce titre attendront
+ *  une décision. Les séances déjà créées ne bougent pas. */
+export async function oublierTitre(id: string) {
+  await exigerSession();
+  await prisma.aliasGoogle.deleteMany({ where: { id } });
+  rafraichir();
 }
 
 async function marquer(f: FormData, statut: "OCCUPE" | "IGNORE") {

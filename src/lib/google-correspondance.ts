@@ -130,7 +130,7 @@ export function cabinetDesLieux<C extends CabinetCandidat>(
 export function suggererPatient<P extends PatientCandidat>(titre: string, patients: P[]): P | null {
   const cle = normaliser(titre);
   if (!cle) return null;
-  const trouves = patients.filter((p) => {
+  const parPrenom = patients.filter((p) => {
     // Le titre commence par le prénom entier — composé ou non, c'est la
     // normalisation qui unifie « Jean-Pierre » et « Jean Pierre ».
     const prenom = normaliser(p.firstName);
@@ -139,5 +139,163 @@ export function suggererPatient<P extends PatientCandidat>(titre: string, patien
     const initiale = reste[0] && reste[0].length === 1 ? reste[0] : null;
     return initiale === null || normaliser(p.lastName).startsWith(initiale);
   });
-  return trouves.length === 1 ? trouves[0] : null;
+  if (parPrenom.length === 1) return parPrenom[0];
+  if (parPrenom.length > 1) return null;
+  // Aucun prénom ne colle : le nom de famille seul (« Dupont », « Dupont +
+  // maman »), s'il n'y a qu'une famille de ce nom.
+  const parNom = patients.filter((p) => {
+    const nom = normaliser(p.lastName);
+    return nom.length >= 3 && (cle === nom || cle.startsWith(`${nom} `));
+  });
+  return parNom.length === 1 ? parNom[0] : null;
+}
+
+// --- Mémoire des titres -----------------------------------------------------
+
+/**
+ * Clé sous laquelle un titre est retenu : normalisé, sans le suffixe « — lieu ».
+ * « Anas », « anas » et « Anas — Uccle » ne font qu'un.
+ */
+export function cleAlias(titre: string, nomsLieux: string[] = []) {
+  return separerLieu(titre, nomsLieux).nom;
+}
+
+/**
+ * Sépare le nom du lieu dans un titre : « Anas — Uccle », « Anas - Uccle »,
+ * ou simplement « Anas Uccle » / « Anas Uccle + parents » quand un mot après
+ * le premier est le nom d'un lieu. Le nom rendu est normalisé.
+ */
+export function separerLieu(titre: string, nomsLieux: string[] = []): { nom: string; lieu: string | null } {
+  const m = SEPARATEUR_LIEU.exec(titre);
+  if (m) {
+    return { nom: normaliser(titre.slice(0, m.index)), lieu: titre.slice(m.index + m[0].length).trim() || null };
+  }
+  const cle = normaliser(titre);
+  for (const brut of nomsLieux) {
+    const lieu = normaliser(brut);
+    if (!lieu || cle === lieu || cle.startsWith(`${lieu} `)) continue;
+    const i = ` ${cle} `.indexOf(` ${lieu} `);
+    if (i > 0) {
+      const nom = `${cle.slice(0, i - 1)} ${cle.slice(i + lieu.length)}`.replace(/\s+/g, " ").trim();
+      return { nom, lieu: brut };
+    }
+  }
+  return { nom: cle, lieu: null };
+}
+
+/** Le lieu accolé au titre (« Anas — Uccle » → « Uccle »), s'il y en a un. */
+export function lieuDuTitre(titre: string, nomsLieux: string[] = []) {
+  return separerLieu(titre, nomsLieux).lieu;
+}
+
+/**
+ * Vrai si le titre contient le prénom ou le nom du patient, au mot près. Garde
+ * de la mémoire : un événement « Bilan » rattaché une fois à Anas ne doit pas
+ * faire de tous les « Bilan » à venir des séances d'Anas.
+ */
+export function titreDesignePatient(titre: string, p: Pick<PatientCandidat, "firstName" | "lastName">) {
+  const mots = new Set(cleAlias(titre).split(" "));
+  const noms = [...normaliser(p.firstName).split(" "), ...normaliser(p.lastName).split(" ")];
+  return noms.some((n) => n.length >= 2 && mots.has(n));
+}
+
+export type ValeurParticipants = "INDIVIDUELLE" | "AVEC_PERE" | "AVEC_MERE" | "AVEC_PARENTS";
+
+/**
+ * Qui accompagne le patient, d'après le titre : « Delhia + parents »,
+ * « Tom avec maman », « Léa (papa) ». Le premier mot n'est jamais lu — c'est
+ * le nom du patient, et un nom de famille peut s'écrire « Pere ».
+ */
+export function participantsDuTitre(titre: string): ValeurParticipants {
+  const mots = cleAlias(titre).split(" ").slice(1);
+  const a = (...m: string[]) => mots.some((x) => m.includes(x));
+  if (a("parents", "parent")) return "AVEC_PARENTS";
+  const mere = a("maman", "mere", "mama", "mum", "mom");
+  const pere = a("papa", "pere", "dad");
+  if (mere && pere) return "AVEC_PARENTS";
+  if (mere) return "AVEC_MERE";
+  if (pere) return "AVEC_PERE";
+  return "INDIVIDUELLE";
+}
+
+// --- Proposition complète ---------------------------------------------------
+
+export type AliasCandidat = {
+  patientId: string;
+  cabinetId: string | null;
+  participants: ValeurParticipants;
+};
+
+export type Referentiel<P extends PatientCandidat, C extends CabinetCandidat> = {
+  patients: P[];
+  cabinets: C[];
+  /** Titres retenus, par clé (cleAlias). */
+  alias: Map<string, AliasCandidat>;
+  /** Cabinet de la dernière séance de chaque patient (lieu permis seulement). */
+  dernierCabinet: Map<string, string>;
+};
+
+export type Proposition<P> = {
+  patient: P;
+  /** Null : aucun lieu sûr, à choisir à la main. */
+  cabinetId: string | null;
+  participants: ValeurParticipants;
+  /** D'où vient le patient : nom complet exact, titre déjà rattaché par
+   *  Amandine, ou ressemblance (prénom, initiale, nom seul). Seules les deux
+   *  premières permettent un rattachement sans clic. */
+  source: "nom" | "memoire" | "ressemblance";
+};
+
+/**
+ * Ce que l'outil propose pour un événement : patient, lieu, accompagnants.
+ * `"refuse"` : le lieu désigne un établissement facturé à l'heure ou un
+ * cabinet fermé — jamais de rattachement automatique.
+ */
+export function proposer<P extends PatientCandidat & { cabinetId?: string | null }, C extends CabinetCandidat>(
+  ev: { titre: string; lieu: string | null },
+  ref: Referentiel<P, C>,
+): Proposition<P> | "refuse" | null {
+  let patient: P | null = null;
+  let lieuTitre: string | null = null;
+  let source: Proposition<P>["source"] = "nom";
+  let memoire: AliasCandidat | undefined;
+
+  const noms = ref.cabinets.map((c) => c.nom);
+  const separe = separerLieu(ev.titre, noms);
+  const exact = patientDuTitre(ev.titre, ref.patients) ?? (separe.lieu ? patientDuTitre(separe.nom, ref.patients) : null);
+  if (exact) {
+    patient = exact.patient;
+    lieuTitre = exact.lieu ?? separe.lieu;
+  } else {
+    memoire = ref.alias.get(separe.nom);
+    const retenu = memoire && ref.patients.find((p) => p.id === memoire!.patientId);
+    if (retenu) {
+      patient = retenu;
+      source = "memoire";
+    } else {
+      memoire = undefined;
+      patient = suggererPatient(separe.nom, ref.patients);
+      source = "ressemblance";
+    }
+    lieuTitre = separe.lieu;
+  }
+  if (!patient) return null;
+
+  const parId = new Map(ref.cabinets.map((c) => [c.id, c]));
+  const permis = (id: string | null | undefined) => {
+    const c = id ? parId.get(id) : undefined;
+    return c && cabinetAutorise(c) ? c.id : null;
+  };
+
+  let cabinetId: string | null;
+  const duLieu = cabinetDesLieux([lieuTitre, ev.lieu], ref.cabinets);
+  if (duLieu === "refuse") return "refuse";
+  if (duLieu) cabinetId = duLieu.cabinet.id;
+  else
+    cabinetId =
+      permis(memoire?.cabinetId) ?? permis(ref.dernierCabinet.get(patient.id)) ?? permis(patient.cabinetId);
+
+  const duTitre = participantsDuTitre(ev.titre);
+  const participants = duTitre !== "INDIVIDUELLE" ? duTitre : (memoire?.participants ?? "INDIVIDUELLE");
+  return { patient, cabinetId, participants, source };
 }
