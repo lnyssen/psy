@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- Copie hebdomadaire des sauvegardes chiffrées du serveur vers ce Mac
+     (lundi 12 h, et à chaque ouverture de session). Installation :
+     bash deploy/mac/activer-copie-sauvegardes.sh -->
+<plist version="1.0">
+<dict>
+  <key>Label</key><string>be.pratiquepsy.copie-sauvegardes</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/bash</string>
+    <string>-c</string>
+    <string>date; mkdir -p "$HOME/Sauvegardes/pratique-psy"; if rsync -az -e "ssh -o BatchMode=yes -o ConnectTimeout=20" root@85.190.112.171:/var/backups/psy/ "$HOME/Sauvegardes/pratique-psy/"; then echo "OK, dernière : $(ls -1t "$HOME/Sauvegardes/pratique-psy" | head -1)"; else echo ÉCHEC; osascript -e 'display notification "La copie des sauvegardes a échoué (voir ~/Sauvegardes/copie.log)" with title "Pratique Psy"'; fi</string>
+  </array>
+  <key>StartCalendarInterval</key>
+  <dict>
+    <key>Weekday</key><integer>1</integer>
+    <key>Hour</key><integer>12</integer>
+    <key>Minute</key><integer>0</integer>
+  </dict>
+  <key>RunAtLoad</key><true/>
+  <key>StandardOutPath</key><string>__HOME__/Sauvegardes/copie.log</string>
+  <key>StandardErrorPath</key><string>__HOME__/Sauvegardes/copie.log</string>
+</dict>
+</plist>
