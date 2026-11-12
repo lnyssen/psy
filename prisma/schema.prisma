@@ -627,6 +627,10 @@ model GoogleConnexion {
   /// événements. Expire de lui-même si une exécution meurt en route.
   verrouJusqua        DateTime? @map("verrou_jusqua")
   creeLe              DateTime  @default(now()) @map("cree_le")
+  /// Identifiant propre à cette base, posé sur chaque événement créé
+  /// (psyInstance). Une autre base (copie, ancienne instance) ne peut ainsi
+  /// jamais supprimer nos événements en les croyant orphelins.
+  instance            String    @default(dbgenerated("(gen_random_uuid())::text"))
 
   @@map("google_connexions")
 }

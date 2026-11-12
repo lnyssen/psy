@@ -47,6 +47,11 @@ const FUSEAU = "Europe/Brussels";
  *  que de risquer le délai de la fonction ou les quotas de Google. */
 const MAX_ECRITURES = 40;
 const VERROU_MS = 90_000;
+/** Au-delà de ce nombre d'orphelins en un passage, rien n'est supprimé : une
+ *  séance effacée dans l'outil, c'est un ou deux événements ; des dizaines,
+ *  c'est une base qui ne correspond pas à l'agenda (copie, restauration,
+ *  mauvaise configuration). On s'arrête et on le signale. */
+export const MAX_ORPHELINS = 3;
 
 export type ResultatSynchro = {
   ok: boolean;
@@ -60,6 +65,10 @@ export type ResultatSynchro = {
   supprimes: number;
   annulees: number;
   reste: number;
+  /** Orphelins non supprimés parce que trop nombreux (voir MAX_ORPHELINS). */
+  orphelinsBloques?: number;
+  /** Annulations venues de Google non appliquées, trop nombreuses. */
+  annulationsBloquees?: number;
 };
 
 const vide = (): ResultatSynchro => ({
@@ -85,6 +94,7 @@ export function idEvenement(idSeance: string) {
 
 function corpsEvenement(
   s: Pick<SeanceComplete, "id" | "startsAt" | "durationMin" | "patient" | "cabinet" | "visio">,
+  instance: string,
 ): CorpsEvenement {
   const fin = new Date(s.startsAt.getTime() + s.durationMin * 60_000);
   return {
@@ -98,13 +108,23 @@ function corpsEvenement(
     start: { dateTime: s.startsAt.toISOString(), timeZone: FUSEAU },
     end: { dateTime: fin.toISOString(), timeZone: FUSEAU },
     transparency: "opaque",
-    extendedProperties: { private: { psySessionId: s.id } },
+    // psyInstance : la base qui a créé l'événement. Seule cette base-là peut
+    // le juger orphelin et le supprimer (voir traiterEvenement).
+    extendedProperties: { private: { psySessionId: s.id, psyInstance: instance } },
   };
 }
 
 function empreinte(c: CorpsEvenement) {
   return createHash("sha256")
-    .update(JSON.stringify([c.summary, c.location, c.start.dateTime, c.end.dateTime]))
+    .update(
+      JSON.stringify([
+        c.summary,
+        c.location,
+        c.start.dateTime,
+        c.end.dateTime,
+        c.extendedProperties.private.psyInstance ?? "",
+      ]),
+    )
     .digest("hex")
     .slice(0, 32);
 }
@@ -155,6 +175,14 @@ type Contexte = {
   /** Supprime côté Google un événement dont la séance n'existe plus. Au mieux :
    *  un échec ne doit pas interrompre la synchronisation. */
   supprimerOrphelin: (idEvenement: string) => Promise<void>;
+  /** Identifiant de la base qui synchronise (GoogleConnexion.instance). */
+  instance: string;
+  /** Événements jugés orphelins pendant la lecture : supprimés après coup,
+   *  seulement s'ils sont peu nombreux (voir MAX_ORPHELINS). */
+  orphelins: string[];
+  /** Séances dont l'événement a été supprimé dans Google : annulées après la
+   *  lecture, seulement si elles sont peu nombreuses. */
+  annulations: string[];
 };
 
 async function traiterEvenement(
@@ -169,17 +197,16 @@ async function traiterEvenement(
       // Une séance à venir encore planifiée se répercute en annulation. Une
       // séance passée ou déjà traitée garde son statut : la facturation ne se
       // réécrit pas parce qu'un événement a été nettoyé dans Google.
+      // L'annulation elle-même attend la fin de la lecture : si beaucoup de
+      // séances disparaissent d'un coup, ce n'est pas Amandine qui annule,
+      // c'est un incident, et les séances restent planifiées (l'écriture
+      // recréera leurs événements).
       const annulable = s.status === "SCHEDULED" && s.startsAt > ctx.maintenant;
       await prisma.session.update({
         where: { id: s.id },
-        data: {
-          googleEventId: null,
-          googleEtag: null,
-          googleEmpreinte: null,
-          ...(annulable ? { status: "CANCELLED_IN_TIME" as const } : {}),
-        },
+        data: { googleEventId: null, googleEtag: null, googleEmpreinte: null },
       });
-      if (annulable) bilan.annulees++;
+      if (annulable) ctx.annulations.push(s.id);
     }
     await prisma.evenementGoogle.deleteMany({ where: { googleId: ev.id } });
     return;
@@ -208,7 +235,12 @@ async function traiterEvenement(
       });
     } else if (!orpheline) {
       // Séance supprimée côté app : son événement n'a plus de raison d'être.
-      await ctx.supprimerOrphelin(ev.id);
+      // Mais seulement si c'est cette base-ci qui l'a créé. Le 11/11/2026, une
+      // ancienne copie de l'outil (Vercel, base d'octobre) a pris pour
+      // orphelins tous les rendez-vous créés depuis et les a effacés de
+      // l'agenda. Un événement d'une autre base, ou sans marque, ne se
+      // supprime jamais d'ici : on l'ignore.
+      if (priv?.psyInstance === ctx.instance) ctx.orphelins.push(ev.id);
       return;
     }
   }
@@ -233,7 +265,7 @@ async function traiterEvenement(
           startsAt: horaire.debut,
           durationMin: dureeMin,
           googleEtag: ev.etag ?? null,
-          googleEmpreinte: empreinte(corpsEvenement(maj)),
+          googleEmpreinte: empreinte(corpsEvenement(maj, ctx.instance)),
         },
       });
       bilan.importes++;
@@ -442,7 +474,7 @@ const ACTIFS = ["SCHEDULED", "ATTENDED", "NO_SHOW"] as const;
 
 async function ecrire(
   jeton: string,
-  connexion: { calendrierId: string },
+  connexion: { calendrierId: string; instance: string },
   ctx: { debut: Date; fin: Date },
   bilan: ResultatSynchro,
 ) {
@@ -470,7 +502,7 @@ async function ecrire(
       continue;
     }
 
-    const corps = corpsEvenement(s);
+    const corps = corpsEvenement(s, connexion.instance);
     const emp = empreinte(corps);
     if (s.googleEventId && s.googleEmpreinte === emp) continue; // déjà à jour
     // On ne crée que des séances à venir : les passées n'ont pas besoin
@@ -548,6 +580,9 @@ export async function synchroniser(opts: { maxAgeMs?: number } = {}): Promise<Re
     const ctx: Contexte = {
       ...fenetre(),
       maintenant,
+      instance: connexion.instance,
+      orphelins: [],
+      annulations: [],
       supprimerOrphelin: async (id) => {
         try {
           await supprimerEvenement(jeton, connexion.calendrierId, id);
@@ -558,6 +593,31 @@ export async function synchroniser(opts: { maxAgeMs?: number } = {}): Promise<Re
     };
 
     const syncToken = await lire(jeton, connexion, ctx, bilan);
+    let alerte: string | null = null;
+    if (ctx.orphelins.length > MAX_ORPHELINS) {
+      alerte =
+        `${ctx.orphelins.length} événements de l’agenda n’ont plus de séance dans l’outil : ` +
+        "par prudence, aucun n’a été supprimé. Vérifiez la base avant de continuer.";
+      bilan.orphelinsBloques = ctx.orphelins.length;
+    } else {
+      for (const id of ctx.orphelins) {
+        await ctx.supprimerOrphelin(id);
+        bilan.supprimes++;
+      }
+    }
+    if (ctx.annulations.length > MAX_ORPHELINS) {
+      alerte =
+        (alerte ? alerte + " " : "") +
+        `${ctx.annulations.length} rendez-vous ont disparu de l’agenda Google d’un coup : ` +
+        "par prudence, ils restent planifiés dans l’outil et seront remis dans l’agenda.";
+      bilan.annulationsBloquees = ctx.annulations.length;
+    } else if (ctx.annulations.length > 0) {
+      const r = await prisma.session.updateMany({
+        where: { id: { in: ctx.annulations }, status: "SCHEDULED" },
+        data: { status: "CANCELLED_IN_TIME" },
+      });
+      bilan.annulees += r.count;
+    }
     await rattacherAutomatiquement(ctx, bilan);
     await ecrire(jeton, connexion, ctx, bilan);
 
@@ -566,7 +626,7 @@ export async function synchroniser(opts: { maxAgeMs?: number } = {}): Promise<Re
       data: {
         syncToken,
         derniereSynchro: new Date(),
-        derniereErreur: null,
+        derniereErreur: alerte,
         verrouJusqua: null,
       },
     });
