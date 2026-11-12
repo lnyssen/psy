@@ -157,13 +157,17 @@ CLE_SAUVEGARDES=""
 verifier_cle() { # $1 nom affiché, $2 empreinte attendue ; la clé lue reste dans K
   K=""
   read -r -s -p "   $1 : " K </dev/tty; echo
-  K=$(printf %s "$K" | tr -d ' \n\r\t')
+  # Tolère un collage « NOTES_KEY="…" » ou entre guillemets.
+  K=$(printf %s "$K" | tr -d ' \n\r\t' | sed -E 's/^[A-Z_]+=//; s/^["'"'"']//; s/["'"'"']$//')
   if [ -z "$K" ]; then echo "  PASSÉ   $1 non vérifiée"; return 1; fi
   if [ -z "$2" ]; then echo "  ?       $1 : le serveur n'en a pas"; return 1; fi
-  if [ "$(printf %s "$K" | shasum -a 256 | cut -d' ' -f1)" = "$2" ]; then
+  local h; h=$(printf %s "$K" | shasum -a 256 | cut -d' ' -f1)
+  if [ "$h" = "$2" ]; then
     ok "ta copie de $1 est la bonne"
+  elif [ "$h" = "$(val EMPREINTE_CLE_SAUVEGARDES)" ] || [ "$h" = "$(val EMPREINTE_NOTES_KEY)" ]; then
+    ko "tu as collé l'AUTRE clé à la place de $1 (inversion)"; return 1
   else
-    ko "ta copie de $1 ne correspond PAS à celle du serveur"; return 1
+    ko "ta copie de $1 ne correspond PAS à celle du serveur (${#K} caractères collés, 44 attendus)"; return 1
   fi
 }
 verifier_cle "la clé des sauvegardes" "$(val EMPREINTE_CLE_SAUVEGARDES)" && CLE_SAUVEGARDES="$K"
