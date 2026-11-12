@@ -33,7 +33,19 @@ head -c 300000000 | tar xzf - -C "$SOURCE"
 }
 
 echo "== Sauvegarde avant migration"
-/usr/local/bin/psy-sauvegarde || echo "Avertissement : la sauvegarde n'a pas pu être faite."
+# Fichier à part : réutiliser psy-sauvegarde écraserait la sauvegarde de la
+# nuit (même nom, psy-AAAA-MM-JJ), seul état sûr si les données ont été
+# abîmées dans la journée. Gardées 14 jours.
+AVANT="/var/backups/psy/avant-deploiement-$(date +%Y-%m-%d-%H%M%S).dump.gpg"
+if sudo -u postgres pg_dump -Fc psy \
+     | gpg --batch --yes --symmetric --cipher-algo AES256 \
+           --passphrase-file /root/.psy-sauvegarde-cle -o "$AVANT" && [ -s "$AVANT" ]; then
+  chmod 600 "$AVANT"
+  echo "   $AVANT"
+else
+  echo "Avertissement : la sauvegarde n'a pas pu être faite."
+fi
+find /var/backups/psy -name 'avant-deploiement-*.dump.gpg' -mtime +14 -delete
 
 echo "== Copie du code et des secrets"
 rsync -a --delete \
