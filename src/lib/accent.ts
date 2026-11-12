@@ -40,9 +40,11 @@ export const ACCENTS = {
     sombre: { accent: "#29a39f", hover: "#31c4bf", text: "#30c0bb", soft: "#183938" },
   },
   vert: {
-    nom: "Vert",
-    clair: { accent: "#1f8449", hover: "#176337", text: "#165f35", soft: "#ebf9f1", bande: "#d2f4e0" },
-    sombre: { accent: "#349b5f", hover: "#3eba71", text: "#47c27a", soft: "#183926" },
+    // Vert sapin : un vert profond tiré vers le bleu, plus feutré que le vert
+    // franc d'avant, qui rappelait un bouton « Valider » (changé le 2026-11-12).
+    nom: "Vert sapin",
+    clair: { accent: "#167556", hover: "#0f5a42", text: "#0f5440", soft: "#e6f4ee", bande: "#d0ebdf" },
+    sombre: { accent: "#38a67f", hover: "#4dbb93", text: "#5cc6a0", soft: "#14332a" },
   },
   rose: {
     nom: "Rose",
