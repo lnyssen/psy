@@ -259,6 +259,21 @@ html {
 }
 
 /*
+ * Accueil : le haut de l'écran est la photo nocturne du phare. Sur iPhone
+ * (Safari et application installée), iOS teinte la zone de l'heure et de la
+ * batterie, et son fondu, d'après le fond de la page et son schéma de
+ * couleurs : avec le papier crème, il posait un voile clair qui se fondait en
+ * dégradé dans la photo. Fond bleu nuit (la couleur du haut de la photo) et
+ * schéma sombre pour cette page : le voile devient sombre, l'heure blanche.
+ * Le pied de page étant bleu nuit lui aussi, le rebond en bas de page ne se
+ * voit pas.
+ */
+html:has(.hero-cascade) {
+  background: #162552;
+  color-scheme: dark;
+}
+
+/*
  * Grain.
  *
  * Deux turbulences SVG superposées, en fond fixe. La fine (fréquence 0,85)
