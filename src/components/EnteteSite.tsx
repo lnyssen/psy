@@ -23,6 +23,19 @@ const PAGES = [
 export function EnteteSite() {
   const pathname = usePathname();
   const [ouvert, setOuvert] = useState(false);
+  // Accueil, en haut de page : la photo monte sous la barre d'état, sans
+  // aplat. Dès qu'on descend vers les sections claires, l'aplat revient.
+  const [enHaut, setEnHaut] = useState(true);
+  useEffect(() => {
+    const lire = () => setEnHaut(window.scrollY < window.innerHeight * 0.5);
+    const image = requestAnimationFrame(lire);
+    window.addEventListener("scroll", lire, { passive: true });
+    return () => {
+      cancelAnimationFrame(image);
+      window.removeEventListener("scroll", lire);
+    };
+  }, []);
+  const surPhoto = pathname === "/" && enHaut;
 
   // La pastille de la page courante glisse d'un lien à l'autre. Elle est
   // placée directement sur l'élément (pas d'état) : mesurer puis rendre à
@@ -90,7 +103,18 @@ export function EnteteSite() {
       l'accueil s'en sert en marge négative pour faire passer la photo derrière,
       et une hauteur variable aurait laissé un liseré.
     */
-    <header className="sticky top-0 z-40 h-[var(--entete)] px-3 pt-4 md:px-6 lg:px-4">
+    <header className="sticky top-0 z-40 h-[var(--entete)] px-3 pt-[calc(1rem+var(--haut-ecran))] md:px-6 lg:px-4">
+      {/* Sous la barre d'état de l'application installée (iPhone) : un aplat
+          bleu nuit, la couleur du pied de page, où l'heure et la batterie
+          s'écrivent en blanc ; il cache le texte qui défile dessous. En haut de
+          l'accueil il s'efface : la photo du phare monte jusqu'au bord de
+          l'écran. Hauteur nulle hors application. */}
+      <div
+        aria-hidden="true"
+        className={`pointer-events-none fixed inset-x-0 top-0 z-20 h-[var(--haut-ecran)] bg-bande-navy transition-opacity duration-300 ${
+          surPhoto && !ouvert ? "opacity-0" : "opacity-100"
+        }`}
+      />
       <div className="relative z-10 mx-auto flex h-full max-w-[calc(100rem+5rem)] items-center gap-2 rounded-full bg-paper/72 px-7 ring-1 ring-line/70 ring-inset backdrop-blur-2xl max-[359px]:px-4 max-md:pr-3.5 md:gap-4 md:px-10">
         <Link href="/" className="flex shrink-0 flex-col">
           <span className="font-display text-[17px] leading-[1.15] tracking-tight md:text-[20px]">
