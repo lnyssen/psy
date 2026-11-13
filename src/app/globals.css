@@ -141,8 +141,12 @@
 
   /* Hauteur réservée à l'en-tête flottant : la pastille elle-même plus le jeu
      qui la détache du haut. L'accueil s'en sert en marge négative pour passer
-     la photo derrière — d'où une valeur unique plutôt qu'un nombre recopié. */
-  --entete: 5.25rem;
+     la photo derrière — d'où une valeur unique plutôt qu'un nombre recopié.
+     Dans l'application installée sur iPhone, la page passe sous la barre
+     d'état (heure, batterie) : sa hauteur, env(safe-area-inset-top), s'ajoute.
+     Ailleurs elle vaut 0 et rien ne change. */
+  --haut-ecran: env(safe-area-inset-top, 0px);
+  --entete: calc(5.25rem + var(--haut-ecran));
 }
 
 /*
@@ -318,6 +322,9 @@ html[data-taille="grande"] {
 }
 
 body {
+  /* iPhone à l'horizontale, application installée : la page s'étend sous
+     l'encoche (viewport-fit=cover, site public) ; on la garde hors de portée. */
+  padding-inline: env(safe-area-inset-left, 0px) env(safe-area-inset-right, 0px);
   background: var(--color-paper);
   color: var(--color-ink);
   font-family: var(--font-body);

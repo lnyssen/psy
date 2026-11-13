@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { parametres } from "@/lib/parametres";
@@ -15,7 +15,14 @@ export const metadata: Metadata = {
     default: "Amandine Monsel – Psychologue clinicienne à Uccle et Auderghem",
     template: "%s – Amandine Monsel",
   },
+  // Application installée sur iPhone : la page s'étend sous la barre d'état,
+  // écrite en blanc. Sans cela, iOS pose une barre claire qui se fond en
+  // dégradé dans la photo sombre de l'accueil. L'en-tête réserve la place
+  // (--haut-ecran) et la couvre d'un aplat bleu nuit.
+  appleWebApp: { capable: true, statusBarStyle: "black-translucent" },
 };
+
+export const viewport: Viewport = { viewportFit: "cover" };
 
 export default async function SiteLayout({
   children,
