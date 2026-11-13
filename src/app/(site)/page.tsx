@@ -7,6 +7,11 @@ import { parametres } from "@/lib/parametres";
 
 export const dynamic = "force-dynamic";
 
+// Barre du navigateur et de l'heure, sur téléphone : le bleu nuit du haut de
+// la photo plutôt que l'accent, pour qu'elle prolonge l'image au lieu de la
+// border d'une couleur (voir html:has(.hero-cascade) dans globals.css).
+export const viewport = { themeColor: "#162552" };
+
 /**
  * Accueil.
  *
