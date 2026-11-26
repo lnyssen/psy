@@ -553,6 +553,8 @@ export default async function FichePatient({
                       <>
                         <a
                           href={`/api/recu/${s.id}`}
+                      target="_blank"
+                      rel="noopener"
                           className="rounded-full border border-line-strong px-2.5 py-0.5 text-[11px] font-medium transition-colors hover:border-accent hover:text-accent-text"
                         >
                           reçu PDF

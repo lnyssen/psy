@@ -18,6 +18,7 @@ import { parametres } from "@/lib/parametres";
 import { OngletsFacturation } from "@/components/OngletsFacturation";
 import { seancesARetablir } from "@/lib/factures-etablissement";
 import { ChampDate } from "@/components/ChampDate";
+import { EnvoyerPdf } from "@/components/EnvoyerPdf";
 
 export const dynamic = "force-dynamic";
 
@@ -279,12 +280,10 @@ export default async function Etablissements({
                       {enRetard ? "en retard" : `échéance ${fmtDateCourte.format(f.echeanceLe)}`}
                     </span>
                   )}
-                  <a
-                    href={`/api/facture-etablissement/${f.id}`}
-                    className="rounded-full border border-line-strong px-2.5 py-0.5 text-[11px] font-medium transition-colors hover:border-accent hover:text-accent-text"
-                  >
-                    PDF
-                  </a>
+                  <EnvoyerPdf
+                    url={`/api/facture-etablissement/${f.id}`}
+                    titre={`Facture ${numeroFacture(f.annee, f.numero)}`}
+                  />
                   {modifiable && (
                     <form action={marquerFacturePayee.bind(null, f.id)}>
                       <button
@@ -346,7 +345,8 @@ export default async function Etablissements({
                         minutesInitiales={f.heuresTotalesMin !== null ? String(f.heuresTotalesMin % 60) : ""}
                         tarifInitial={f.tarifHoraireCents !== null ? (f.tarifHoraireCents / 100).toFixed(2) : ""}
                         libelleInitial={f.libelle ?? ""}
-                        libellePlaceholder={`Vacations ${MOIS_LABEL.format(new Date(Date.UTC(f.annee, f.mois - 1, 1)))}`}
+                        libellePlaceholder={`Prestations du mois de ${MOIS_LABEL.format(new Date(Date.UTC(f.annee, f.mois - 1, 1)))}`}
+                        libelleParDefaut={`Prestations du mois de ${MOIS_LABEL.format(new Date(Date.UTC(f.annee, f.mois - 1, 1)))}`}
                         montantInitial={
                           f.heuresTotalesMin === null || f.tarifHoraireCents === null
                             ? (f.montantCents / 100).toFixed(2)
