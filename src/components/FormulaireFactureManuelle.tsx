@@ -94,7 +94,8 @@ export function FormulaireFactureManuelle({
         <ChampsDecompte
           key={cabinetId}
           tarifInitial={cabinet?.tarifHoraireCents ? (cabinet.tarifHoraireCents / 100).toFixed(2) : ""}
-          libellePlaceholder={`Facultatif, par ex. supplément ${moisLabels[moisSaisi - 1] ?? moisChoisi}`}
+          libellePlaceholder={`Par ex. supplément ${moisLabels[moisSaisi - 1] ?? moisChoisi}`}
+          libelleParDefaut={`Prestations du mois de ${moisLabels[moisSaisi - 1] ?? moisChoisi} ${annee}`}
         />
       </div>
 

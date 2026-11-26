@@ -25,6 +25,7 @@ export function ChampsDecompte({
   tarifInitial = "",
   libelleInitial = "",
   libellePlaceholder,
+  libelleParDefaut,
   montantInitial = "",
 }: {
   heuresInitiales?: string;
@@ -32,6 +33,8 @@ export function ChampsDecompte({
   tarifInitial?: string;
   libelleInitial?: string;
   libellePlaceholder: string;
+  /** Ce que le PDF imprimera à la place d'un libellé vide, quand il y a un décompte complet. */
+  libelleParDefaut: string;
   /** Montant déjà saisi à la main (euros, deux décimales), s'il n'y a pas de décompte. */
   montantInitial?: string;
 }) {
@@ -39,6 +42,7 @@ export function ChampsDecompte({
   const [minutes, setMinutes] = useState(minutesInitiales);
   const [tarif, setTarif] = useState(tarifInitial);
   const [montant, setMontant] = useState(montantInitial);
+  const [libelle, setLibelle] = useState(libelleInitial);
   // Plusieurs décomptes (un par facture à éditer) peuvent coexister sur la page.
   const aide = `aide-montant-${useId()}`;
 
@@ -48,6 +52,22 @@ export function ChampsDecompte({
     nombreSaisi(tarif),
   );
   const calcule = cents !== null;
+  const aideLibelle = `aide-libelle-${useId()}`;
+
+  // Sans libellé, le serveur refuse une facture sans heures (rien ne dirait
+  // de quoi il s'agit) et le PDF imprime un intitulé par défaut sinon — voir
+  // enregistrerFactureEtablissementManuelle et la route PDF. On le dit avant
+  // l'envoi plutôt que de laisser le formulaire ne rien faire en silence.
+  const aDesHeures =
+    (nombreSaisi(heures || "0") || 0) > 0 || (nombreSaisi(minutes || "0") || 0) > 0;
+  const sansLibelle = libelle.trim() === "";
+  const avertissement = !sansLibelle
+    ? null
+    : !aDesHeures
+      ? "Libellé obligatoire\u00a0: sans heures, rien d’autre ne dit sur la facture de quoi il s’agit."
+      : calcule
+        ? `Pas de libellé\u00a0: la facture affichera «\u00a0${libelleParDefaut}\u00a0».`
+        : "Pas de libellé\u00a0: la facture affichera seulement «\u00a0Prestation\u00a0».";
 
   return (
     <>
@@ -91,7 +111,23 @@ export function ChampsDecompte({
       </label>
       <label>
         <span className={libelleChamp}>Libellé</span>
-        <input name="libelle" defaultValue={libelleInitial} placeholder={libellePlaceholder} className={`mt-1 ${champ}`} />
+        <input
+          name="libelle"
+          value={libelle}
+          onChange={(e) => setLibelle(e.target.value)}
+          placeholder={libellePlaceholder}
+          required={!aDesHeures}
+          aria-invalid={avertissement !== null && !aDesHeures}
+          aria-describedby={aideLibelle}
+          className={`mt-1 ${champ} ${avertissement ? "border-due" : ""}`}
+        />
+        <span
+          id={aideLibelle}
+          role={avertissement ? "alert" : undefined}
+          className={`mt-1 block text-[11px] ${!aDesHeures ? "text-overdue" : "text-due"}`}
+        >
+          {avertissement ? `⚠\u00a0${avertissement}` : null}
+        </span>
       </label>
       <label>
         <span className={libelleChamp}>Montant (€)</span>

@@ -179,6 +179,8 @@ export function TableFacturation({
                     <>
                     <a
                       href={`/api/recu/${l.id}`}
+                      target="_blank"
+                      rel="noopener"
                       className="rounded-full border border-line-strong px-3 py-1 text-[11px] font-medium"
                     >
                       reçu PDF
@@ -274,6 +276,8 @@ export function TableFacturation({
                       <>
                       <a
                         href={`/api/recu/${l.id}`}
+                      target="_blank"
+                      rel="noopener"
                         className="rounded-full border border-line-strong px-2.5 py-0.5 text-[11px] font-medium transition-colors hover:border-accent hover:text-accent-text"
                       >
                         reçu PDF

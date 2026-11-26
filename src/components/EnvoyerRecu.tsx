@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { envoyerRecuParCourriel } from "@/lib/recu-actions";
-import { partagerPdf } from "@/lib/partager-pdf";
+import { EnvoyerPdf } from "@/components/EnvoyerPdf";
 
 const bouton =
   "rounded-full border border-line-strong px-2.5 py-0.5 text-[11px] font-medium transition-colors hover:border-accent hover:text-accent-text disabled:opacity-40";
@@ -21,18 +21,9 @@ export function EnvoyerRecu({
   dejaEnvoye?: boolean;
 }) {
   const [enCours, demarrer] = useTransition();
-  const [partage, setPartage] = useState(false);
   const [retour, setRetour] = useState<{ ok: boolean; texte: string } | null>(
     null,
   );
-
-  async function partager() {
-    setPartage(true);
-    setRetour(null);
-    const r = await partagerPdf(`/api/recu/${id}`, "Reçu d’honoraires");
-    if (!r.ok) setRetour({ ok: false, texte: r.message ?? "Le partage a échoué." });
-    setPartage(false);
-  }
 
   return (
     <>
@@ -50,9 +41,7 @@ export function EnvoyerRecu({
       >
         {enCours ? "envoi…" : dejaEnvoye ? "renvoyer par e-mail" : "envoyer par e-mail"}
       </button>
-      <button type="button" disabled={partage} onClick={partager} className={bouton}>
-        partager
-      </button>
+      <EnvoyerPdf url={`/api/recu/${id}`} titre="Reçu d’honoraires" voir={null} envoyer="partager" />
       {dejaEnvoye && !retour && (
         <span className="text-[11px] text-ink-muted">déjà envoyé</span>
       )}
